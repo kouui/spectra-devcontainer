@@ -18,7 +18,10 @@ open CMD as admin
 linux subsystem (Ubuntu kernel in default) will be installed.
 after installation, you need to restart your PC.
 
-after restarting your PC,  in Windows, open terminal, now you are able to open a terminal with Ubuntu kernel. first time, you have to setup your username and password.
+after restarting your PC,  in Windows, open terminal, now you are able to open a terminal with Ubuntu kernel. 
+![fig5](figures/fig5.png)
+
+At first, you have to setup your username and password. (don't forget your password)
 
 then install `git`
 
