@@ -1,0 +1,20 @@
+{
+    //isort
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "never"
+    },
+    //black
+    "editor.formatOnSave": true,
+    "python.formatting.provider": "black",
+    //flake8
+    "python.linting.lintOnSave": true,
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": false,
+    "python.linting.flake8Enabled": true,
+    "flake8.args": [
+        "--extend-ignore=E266,F401,F541,F841,E262,E128",
+        "--max-line-length=100",
+    ],
+    //autoDocstring
+    "autoDocstring.docstringFormat": "google",
+}

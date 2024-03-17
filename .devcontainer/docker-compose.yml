@@ -1,0 +1,26 @@
+version: '1'
+services:
+  devsrv:
+    image: spectra
+    ports:
+      - "8888:8888" # Map host port to container port
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # args:
+      #   USER_ID: 1000
+      #   USER_NAME: dev
+      #   GROUP_ID: 1000
+      #   GROUP_NAME: dev
+      #   WORK_DIR: workspace
+    container_name: spectra
+    deploy:
+      resources:
+        limits:
+          cpus: '6'
+    #command: ["fish"]
+    tty: true
+    #restart: always
+    #command: sleep infinity
+    volumes:
+      - ..:/home/dev/workspace

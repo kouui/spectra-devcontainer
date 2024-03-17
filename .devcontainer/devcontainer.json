@@ -1,0 +1,43 @@
+{
+  "name": "spectra",
+  "dockerComposeFile": "./docker-compose.yml",
+  "service": "devsrv", // the service name defined in docker-compose.yml
+  "remoteUser": "1000",
+  "workspaceFolder": "/home/dev/workspace",
+  "settings": {
+    "terminal.integrated.shell.linux": "/usr/bin/fish"
+  },
+  "postCreateCommand": "./.devcontainer/postCreateCommand.sh; fish",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // Python
+        "ms-python.python", // extension pack
+        "ms-python.flake8",
+        "ms-python.isort",
+        "ms-python.black-formatter",
+        //"ms-toolsai.jupyter",
+        "njpwerner.autodocstring",
+        // CSV
+        "mechatroner.rainbow-csv",
+        "janisdd.vscode-edit-csv",
+        // TOML
+        //"bungcip.better-toml",
+        // PDF
+        //"tomoki1207.pdf",
+        // Git
+        "donjayamanne.githistory",
+        "eamodio.gitlens",
+        "seatonjiang.gitmoji-vscode",
+        "mhutchie.git-graph",
+        // Markdown
+        "DavidAnson.vscode-markdownlint",
+        // Docker
+        "ms-azuretools.vscode-docker",
+        // Live Share
+        //"ms-vsliveshare.vsliveshare",
+      ]
+    }
+  },
+  // ... other properties
+}
