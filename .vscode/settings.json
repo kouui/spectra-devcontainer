@@ -4,7 +4,7 @@
         "source.organizeImports": "never"
     },
     //black
-    "editor.formatOnSave": true,
+    "editor.formatOnSave": false,
     "python.formatting.provider": "black",
     //flake8
     "python.linting.lintOnSave": true,
@@ -12,7 +12,7 @@
     "python.linting.pylintEnabled": false,
     "python.linting.flake8Enabled": true,
     "flake8.args": [
-        "--extend-ignore=E266,F401,F541,F841,E262,E128",
+        "--extend-ignore=E201,E202,E203,E302,E221,E265,E266,F401,F403,F541,F841,E261,E262,E128",
         "--max-line-length=100",
     ],
     //autoDocstring
