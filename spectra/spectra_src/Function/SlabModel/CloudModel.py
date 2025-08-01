@@ -8,6 +8,7 @@
 #    2022/07/20   k.i.   add Src, tau_1D
 # 0.1.2
 #    2023/07/04   u.k.   when Aji equals to 0, set Src to 0 to avoid the zero division warning
+#    2025/07/07   j.n.   add line_emissivity and line_absorption
 #-------------------------------------------------------------------------------
 
 from typing import Container
@@ -24,6 +25,8 @@ import numpy as _numpy
 
 def SE_to_slab_0D_(atom : _Atom.Atom, atmos : _Atmosphere.Atmosphere0D,
                    SE_con : _Container.SE_Container, depth : T_FLOAT) -> _Container.CloudModel_Container:
+    """ calculate the optical depth and source function for a slab model
+    """
 
     nLine = atom.nLine
     Line = atom.Line
@@ -48,9 +51,13 @@ def SE_to_slab_0D_(atom : _Atom.Atom, atmos : _Atmosphere.Atmosphere0D,
     Aji   : T_ARRAY = Line["AJI"][:]
     #Src   : T_ARRAY = ( Aji * nj ) / ( Bij * ni - Bji * nj )
     Src   : T_ARRAY = _numpy.zeros_like(Aji)
-    for k in range(0,nLine):
+    line_emissivity   : T_ARRAY =  Aji * nj
+    line_absorption   : T_ARRAY =  Bij * ni - Bji * nj
+    for k in range(0, nLine):
+
         if Aji[k] <= 0. :
             Src[k] = 0.
+            line_emissivity[k] = 0
         else:
             Src[k] = ( Aji[k] * nj[k] ) / ( Bij[k] * ni[k] - Bji[k] * nj[k] )
 
@@ -62,9 +69,9 @@ def SE_to_slab_0D_(atom : _Atom.Atom, atmos : _Atmosphere.Atmosphere0D,
     arr_prof_1D   = _numpy.empty_like( absorb_prof_1d )
     arr_tau_1D    = _numpy.empty_like( absorb_prof_1d )
     #arr_wl_1D     = _numpy.empty_like( absorb_prof_1d )
-    for k in range(0,nLine):
-        i1 = Line_mesh_idxs[k,0]
-        i2 = Line_mesh_idxs[k,1]
+    for k in range(0, nLine):
+        i1 = Line_mesh_idxs[k, 0]
+        i2 = Line_mesh_idxs[k, 1]
 
         tau = depth * alp0[k] * absorb_prof_1d[i1:i2]
         wl  = wave_mesh_shifted_1d[i1:i2]
@@ -80,16 +87,17 @@ def SE_to_slab_0D_(atom : _Atom.Atom, atmos : _Atmosphere.Atmosphere0D,
         arr_prof_1D[i1:i2] = prof[:]
         arr_tau_1D[i1:i2] = tau[:]
 
-
     cloud_con = _Container.CloudModel_Container(
-        w0                 = arr_w0, 
-        tau_max            = arr_tau_max, 
-        Ibar               = arr_Ibar, 
-        Src                = Src, 
+        w0                 = arr_w0,
+        tau_max            = arr_tau_max,
+        Ibar               = arr_Ibar,
+        Src                = Src,
         tau_1D             = arr_tau_1D,
         prof_1D            = arr_prof_1D,
         wl_1D              = wave_mesh_shifted_1d.copy(),
         Line_mesh_idxs     = Line_mesh_idxs.copy(),
+        line_emissivity    = line_emissivity,
+        line_absorption    = line_absorption,
     )
 
     return cloud_con
