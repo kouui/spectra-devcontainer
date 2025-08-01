@@ -6,6 +6,7 @@
 # 0.1.0 
 #    2021/05/18   u.k.   spectra-re
 #    2022/07/20   k.i.   add Src, tau_1D
+#    2025/07/07   j.n.   add line_emissivity, line_absorption
 #-------------------------------------------------------------------------------
 
 from ...ImportAll import *
@@ -25,4 +26,5 @@ class CloudModel_Container:
     prof_1D            : T_ARRAY     # 1d, (sum_of_line_wavelength_mesh,), out intensity profile, [erg/cm^2/Sr/cm/s]
     wl_1D              : T_ARRAY     # 1d, (sum_of_line_wavelength_mesh,), doppler shifted wavelength mesh , [cm]
     Line_mesh_idxs     : T_ARRAY     # 1d, (sum_of_line_wavelength_mesh,), [-]
-
+    line_emissivity    : T_ARRAY     # 1d, (nline,), [/cm^3/s/]
+    line_absorption    : T_ARRAY     # 1d, (nline,), [/erg/cm/Sr] =emi/src
