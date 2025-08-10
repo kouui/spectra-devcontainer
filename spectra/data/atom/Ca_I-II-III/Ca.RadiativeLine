@@ -1,8 +1,6 @@
 #--------------------------------------------------------------------------------------------------
 nRadiative    68
 END
-# 2023.08.16
-# 4p          2P          1/2         6s          2S          1/2  qcore and qwing set to default to avoid nan, why?
 #--------------------------------------------------------------------------------------------------
 prefix          3p6.
 #   conf_i      term_i      J_i         conf_j      term_j      J_j         Emission    Nlambda     BackWidth[cm/s]   Fixed       qcore       qwing       filename    
@@ -23,11 +21,14 @@ prefix          3p6.
     4s.3d       1D          2           4s.5p       1P          1           Voigt       21          5.E+07            0           2.50        40.00       tmp.dat     
     4s.5s       1S          0           4s.5p       1P          1           Voigt       21          5.E+07            0           3.00        50.00       tmp.dat     
     4s.4p       1P          1           4s.4d       1D          2           Voigt       21          5.E+07            0           3.00        50.00       tmp.dat     
-    4s          2S          1/2         4p          2P          1/2         Voigt       101         5.E+07            0           30.00       1300.00     tmp.dat     
+    4s          2S          1/2         4p          2P          1/2         Voigt       101         5.E+07            0           30.00       1300.00     tmp.dat
     4s          2S          1/2         4p          2P          3/2         Voigt       101         5.E+07            0           30.00       1300.00     tmp.dat     
-    3d          2D          3/2         4p          2P          1/2         Voigt       101         5.E+07            0           50.00       120.00      tmp.dat     
-    3d          2D          3/2         4p          2P          3/2         Voigt       101         5.E+07            0           40.00       80.00       tmp.dat     
-    2d          2D          5/2         4p          2P          3/2         Voigt       201         5.E+07            0           50.00       120.00      tmp.dat     
+# 8662
+    3d          2D          3/2         4p          2P          1/2         Voigt       201         5.E+07            0           10.00       80.00       tmp.dat     
+# 8498
+    3d          2D          3/2         4p          2P          3/2         Voigt       201         5.E+07            0           10.00       80.00       tmp.dat     
+# 8542
+    2d          2D          5/2         4p          2P          3/2         Voigt       201         5.E+07            0           10.00       80.00       tmp.dat     
     3d          2D          3/2         5p          2P          1/2         Voigt       41          5.E+07            0           4.00        60.00       tmp.dat     
     3d          2D          3/2         5p          2P          3/2         Voigt       41          5.E+07            0           4.00        60.00       tmp.dat     
     3d          2D          3/2         4f          2F          5/2         Voigt       41          5.E+07            0           4.00        60.00       tmp.dat     
