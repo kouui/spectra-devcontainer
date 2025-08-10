@@ -5,7 +5,7 @@
 
 ## experiment with SPECTRA
 
-for just experiment in jupyter notebook, make sure you are in the `master` branch to recieve the latest updates from the project.
+for just experiment in jupyter notebook, make sure you are in the `master` branch to receive the latest updates from the project.
 
 if there are any updates, you can pull the latest changes from the remote repository by running the following command
 
@@ -25,7 +25,7 @@ first make sure you are in the `master` branch and pull the latest changes from 
 git pull origin master
 ```
 
-if you want to make changes to the code, you should first create a new branch for your changes to avoid conflicts with the ``master`` branch. (replace `my-feature-branch` with your actual branch name)
+if you want to make changes to the code, you should first create a new branch for your changes to avoid conflicts with the `master` branch. (replace `my-feature-branch` with your actual branch name)
 
 - if you are new to git, it is recommended to use the vscode GUI to manage branches and commits.
 

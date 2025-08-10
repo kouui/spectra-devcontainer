@@ -117,7 +117,7 @@ to use github copilot, you need to sign in with your GitHub account.
 
 - reference: https://zenn.dev/muit_techblog/articles/38e5780fb6011a
 
-## you workflow
+## your workflow
 
 after everything is set up, you can start playing with SPECTRA by the following steps.
 
