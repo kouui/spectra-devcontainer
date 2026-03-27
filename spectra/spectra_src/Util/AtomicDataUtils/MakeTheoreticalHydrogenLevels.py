@@ -38,7 +38,9 @@ def make_hydrogen_levels_(nlevel:int,outfile:str):
         n = conf = i
         g = 2*n*n
         # ionization energy
-        Eik = CST.E_Rydberg_ * (1./n**2)
+        # Eik = CST.E_Rydberg_ * (1./n**2)
+        R_H = 109677.59        # [cm-1],  Hydrogen Rydberg const w/ proton mass
+        Eik = R_H * CST.c_ * CST.h_ * (1./n**2) * (1./n**2)
         erg = (1.3598430E+01*CST.eV2erg_ - Eik) / CST.eV2erg_
         s += f"    {conf:<2d}            -       -          {n:<2d}  -   -     {g:<4d}    1      {erg:.7E}\n"
     template = template.replace("{levels}", s)
