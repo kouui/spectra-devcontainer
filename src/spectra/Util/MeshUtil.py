@@ -178,8 +178,8 @@ def array_from_1D_(arr_1D: T_ARRAY, mesh_idxs: T_ARRAY, k: T_INT) -> T_ARRAY:
     T_ARRAY
         target sub-array
     """
-    i1: T_INT = mesh_idxs[k, :]
-    i2: T_INT = mesh_idxs[k, :]
+    i1: T_INT = mesh_idxs[k, 0]
+    i2: T_INT = mesh_idxs[k, 1]
 
     return arr_1D[i1:i2].copy()
 
