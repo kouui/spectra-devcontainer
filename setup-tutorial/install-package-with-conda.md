@@ -79,7 +79,7 @@ conda deactivate
 Example scripts are located at:
 
 ```
-spectra/test/examples/example.*.py
+tests/examples/example.*.py
 ```
 
 ---

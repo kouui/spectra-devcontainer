@@ -40,8 +40,8 @@ Then open `http://localhost:8888` in your browser.
 ## Running Examples
 
 ```bash
-uv run test/examples/example.He.py
-uv run test/examples/example.SE.py
+uv run tests/examples/example.He.py
+uv run tests/examples/example.SE.py
 ```
 
 ## Development
@@ -50,7 +50,7 @@ uv run test/examples/example.SE.py
 uv sync --extra dev
 uv run ruff check src/
 uv run pyright src/
-uv run pytest test/
+uv run pytest tests/
 ```
 
 ## Conventions

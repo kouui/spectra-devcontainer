@@ -33,7 +33,7 @@ packages = ["src/spectra"]
 
 [tool.ruff]
 target-version = "py313"
-src = ["src", "test"]
+src = ["src", "tests"]
 line-length = 120
 
 [tool.ruff.lint]
@@ -64,4 +64,4 @@ known-first-party = ["spectra"]
 pythonVersion = "3.13"
 venvPath = "."
 venv = ".venv"
-include = ["src", "test"]
+include = ["src", "tests"]
