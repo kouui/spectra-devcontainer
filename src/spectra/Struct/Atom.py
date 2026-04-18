@@ -109,7 +109,7 @@ class Atom:
 
 def init_Atom_(
     conf_path: T_STR, is_hydrogen: T_BOOL = False
-) -> T_TUPLE[Atom, _WavelengthMesh.Wavelength_Mesh, T_DICT[T_STR, T_UNION[None, T_STR]]]:
+) -> T_TUPLE[Atom, _WavelengthMesh.Wavelength_Mesh, T_DICT[T_STR, None | T_STR]]:
     """given the *.conf file, create the Atom struct
 
     Parameters
@@ -121,11 +121,11 @@ def init_Atom_(
 
     Returns
     -------
-    T_TUPLE[Atom, T_DICT[T_STR, T_UNION[None,T_STR]]]
+    T_TUPLE[Atom, T_DICT[T_STR, None | T_STR]]
 
     atom : Atom
         the Atom struct
-    path_dict : T_DICT[T_STR, T_UNION[None,T_STR]]
+    path_dict : T_DICT[T_STR, None | T_STR]
         a dictionary of the path of data files
     """
 

@@ -897,15 +897,13 @@ def make_conf_file_(afiles: AtomFiles, outfile: str, outdir: str):
         afiles.Gro,
     )
     with open(outfile, "w") as f:
-        count = 0
-        for na, fna in zip(names, fnames, strict=False):
+        for count, (na, fna) in enumerate(zip(names, fnames, strict=False)):
             if count == 0:
                 fna = fna.replace("\\", "\\\\")
             if count > 0:
                 fna = Path(fna).name
             text = f"{na:<20s}{fna:<50s}"
             f.write(text + "\n")
-            count += 1
     return 0
 
 

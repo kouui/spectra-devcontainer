@@ -38,6 +38,11 @@ line-length = 120
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B", "SIM", "N"]
+extend-ignore = [
+    "SIM103",  # return bool directly — explicit if-else is clearer in this codebase
+    "SIM108",  # ternary operator — if-else blocks are clearer for physics expressions
+    "SIM118",  # use `key in dict` — project uses explicit `.keys()` calls
+]
 ignore = [
     # Naming conventions — project uses non-PEP8 naming throughout:
     #   PascalCase modules/dirs, trailing-underscore functions/constants,
@@ -50,6 +55,7 @@ ignore = [
     "N815",  # mixedCase variable in class scope — physics quantity naming (nLevel, nLine)
     "N816",  # mixedCase variable in global scope — physics constants (eV2erg_)
     "N999",  # invalid module name — project uses PascalCase module names (BasicP.py)
+    "E501",  # line too long — long math formulas in docstrings can't use noqa
     "E741",  # ambiguous variable name (l, I) — common in physics notation
     "F403",  # wildcard import — project uses star imports from ImportAll
     "F405",  # undefined name from star import — consequence of F403

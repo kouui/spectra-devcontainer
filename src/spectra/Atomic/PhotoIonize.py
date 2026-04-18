@@ -109,7 +109,7 @@ def interpolate_PI_alpha_(alpha_table: T_ARRAY, alpha_table_idxs: T_ARRAY, conti
 
 
 def bound_free_radiative_transition_coefficient_(
-    wave: T_ARRAY, J: T_ARRAY, alpha: T_ARRAY, Te: T_UNION[T_FLOAT, T_INT], nk_by_ni_LTE: T_FLOAT
+    wave: T_ARRAY, J: T_ARRAY, alpha: T_ARRAY, Te: T_FLOAT | T_INT, nk_by_ni_LTE: T_FLOAT
 ) -> T_TUPLE[T_FLOAT, T_FLOAT, T_FLOAT]:
     r"""Given wavelength mesh, mean intensity (as function of wavelength),
     photoionization cross section, compute
@@ -133,7 +133,7 @@ def bound_free_radiative_transition_coefficient_(
         photoionization cross section as function of wavelength,
         [:math:`cm^{2}`]
 
-    Te : T_UNION[T_FLOAT,T_INT]
+    Te : T_FLOAT | T_INT
         Temperature,
         [:math:`K`]
 

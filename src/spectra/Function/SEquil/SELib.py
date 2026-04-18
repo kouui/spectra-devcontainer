@@ -124,7 +124,7 @@ def cal_SE_with_Pg_Te_(
     atmos: _Atmosphere.Atmosphere0D,
     wMesh: _WavelengthMesh.Wavelength_Mesh,
     radiation: _Radiation.Radiation,
-    Nh_SE: T_UNION[T_ARRAY, None],
+    Nh_SE: T_ARRAY | None,
 ) -> T_TUPLE[_Container.SE_Container, _Container.TranRates_Container]:
     Pg = atmos.Pg
     Te = atmos.Te
@@ -175,7 +175,7 @@ def cal_SE_with_Nh_Te_(
     atmos: _Atmosphere.Atmosphere0D,
     wMesh: _WavelengthMesh.Wavelength_Mesh,
     radiation: _Radiation.Radiation,
-    Nh_SE: T_UNION[T_ARRAY, None],
+    Nh_SE: T_ARRAY | None,
 ) -> T_TUPLE[_Container.SE_Container, _Container.TranRates_Container]:
 
     Nh = atmos.Nh  # [/cm^{3}]
@@ -220,7 +220,7 @@ def cal_SE_with_Ne_Te_(
     atmos: _Atmosphere.Atmosphere0D,
     wMesh: _WavelengthMesh.Wavelength_Mesh,
     radiation: _Radiation.Radiation,
-    Nh_SE: T_UNION[T_ARRAY, None],
+    Nh_SE: T_ARRAY | None,
     is_single_element: bool = False,
     rate_only: T_BOOL = False,
 ) -> T_TUPLE[_Container.SE_Container, _Container.TranRates_Container]:
@@ -281,7 +281,7 @@ def cal_SE_(
     atmos: _Atmosphere.Atmosphere0D,
     wMesh: _WavelengthMesh.Wavelength_Mesh,
     radiation: _Radiation.Radiation,
-    Nh_SE: T_UNION[T_ARRAY, None],
+    Nh_SE: T_ARRAY | None,
     rate_only: T_BOOL = False,
 ) -> T_TUPLE[_Container.SE_Container, _Container.TranRates_Container]:
     ##: TODO: instead of using background radiation in radiation struct

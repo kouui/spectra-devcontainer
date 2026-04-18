@@ -97,7 +97,7 @@ def saha_distribution_(gi: T_VEC_IA, gk: T_VEC_IA, chi: T_VEC_FA, Ne: T_VEC_IFA,
     return ratio
 
 
-def LTE_ratio_Line_(g: T_ARRAY, idxI: T_ARRAY, idxJ: T_ARRAY, w0: T_ARRAY, Te: T_UNION[T_FLOAT, T_INT]) -> T_ARRAY:
+def LTE_ratio_Line_(g: T_ARRAY, idxI: T_ARRAY, idxJ: T_ARRAY, w0: T_ARRAY, Te: T_FLOAT | T_INT) -> T_ARRAY:
     """Compute LTE population ratio nj/ni for each line transition
 
     Parameters
@@ -114,7 +114,7 @@ def LTE_ratio_Line_(g: T_ARRAY, idxI: T_ARRAY, idxJ: T_ARRAY, w0: T_ARRAY, Te: T
     w0 : T_ARRAY
         wavelength of each line transition,
         [:math:`cm`]
-    Te : T_UNION[T_FLOAT,T_INT]
+    Te : T_FLOAT | T_INT
         electron temperature,
         [:math:`K`]
 
@@ -137,7 +137,7 @@ def LTE_ratio_Line_(g: T_ARRAY, idxI: T_ARRAY, idxJ: T_ARRAY, w0: T_ARRAY, Te: T
 
 
 def LTE_ratio_Cont_(
-    g: T_ARRAY, idxI: T_ARRAY, idxJ: T_ARRAY, w0: T_ARRAY, Te: T_UNION[T_FLOAT, T_INT], Ne: T_UNION[T_FLOAT, T_INT]
+    g: T_ARRAY, idxI: T_ARRAY, idxJ: T_ARRAY, w0: T_ARRAY, Te: T_FLOAT | T_INT, Ne: T_FLOAT | T_INT
 ) -> T_ARRAY:
     """Compute LTE population ratio nj/ni for each continuum transition
 
@@ -155,10 +155,10 @@ def LTE_ratio_Cont_(
     w0 : T_ARRAY
         wavelength of each line transition,
         [:math:`cm`]
-    Te : T_UNION[T_FLOAT,T_INT]
+    Te : T_FLOAT | T_INT
         electron temperature,
         [:math:`K`]
-    Ne : T_UNION[T_FLOAT,T_INT]
+    Ne : T_FLOAT | T_INT
         electron density, [:math:`cm^{-3}`]
 
     Returns
@@ -180,7 +180,7 @@ def LTE_ratio_Cont_(
 
 
 def LTE_ratio_(
-    erg: T_ARRAY, g: T_ARRAY, stage: T_ARRAY, Te: T_UNION[T_FLOAT, T_INT], Ne: T_UNION[T_FLOAT, T_INT]
+    erg: T_ARRAY, g: T_ARRAY, stage: T_ARRAY, Te: T_FLOAT | T_INT, Ne: T_FLOAT | T_INT
 ) -> T_ARRAY:
     """Compute normalized LTE population
 
@@ -195,10 +195,10 @@ def LTE_ratio_(
     stage : T_ARRAY
         ionization stage,
         [-]
-    Te : T_UNION[T_FLOAT,T_INT]
+    Te : T_FLOAT | T_INT
         electron temperature,
         [:math:`K`]
-    Ne : T_UNION[T_FLOAT,T_INT]
+    Ne : T_FLOAT | T_INT
         electron density,
         [:math:`cm^{-3}`]
 
@@ -223,11 +223,11 @@ def LTE_ratio_(
 
 
 def einsteinA_to_einsteinBs_hz_(
-    Aji: T_UNION[T_ARRAY, T_FLOAT],
-    f0: T_UNION[T_ARRAY, T_FLOAT],
-    gi: T_UNION[T_ARRAY, T_INT],
-    gj: T_UNION[T_ARRAY, T_INT],
-) -> T_UNION[T_TUPLE[T_ARRAY, T_ARRAY], T_TUPLE[T_FLOAT, T_FLOAT]]:
+    Aji: T_ARRAY | T_FLOAT,
+    f0: T_ARRAY | T_FLOAT,
+    gi: T_ARRAY | T_INT,
+    gj: T_ARRAY | T_INT,
+) -> T_TUPLE[T_ARRAY | T_ARRAY, T_TUPLE[T_FLOAT, T_FLOAT]]:
     """
 
     given Einstein A coefficient Aij,
@@ -236,26 +236,26 @@ def einsteinA_to_einsteinBs_hz_(
     Parameters
     ----------
 
-    Aji : T_UNION[T_ARRAY, T_FLOAT]
+    Aji : T_ARRAY | T_FLOAT
         Einstein A coefficient Aji,
         [:math:`s^{-1}`]
-    f0 : T_UNION[T_ARRAY, T_FLOAT]
+    f0 : T_ARRAY | T_FLOAT
         central frequency of corresponding line transition,
         [:math:`Hz`]
-    gi : T_UNION[T_ARRAY, T_INT]
+    gi : T_ARRAY | T_INT
         statistical weight of lower level,
         [-]
-    gj : T_UNION[T_ARRAY, T_INT]
+    gj : T_ARRAY | T_INT
         statistical weight of upper level,
         [-]
 
     Returns
     -------
 
-    Bji : T_UNION[T_ARRAY, T_FLOAT]
+    Bji : T_ARRAY | T_FLOAT
         Einstein B coefficient Bji,
         [:math:`s^{-1}/(erg/cm^{2}/Sr/Hz/s)`]
-    Bij : T_UNION[T_ARRAY, T_FLOAT]
+    Bij : T_ARRAY | T_FLOAT
         Einstein B coefficient Bji,
         [:math:`s^{-1}/(erg/cm^{2}/Sr/Hz/s)`]
 
@@ -290,11 +290,11 @@ def einsteinA_to_einsteinBs_cm_(Aji: T_ARRAY, w0: T_ARRAY, gi: T_ARRAY, gj: T_AR
 
 
 def einsteinA_to_einsteinBs_cm_(
-    Aji: T_UNION[T_ARRAY, T_FLOAT],
-    w0: T_UNION[T_ARRAY, T_FLOAT],
-    gi: T_UNION[T_ARRAY, T_INT],
-    gj: T_UNION[T_ARRAY, T_INT],
-) -> T_UNION[T_TUPLE[T_ARRAY, T_ARRAY], T_TUPLE[T_FLOAT, T_FLOAT]]:
+    Aji: T_ARRAY | T_FLOAT,
+    w0: T_ARRAY | T_FLOAT,
+    gi: T_ARRAY | T_INT,
+    gj: T_ARRAY | T_INT,
+) -> T_TUPLE[T_ARRAY | T_ARRAY, T_TUPLE[T_FLOAT, T_FLOAT]]:
     r"""
 
     given Einstein A coefficient Aij,
@@ -303,26 +303,26 @@ def einsteinA_to_einsteinBs_cm_(
     Parameters
     ----------
 
-    Aji : T_UNION[T_ARRAY, T_FLOAT]
+    Aji : T_ARRAY | T_FLOAT
         Einstein A coefficient Aji,
         [:math:`s^{-1}`]
-    w0 : T_UNION[T_ARRAY, T_FLOAT]
+    w0 : T_ARRAY | T_FLOAT
         central wavelength of corresponding line transition,
         [:math:`cm`]
-    gi : T_UNION[T_ARRAY, T_INT]
+    gi : T_ARRAY | T_INT
         statistical weight of lower level,
         [-]
-    gj : T_UNION[T_ARRAY, T_INT]
+    gj : T_ARRAY | T_INT
         statistical weight of upper level,
         [-]
 
     Returns
     -------
 
-    Bji : T_UNION[T_ARRAY, T_FLOAT]
+    Bji : T_ARRAY | T_FLOAT
         Einstein B coefficient Bji,
         [:math:`s^{-1}/(erg/cm^{2}/Sr/Hz/s)`]
-    Bij : T_UNION[T_ARRAY, T_FLOAT]
+    Bij : T_ARRAY | T_FLOAT
         Einstein B coefficient Bji,
         [:math:`s^{-1}/(erg/cm^{2}/Sr/Hz/s)`]
 
@@ -345,22 +345,22 @@ def einsteinA_to_einsteinBs_cm_(
     return Bji, Bij
 
 
-def Aji_to_Bji_cm_(Aji: T_UNION[T_ARRAY, T_FLOAT], w0: T_UNION[T_ARRAY, T_FLOAT]) -> T_UNION[T_ARRAY, T_FLOAT]:
+def Aji_to_Bji_cm_(Aji: T_ARRAY | T_FLOAT, w0: T_ARRAY | T_FLOAT) -> T_ARRAY | T_FLOAT:
     """Given Einstein Aji coefficient, compute Einstein Bji coefficient
 
     Parameters
     ----------
-    Aji : T_UNION[T_ARRAY, T_FLOAT]
+    Aji : T_ARRAY | T_FLOAT
         Einstein A coefficient Aji,
         [:math:`s^{-1}`]
 
-    w0 : T_UNION[T_ARRAY, T_FLOAT]
+    w0 : T_ARRAY | T_FLOAT
         wavelength
         [:math:`cm`]
 
     Returns
     -------
-    T_UNION[T_ARRAY, T_FLOAT]
+    T_ARRAY | T_FLOAT
         Einstein B coefficient Bji,
         [?]
     """
@@ -371,23 +371,23 @@ def Aji_to_Bji_cm_(Aji: T_UNION[T_ARRAY, T_FLOAT], w0: T_UNION[T_ARRAY, T_FLOAT]
 
 
 def Bji_to_Bij_(
-    Bji: T_UNION[T_ARRAY, T_FLOAT], gi: T_UNION[T_ARRAY, T_INT], gj: T_UNION[T_ARRAY, T_INT]
-) -> T_UNION[T_ARRAY, T_FLOAT]:
+    Bji: T_ARRAY | T_FLOAT, gi: T_ARRAY | T_INT, gj: T_ARRAY | T_INT
+) -> T_ARRAY | T_FLOAT:
     """[summary]
 
     Parameters
     ----------
-    Bji : T_UNION[T_ARRAY, T_FLOAT]
+    Bji : T_ARRAY | T_FLOAT
         Einstein B coefficient Bji,
         [?]
-    gi : T_UNION[T_ARRAY, T_INT]
+    gi : T_ARRAY | T_INT
         statistical weight of the lower level
-    gj : T_UNION[T_ARRAY, T_INT]
+    gj : T_ARRAY | T_INT
         statistical weight of the upper level
 
     Returns
     -------
-    T_UNION[T_ARRAY, T_FLOAT]
+    T_ARRAY | T_FLOAT
         Einstein B coefficient Bij,
         [?]
     """
@@ -397,8 +397,8 @@ def Bji_to_Bij_(
 
 
 def planck_hz_(
-    F: T_UNION[T_ARRAY, T_FLOAT, T_INT], T: T_UNION[T_ARRAY, T_FLOAT, T_INT]
-) -> T_UNION[T_ARRAY, T_FLOAT, T_INT]:
+    F: T_ARRAY | T_FLOAT | T_INT, T: T_ARRAY | T_FLOAT | T_INT
+) -> T_ARRAY | T_FLOAT | T_INT:
     r"""
     given frequency and temperature,
     calculate the frequency based planck function.
@@ -407,17 +407,17 @@ def planck_hz_(
     Parameters
     ----------
 
-    F : T_UNION[T_ARRAY, T_FLOAT, T_INT]
+    F : T_ARRAY | T_FLOAT | T_INT
         frequency,
         [:math:`Hz`]
-    T : T_UNION[T_ARRAY, T_FLOAT, T_INT]
+    T : T_ARRAY | T_FLOAT | T_INT
         temperature,
         [:math:`K`]
 
     Returns
     -------
 
-    intensity : T_UNION[T_ARRAY, T_FLOAT, T_INT]
+    intensity : T_ARRAY | T_FLOAT | T_INT
         frequency based intensity,
         [:math:`erg/cm^2/Sr/Hz/s`]
 
@@ -458,8 +458,8 @@ def planck_cm_(W: T_FLOAT, T: T_ARRAY) -> T_ARRAY: ...
 
 
 def planck_cm_(
-    W: T_UNION[T_ARRAY, T_FLOAT, T_INT], T: T_UNION[T_ARRAY, T_FLOAT, T_INT]
-) -> T_UNION[T_ARRAY, T_FLOAT, T_INT]:
+    W: T_ARRAY | T_FLOAT | T_INT, T: T_ARRAY | T_FLOAT | T_INT
+) -> T_ARRAY | T_FLOAT | T_INT:
     r"""
     given wavelength and temperature,
     calculate the wavelength based planck function.
@@ -468,17 +468,17 @@ def planck_cm_(
     Parameters
     ----------
 
-    W : T_UNION[T_ARRAY, T_FLOAT, T_INT]
+    W : T_ARRAY | T_FLOAT | T_INT
         wavelength,
         [:math:`cm`]
-    T : T_UNION[T_ARRAY, T_FLOAT, T_INT]
+    T : T_ARRAY | T_FLOAT | T_INT
         temperature,
         [:math:`K`]
 
     Returns
     -------
 
-    intensity : T_UNION[T_ARRAY, T_FLOAT, T_INT]
+    intensity : T_ARRAY | T_FLOAT | T_INT
         wavelength based intensity,
         [:math:`erg/cm^2/Sr/cm/s`]
 
@@ -588,7 +588,7 @@ def Ufunc_(elm: T_STR, T: T_FLOAT) -> T_FLOAT: ...
 def Ufunc_(elm: T_STR, T: T_ARRAY) -> T_ARRAY: ...
 
 
-def Ufunc_(elm: T_STR, T: T_UNION[T_ARRAY, T_FLOAT, T_INT]) -> T_UNION[T_ARRAY, T_FLOAT]:
+def Ufunc_(elm: T_STR, T: T_ARRAY | T_FLOAT | T_INT) -> T_ARRAY | T_FLOAT:
     r"""
     partition function of neutral hydrogen
 
@@ -597,12 +597,12 @@ def Ufunc_(elm: T_STR, T: T_UNION[T_ARRAY, T_FLOAT, T_INT]) -> T_UNION[T_ARRAY, 
     ----------
     elm : T_STR
         element & ionization stage as ca_i, fe_ii, etc.
-    T   : T_UNION[T_ARRAY,T_FLOAT,T_INT]
+    T   : T_ARRAY | T_FLOAT | T_INT
         [:math:`K`]
 
     Returns
     --------
-    T_UNION[T_ARRAY, T_FLOAT]
+    T_ARRAY | T_FLOAT
         partition function of neutral hydrogen
         [-]
 
@@ -636,7 +636,7 @@ def Ufunc_(elm: T_STR, T: T_UNION[T_ARRAY, T_FLOAT, T_INT]) -> T_UNION[T_ARRAY, 
     c: T_ARRAY = _UFUNC_COEFFICIENT_ARRAY[k, :]
 
     th = 5040.0 / T
-    s: T_UNION[T_ARRAY, T_FLOAT] = c[0]
+    s: T_ARRAY | T_FLOAT = c[0]
     for i in range(1, 5):
         s += c[i] * (_numpy.log10(th)) ** i
     ufunc1 = 10.0**s

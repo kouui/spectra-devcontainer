@@ -16,7 +16,7 @@ from ..ImportAll import *
 # -------------------------------------------------------------------------------
 
 
-def set_matrixC_(Cmat: T_ARRAY, Cji: T_ARRAY, Cij: T_ARRAY, idxI: T_ARRAY, idxJ: T_ARRAY, Ne: T_UNION[T_FLOAT, T_INT]):
+def set_matrixC_(Cmat: T_ARRAY, Cji: T_ARRAY, Cij: T_ARRAY, idxI: T_ARRAY, idxJ: T_ARRAY, Ne: T_FLOAT | T_INT):
     r"""
     Compute the collisional rate matrix.
 
@@ -41,7 +41,7 @@ def set_matrixC_(Cmat: T_ARRAY, Cji: T_ARRAY, Cij: T_ARRAY, idxI: T_ARRAY, idxJ:
     idxJ : T_ARRAY, 1d
         level index of upper level j, [-]
 
-    Ne: T_UNION[T_FLOAT, T_INT]
+    Ne: T_FLOAT | T_INT
         electron density,
         [:math:`cm^{-3}`]
 

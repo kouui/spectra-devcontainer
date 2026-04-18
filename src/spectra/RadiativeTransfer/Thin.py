@@ -12,30 +12,30 @@ from ..ImportAll import *
 
 
 def relative_flux_(
-    AJI: T_UNION[T_FLOAT, T_ARRAY], f0: T_UNION[T_FLOAT, T_ARRAY], nj: T_UNION[T_INT, T_ARRAY]
-) -> T_UNION[T_FLOAT, T_ARRAY]:
+    AJI: T_FLOAT | T_ARRAY, f0: T_FLOAT | T_ARRAY, nj: T_INT | T_ARRAY
+) -> T_FLOAT | T_ARRAY:
     """
     calculate optically thin relative flux (some constants are removed)
 
     Parameters
     ----------
 
-    AJI : T_UNION[T_FLOAT,T_ARRAY]
+    AJI : T_FLOAT | T_ARRAY
         Einstein A coefficient,
         [:math:`s^{-1}`]
 
-    f0 : T_UNION[T_FLOAT,T_ARRAY]
+    f0 : T_FLOAT | T_ARRAY
         Transition line frequency,
         [:math:`hz`]
 
-    nj : T_UNION[T_INT,T_ARRAY]
+    nj : T_INT | T_ARRAY
         Population of the upper level of line transition,
         [:math:`cm^{-3}`]
 
     Returns
     -------
 
-    T_UNION[T_FLOAT,T_ARRAY]
+    T_FLOAT | T_ARRAY
         relative flux under the assumption of optically thin.
         [:math:`erg \\; cm^{-3} \\; s^{-1}`]
 

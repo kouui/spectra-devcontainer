@@ -21,29 +21,29 @@ def interp_omega_(table: T_ARRAY, Te: T_ARRAY, Te_table: T_ARRAY, f1: T_FLOAT, f
 
 def interp_omega_(
     table: T_ARRAY,
-    Te: T_UNION[T_FLOAT, T_INT, T_ARRAY],
+    Te: T_FLOAT | T_INT | T_ARRAY,
     Te_table: T_ARRAY,
-    f1: T_UNION[T_FLOAT, T_INT],
-    f2: T_UNION[T_FLOAT, T_INT],
-) -> T_UNION[T_FLOAT, T_ARRAY]:
+    f1: T_FLOAT | T_INT,
+    f2: T_FLOAT | T_INT,
+) -> T_FLOAT | T_ARRAY:
     """given electron temperature, interpolate CE/CI coefficient
 
     Parameters
     ----------
     table : T_ARRAY
         a table of CE coefficient as a function of temperature for interpolation
-    Te : T_UNION[T_FLOAT,T_INT,T_ARRAY]
+    Te : T_FLOAT | T_INT | T_ARRAY
         electron termperature, [:math:`K`]
     Te_table : T_ARRAY
         corresponding electron termperature points in _table, [:math:`K`]
-    f1 : T_UNION[T_FLOAT,T_INT]
+    f1 : T_FLOAT | T_INT
         multiply factor needed to compute CE/CI rate coefficient
-    f2 : T_UNION[T_FLOAT,T_INT]
+    f2 : T_FLOAT | T_INT
         division factor needed to compute CE/CI rate coefficient
 
     Returns
     -------
-    T_UNION[T_FLOAT,T_ARRAY]
+    T_FLOAT | T_ARRAY
         CE/CI coefficient
     """
     if table[0] == 0.0:

@@ -22,7 +22,7 @@ from . import Configurations as CFG
 from .Enums import *
 from .Types import *
 
-nb_List: T_TYPE[T_UNION[List, T_LIST]]
+nb_List: T_TYPE[List | T_LIST]
 if CFG._IS_JIT:
     # from numba.typed import List # type: ignore
     nb_List = List
@@ -39,7 +39,7 @@ del List
 # from numba.experimental import jitclass as nb_jitclass # type: ignore
 # comment : currently we will not use jitclass as a data struct in spectra
 
-NB_VEC_KWGS: T_DICT[T_STR, T_UNION[T_BOOL, T_STR]] = {
+NB_VEC_KWGS: T_DICT[T_STR, T_BOOL | T_STR] = {
     "cache": CFG._IS_CACHE,
     "target": CFG._VEC_TARGET,
     # "nogil"  : CFG._IS_NOGIL,

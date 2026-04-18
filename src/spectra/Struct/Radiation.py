@@ -30,7 +30,7 @@ class Radiation:
 
 
 def init_Radiation_(
-    atmos: T_UNION[_Atmosphere.Atmosphere0D, _Atmosphere.AtmosphereC1D], wMesh: _WavelengthMesh.Wavelength_Mesh
+    atmos: _Atmosphere.Atmosphere0D | _Atmosphere.AtmosphereC1D, wMesh: _WavelengthMesh.Wavelength_Mesh
 ) -> Radiation:
 
     backRad = _numpy.load(CFG._ROOT_DIR / "data" / "intensity" / "atlas" / "QS" / "atlas_QS.20221118.npy")

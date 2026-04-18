@@ -156,21 +156,21 @@ def damping_const_a_(gamma_line: T_VEC_FA, dop_width_hz: T_VEC_FA) -> T_VEC_FA:
     return gamma_line / (4 * CST.pi_ * dop_width_hz)
 
 
-def refractive_index_in_air_(wave: T_UNION[T_FLOAT, T_INT, T_ARRAY], unit: T_STR) -> T_UNION[T_FLOAT, T_INT, T_ARRAY]:
+def refractive_index_in_air_(wave: T_FLOAT | T_INT | T_ARRAY, unit: T_STR) -> T_FLOAT | T_INT | T_ARRAY:
     """Given wavelength, calculate the refraction index in air
 
     J. Opt. Soc. Am. 62, 958 (1972)
 
     Parameters
     ----------
-    wave : T_UNION[T_FLOAT, T_INT, T_ARRAY]
+    wave : T_FLOAT | T_INT | T_ARRAY
         wavelength
     unit : T_STR
         wavelength unit, "cm" or "um" or "nm" or "AA"
 
     Returns
     -------
-    T_UNION[T_FLOAT, T_ARRAY]
+    T_FLOAT | T_ARRAY
         refraction index in air
     """
     fac: T_FLOAT = {
@@ -187,42 +187,42 @@ def refractive_index_in_air_(wave: T_UNION[T_FLOAT, T_INT, T_ARRAY], unit: T_STR
     return out * 1e-8 + 1.0
 
 
-def air_to_vacuum_(wave: T_UNION[T_FLOAT, T_INT, T_ARRAY], unit: T_STR) -> T_UNION[T_FLOAT, T_ARRAY]:
+def air_to_vacuum_(wave: T_FLOAT | T_INT | T_ARRAY, unit: T_STR) -> T_FLOAT | T_ARRAY:
     """Given the wavelength in air, compute the wavelength in vacuum
 
     https://physics.nist.gov/PhysRefData/ASD/Html/lineshelp.html#AIR
 
     Parameters
     ----------
-    wave : T_UNION[T_FLOAT, T_INT, T_ARRAY]
+    wave : T_FLOAT | T_INT | T_ARRAY
         wavelength
     unit : T_STR
         wavelength unit, "cm" or "um" or "nm" or "AA"
 
     Returns
     -------
-    T_UNION[T_FLOAT, T_INT, T_ARRAY]
+    T_FLOAT | T_INT | T_ARRAY
         refraction index in air
     """
 
     return wave * refractive_index_in_air_(wave, unit)
 
 
-def vacuum_to_air_(wave: T_UNION[T_FLOAT, T_INT, T_ARRAY], unit: T_STR) -> T_UNION[T_FLOAT, T_ARRAY]:
+def vacuum_to_air_(wave: T_FLOAT | T_INT | T_ARRAY, unit: T_STR) -> T_FLOAT | T_ARRAY:
     """Given the wavelength in vacuum, compute the wavelength in air
 
     https://physics.nist.gov/PhysRefData/ASD/Html/lineshelp.html#AIR
 
     Parameters
     ----------
-    wave : T_UNION[T_FLOAT, T_INT, T_ARRAY]
+    wave : T_FLOAT | T_INT | T_ARRAY
         wavelength
     unit : T_STR
         wavelength unit, "cm" or "um" or "nm" or "AA"
 
     Returns
     -------
-    T_UNION[T_FLOAT, T_INT, T_ARRAY]
+    T_FLOAT | T_INT | T_ARRAY
         refraction index in air
     """
 

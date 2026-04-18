@@ -109,7 +109,7 @@ for _key, val in ELEMENT_DICT.items():
 # Z : atomic number
 # Mass : relative atom mass
 # Abundance : relative abundance, n_ele = 10**(Abundance-12) * n_H
-_ELEMENT_DICT_OLD: T_DICT[T_STR, T_DICT[T_STR, T_UNION[T_INT, T_FLOAT]]] = {
+_ELEMENT_DICT_OLD: T_DICT[T_STR, T_DICT[T_STR, T_INT | T_FLOAT]] = {
     "He": {"Z": 2, "Mass": 4.003, "Abundance": 11.00},
     "C": {"Z": 6, "Mass": 12.01, "Abundance": 8.54},
     "N": {"Z": 7, "Mass": 14.01, "Abundance": 8.06},

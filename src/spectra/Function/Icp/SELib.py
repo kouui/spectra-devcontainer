@@ -74,7 +74,7 @@ def cal_SE_with_Pg_Te_Ne_single_Atom_(
     atmos: _Atmosphere.Atmosphere0D,
     wMesh: _WavelengthMesh.Wavelength_Mesh,
     radiation: _Radiation.Radiation,
-    stage_pop: T_UNION[T_ARRAY, None],
+    stage_pop: T_ARRAY | None,
     rate_only: T_BOOL = False,
 ):
 
@@ -121,7 +121,7 @@ def cal_SE_with_Pg_Te_single_Atom_(
     atmos: _Atmosphere.Atmosphere0D,
     wMesh: _WavelengthMesh.Wavelength_Mesh,
     radiation: _Radiation.Radiation,
-    stage_pop: T_UNION[T_ARRAY, None],
+    stage_pop: T_ARRAY | None,
     rate_only: T_BOOL = False,
 ):
     Pg = atmos.Pg
@@ -182,7 +182,7 @@ def cal_SE_with_Pg_Te_single_Atom_(
 # def cal_SE_with_Pg_Te_(atom : _Atom.Atom, atmos : _Atmosphere.Atmosphere0D,
 #                        wMesh : _WavelengthMesh.Wavelength_Mesh,
 #                        radiation : _Radiation.Radiation,
-#                        Nh_SE : T_UNION[T_ARRAY, None],
+#                        Nh_SE : T_ARRAY | None,
 #                        ) -> T_TUPLE[_Container.SE_Container,_Container.TranRates_Container] :
 #     Pg = atmos.Pg
 #     Te = atmos.Te
@@ -229,8 +229,8 @@ def cal_SE_with_Nh_Te_(
     atmos: _Atmosphere.Atmosphere0D,
     wMesh: _WavelengthMesh.Wavelength_Mesh,
     radiation: _Radiation.Radiation,
-    Nh_SE: T_UNION[T_ARRAY, None],
-    stage_pop: T_UNION[T_ARRAY, None],
+    Nh_SE: T_ARRAY | None,
+    stage_pop: T_ARRAY | None,
 ) -> T_TUPLE[_Container.SE_Container, _Container.TranRates_Container]:
 
     Nh = atmos.Nh  # [/cm^{3}]
@@ -268,8 +268,8 @@ def cal_SE_with_Ne_Te_(
     atmos: _Atmosphere.Atmosphere0D,
     wMesh: _WavelengthMesh.Wavelength_Mesh,
     radiation: _Radiation.Radiation,
-    Nh_SE: T_UNION[T_ARRAY, None],
-    stage_pop: T_UNION[T_ARRAY, None],
+    Nh_SE: T_ARRAY | None,
+    stage_pop: T_ARRAY | None,
 ) -> T_TUPLE[_Container.SE_Container, _Container.TranRates_Container]:
 
     ##    is_hydrogen = ( atom._atom_type ==  E_ATOM.HYDROGEN )
@@ -300,7 +300,7 @@ def cal_SE_with_Ne_Te_(
     return SE_con, tran_rate_con
 
 
-def make_ion_pop_(atom: _Atom.Atom, stage_pop: T_UNION[T_ARRAY, None]):
+def make_ion_pop_(atom: _Atom.Atom, stage_pop: T_ARRAY | None):
 
     nLevel = atom.nLevel
     ion_pop: T_ARRAY = _numpy.ones(nLevel, dtype=DT_NB_FLOAT) * -1
@@ -332,8 +332,8 @@ def cal_SE_(
     atmos: _Atmosphere.Atmosphere0D,
     wMesh: _WavelengthMesh.Wavelength_Mesh,
     radiation: _Radiation.Radiation,
-    Nh_SE: T_UNION[T_ARRAY, None],
-    stage_pop: T_UNION[T_ARRAY, None],
+    Nh_SE: T_ARRAY | None,
+    stage_pop: T_ARRAY | None,
     rate_only: T_BOOL = False,
 ) -> T_TUPLE[_Container.SE_Container, _Container.TranRates_Container]:
     ##: TODO: instead of using background radiation in radiation struct

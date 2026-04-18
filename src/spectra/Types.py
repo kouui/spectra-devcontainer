@@ -7,7 +7,6 @@
 # -------------------------------------------------------------------------------
 
 from typing import Literal as T_LITERAL
-from typing import Union as T_UNION
 
 # reference : https://numpy.org/devdocs/reference/typing.html
 from numpy import ndarray as _ndarray
@@ -33,11 +32,11 @@ del _ndarray
 # advanced types
 # -------------------------------------------------------------------------------
 
-T_VEC_IFA = T_UNION[T_INT, T_FLOAT, T_ARRAY]
-T_VEC_FA = T_UNION[T_FLOAT, T_ARRAY]
-T_VEC_IA = T_UNION[T_INT, T_ARRAY]
+T_VEC_IFA = T_INT | T_FLOAT | T_ARRAY
+T_VEC_FA = T_FLOAT | T_ARRAY
+T_VEC_IA = T_INT | T_ARRAY
 
-# T_UNION_IS  = T_UNION[ T_INT, T_SLICE ]
+# T_UNION_IS  = T_INT | T_SLICE
 
 # types used in struct
 T_CTJ_TABLE = tuple[tuple[T_STR, T_STR, T_STR], ...]

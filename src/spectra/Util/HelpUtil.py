@@ -23,7 +23,7 @@ _STR_PRINT_MAX_LENGTH = 10
 _SEP_LINE = "-" * _LENGTH_BAR + "\n"
 
 
-def format_type_tuple_list_(vtype_name: T_STR, value: T_UNION[T_LIST, T_TUPLE]) -> T_STR:
+def format_type_tuple_list_(vtype_name: T_STR, value: T_LIST | T_TUPLE) -> T_STR:
 
     if len(value) == 0:
         return f"{vtype_name} of empty"
@@ -107,16 +107,14 @@ def _help_attribute_(obj: T_ANY, level: T_INT):
         if len(name) > 2 and name[:2] == "__":
             continue
 
-        s = f"{prefix + name:{_LENGTH_NAME}s}{' ' * _LENGTH_SPACE}"  # "{format_type_(vtype.__name__, value):{_LENGTH_TYPE}s}{' '*_LENGTH_SPACE}"
+        s = f"{prefix + name:{_LENGTH_NAME}s}{' ' * _LENGTH_SPACE}"
 
         # if isinstance( type(value), _enum.EnumMeta ):
         if isinstance(value, _enum.IntEnum):
             s += f"{vtype.__name__:{_LENGTH_TYPE}s}{' ' * _LENGTH_SPACE}"
             s += f"v: {value.name}\n"
 
-        elif (
-            isinstance(value, int) or isinstance(value, float) or isinstance(value, complex) or isinstance(value, bool)
-        ):
+        elif isinstance(value, (int, float, complex, bool)):
             s += f"{vtype.__name__:{_LENGTH_TYPE}s}{' ' * _LENGTH_SPACE}"
             s += f"v: {value}\n"
 
@@ -127,7 +125,7 @@ def _help_attribute_(obj: T_ANY, level: T_INT):
             else:
                 s += f"    v: {value}\n"
 
-        elif isinstance(value, tuple) or isinstance(value, list):
+        elif isinstance(value, (tuple, list)):
             s += f"{format_type_tuple_list_(vtype.__name__, value):{_LENGTH_TYPE}s}{' ' * _LENGTH_SPACE}"
             s += f"l: {len(value)}\n"
 

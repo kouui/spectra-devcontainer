@@ -62,14 +62,14 @@ def trapze_(y: T_ARRAY, x: T_ARRAY) -> T_FLOAT:
 # -----------------------------------------------------------------------------
 
 
-def _simps_odd_evenspaced_(y: T_ARRAY, dx: T_UNION[T_INT, T_FLOAT]) -> T_FLOAT:
+def _simps_odd_evenspaced_(y: T_ARRAY, dx: T_INT | T_FLOAT) -> T_FLOAT:
     """simpson integral for evenly spaced odd size array
 
     Parameters
     ----------
     y : T_ARRAY
         integrand
-    dx : T_UNION[T_INT,T_FLOAT]
+    dx : T_INT | T_FLOAT
         interval of independent variable
 
     Returns
@@ -122,14 +122,14 @@ def _simps_odd_(y: T_ARRAY, x: T_ARRAY) -> T_FLOAT:
     return result
 
 
-def _simps_even_evenspaced_(y: T_ARRAY, dx: T_UNION[T_INT, T_FLOAT]) -> T_FLOAT:
+def _simps_even_evenspaced_(y: T_ARRAY, dx: T_INT | T_FLOAT) -> T_FLOAT:
     """simpson integral for evenly spaced even size array
 
     Parameters
     ----------
     y : T_ARRAY
         integrand
-    dx : T_UNION[T_INT,T_FLOAT]
+    dx : T_INT | T_FLOAT
         interval of independent variable
 
     Returns
@@ -186,7 +186,7 @@ def _simps_even_(y: T_ARRAY, x: T_ARRAY) -> T_FLOAT:
     return result
 
 
-def simpson_(y: T_ARRAY, x: T_UNION[T_ARRAY, None] = None, dx: T_UNION[T_FLOAT, T_INT, None] = None) -> T_FLOAT:
+def simpson_(y: T_ARRAY, x: T_ARRAY | None = None, dx: T_FLOAT | T_INT | None = None) -> T_FLOAT:
     """
     Integration using Simpson's rule
 

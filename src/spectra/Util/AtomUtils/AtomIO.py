@@ -471,13 +471,13 @@ def read_Mesh_info_(
         count += 1
 
 
-def read_conf_(conf_path: T_STR) -> T_DICT[T_STR, T_UNION[None, T_STR]]:
+def read_conf_(conf_path: T_STR) -> T_DICT[T_STR, None | T_STR]:
 
     if not conf_path.endswith(".conf"):
         raise ValueError("`conf_path` should be a string ends with '.conf'")
 
     path_dict_keys = ("folder", "conf", "Level", "Aji", "CEe", "CIe", "PI", "RadiativeLine", "Grotrian")
-    path_dict: T_DICT[T_STR, T_UNION[None, T_STR]] = {key: None for key in path_dict_keys}
+    path_dict: T_DICT[T_STR, None | T_STR] = {key: None for key in path_dict_keys}
 
     # i = conf_path.rfind('/')
     # folder = conf_path[:i+1]
@@ -592,7 +592,7 @@ def nLine_nCont_nTran_(stage: T_ARRAY) -> T_TUPLE[T_INT, T_INT, T_INT, T_BOOL]:
             nCont += v
     nTran = nLine + nCont
 
-    has_continuum = True if nCont > 0 else False
+    has_continuum = nCont > 0
 
     return nLine, nCont, nTran, has_continuum
 
@@ -695,7 +695,7 @@ def make_Atom_Cont_(nCont: T_INT, Cont_idx_table: T_IDX_PAIR_TABLE, Level: T_ARR
 
 
 def make_Atom_Line_(
-    path: T_UNION[T_STR, None],
+    path: T_STR | None,
     Level: T_ARRAY,
     Line_idx_table: T_IDX_PAIR_TABLE,
     Line_ctj_table: T_CTJ_PAIR_TABLE,
@@ -790,7 +790,7 @@ def make_Atom_Line_(
 
 
 def make_Atom_CECI_(
-    path_electron: T_UNION[T_STR, None],
+    path_electron: T_STR | None,
     tran_type: T_STR,
     n_transition: T_INT,
     Tran: T_ARRAY,
@@ -894,7 +894,7 @@ def make_Atom_CECI_(
 
 
 def make_Atom_RL_(
-    path: T_UNION[T_STR, None], Level_info_table: T_CTJ_TABLE, Line_ctj_table: T_CTJ_PAIR_TABLE
+    path: T_STR | None, Level_info_table: T_CTJ_TABLE, Line_ctj_table: T_CTJ_PAIR_TABLE
 ) -> T_TUPLE[T_ARRAY, T_INT]:
 
     dtype = _numpy.dtype(
@@ -935,7 +935,7 @@ def make_Atom_RL_(
 
 
 def make_Atom_PI_(
-    path: T_UNION[T_STR, None],
+    path: T_STR | None,
     Level: T_ARRAY,
     Cont: T_ARRAY,
     Cont_mesh: T_ARRAY,
