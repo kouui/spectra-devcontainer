@@ -10,9 +10,9 @@
 
 
 from .Types import T_STR, T_BOOL, T_INT, T_NORETURN
-import os
+from pathlib import Path
 
-_ROOT_DIR : T_STR = os.path.abspath( os.path.join( os.path.dirname(__file__), "..", ".." ) )
+_ROOT_DIR : Path = Path(__file__).resolve().parent.parent.parent
 
 
 #-------------------------------------------------------------------------------

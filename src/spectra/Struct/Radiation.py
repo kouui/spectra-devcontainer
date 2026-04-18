@@ -33,14 +33,11 @@ from ..Atomic import PhotoIonize as _PhotoIonize
 from ..Atomic import LTELib as _LTELib
 
 import numpy as _numpy
-import os
 
 def init_Radiation_(atmos : T_UNION[_Atmosphere.Atmosphere0D,_Atmosphere.AtmosphereC1D],
                     wMesh : _WavelengthMesh.Wavelength_Mesh) -> Radiation:
 
-    root=CFG._ROOT_DIR
-
-    backRad = _numpy.load(  os.path.join(root,"data","intensity","atlas","QS","atlas_QS.20221118.npy") )
+    backRad = _numpy.load( CFG._ROOT_DIR / "data" / "intensity" / "atlas" / "QS" / "atlas_QS.20221118.npy" )
     #backRad[0,:] *= 1E-8
     #backRad[1,:] *= 2.5*intensity_fac
     

@@ -20,7 +20,7 @@
 from ...ImportAll import *
 
 import numpy as _numpy
-import os
+from pathlib import Path
 
 from collections import OrderedDict as _OrderedDict
 
@@ -458,8 +458,9 @@ def read_conf_(conf_path : T_STR) -> T_DICT[T_STR, T_UNION[None,T_STR]]:
 
     #i = conf_path.rfind('/')
     #folder = conf_path[:i+1]
-    folder = os.path.dirname( conf_path )
-    path_dict["conf"] = os.path.abspath( conf_path )
+    conf = Path(conf_path).resolve()
+    folder = conf.parent
+    path_dict["conf"] = str(conf)
 
     with open(conf_path, "r") as f:
         lines = f.readlines()
@@ -474,11 +475,11 @@ def read_conf_(conf_path : T_STR) -> T_DICT[T_STR, T_UNION[None,T_STR]]:
             raise ValueError(f"{words[0]} is not a valid key")
 
         if words[0] == "folder":
-            path_dict[words[0]] = os.path.abspath( os.path.join( folder, words[1] ) )
+            path_dict[words[0]] = str((folder / words[1]).resolve())
         else:
             if path_dict["folder"] is None:
                 raise ValueError("`folder` configuration should be read first.")
-            path_dict[words[0]] = os.path.abspath( os.path.join( path_dict["folder"], words[1] ) )
+            path_dict[words[0]] = str((Path(path_dict["folder"]) / words[1]).resolve())
 
     return path_dict
 

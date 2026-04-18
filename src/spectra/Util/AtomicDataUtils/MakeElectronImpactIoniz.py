@@ -7,7 +7,6 @@
 #-------------------------------------------------------------------------------
 
 from spectra.ImportAll import *
-import os
 
 import numpy as _numpy
 from numpy import sqrt as _sqrt
@@ -36,7 +35,7 @@ def _is_skip_(line: T_STR) -> T_BOOL:
 
 def _v1_read_data_() -> T_DICT[T_INT, T_DICT[T_INT,T_ARRAY] ]:
 
-    file = os.path.join( CFG._ROOT_DIR, "data/atomic_raw/ionization/electron_impact_ionization/ground.Z_1_28.txt" )
+    file = CFG._ROOT_DIR / "data" / "atomic_raw" / "ionization" / "electron_impact_ionization" / "ground.Z_1_28.txt"
 
     data : T_DICT[T_INT, T_DICT[T_INT,T_ARRAY] ] = {}
 

@@ -8,7 +8,7 @@
 import argparse
 from pprint import pprint
 from dataclasses import dataclass
-import os
+from pathlib import Path
 
 from spectra import Elements
 from spectra import Constants as Cst
@@ -840,7 +840,7 @@ def make_conf_file_( afiles:AtomFiles, outfile: str, outdir: str):
         "Grotrian"
     )
     fnames = (
-        os.path.abspath(outdir),
+        str(Path(outdir).resolve()),
         afiles.level,
         afiles.Aji,
         afiles.CEe,
@@ -853,7 +853,7 @@ def make_conf_file_( afiles:AtomFiles, outfile: str, outdir: str):
         count = 0
         for na, fna in zip( names, fnames ):
             if count ==0: fna = fna.replace('\\', '\\\\')
-            if count > 0: fna = os.path.basename(fna)
+            if count > 0: fna = Path(fna).name
             text = f"{na:<20s}{fna:<50s}"
             f.write(text + '\n')
             count += 1
@@ -899,28 +899,27 @@ def main():
         raise ValueError(f"symbol [{sym}] not found in :\n{Elements.ELEMENT_DICT.keys()}")
 
     ##: step 1 create output folder if not exist
-    outdir = args.outdir
-    outdir = os.path.abspath(outdir)
-    if not os.path.exists(outdir): os.makedirs(outdir, exist_ok=True)
+    outdir = Path(args.outdir).resolve()
+    outdir.mkdir(parents=True, exist_ok=True)
 
     ##: step 2. create struct for output filenames
     
     fn = f'{args.file_prefix}{sym}'
     afile = AtomFiles(
-        level  = os.path.join(outdir, f'{fn}.Level'),
-        Aji    = os.path.join(outdir, f'{fn}.Aji'),
-        RadiativeLine = os.path.join(outdir, f'{fn}.RadiativeLine'),
-        Alpha = os.path.join(outdir, f'{fn}.Alpha'),
-        CEe   = os.path.join(outdir, f'{fn}.CE.electron'),
-        CIe   = os.path.join(outdir, f'{fn}.CI.electron'),
-        Gro   = os.path.join(outdir, f'{fn}.Grotrian'),
-        Conf  = os.path.join(outdir, f'{fn}.conf'),
+        level  = str(outdir / f'{fn}.Level'),
+        Aji    = str(outdir / f'{fn}.Aji'),
+        RadiativeLine = str(outdir / f'{fn}.RadiativeLine'),
+        Alpha = str(outdir / f'{fn}.Alpha'),
+        CEe   = str(outdir / f'{fn}.CE.electron'),
+        CIe   = str(outdir / f'{fn}.CI.electron'),
+        Gro   = str(outdir / f'{fn}.Grotrian'),
+        Conf  = str(outdir / f'{fn}.conf'),
     )
 
     if len(args.indir) > 0:
-        args.indir = os.path.abspath(args.indir)
-        args.rhpath = os.path.join(args.indir, os.path.basename(args.rhpath))
-        args.conftable = os.path.join(args.indir, os.path.basename(args.conftable))
+        indir = Path(args.indir).resolve()
+        args.rhpath = str(indir / Path(args.rhpath).name)
+        args.conftable = str(indir / Path(args.conftable).name)
 
     ##: step 3. read level index --> configuration, term, j table
     tables, prefix = read_table_(args.conftable)
