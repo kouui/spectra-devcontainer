@@ -92,6 +92,7 @@ class AtmosphereC1D:
 #       2021.5.13      k.i. from val.pro
 # -------------------------------------------------------------------------------
 
+
 def init_VAL_(val_type: T_STR = "C") -> AtmosphereC1D:
 
     val_type = val_type.upper()

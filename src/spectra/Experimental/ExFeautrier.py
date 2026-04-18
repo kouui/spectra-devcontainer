@@ -371,9 +371,7 @@ def tmat_improved_RH_(tau, mu, r0=0, rn=0):
 # -------------------------------------------------------------------------------
 
 
-def angle_averaged_tmat_(
-    TmatirxFunc, tau, I_upper=None, I_lower=None, r0=0, rn=0
-):
+def angle_averaged_tmat_(TmatirxFunc, tau, I_upper=None, I_lower=None, r0=0, rn=0):
     """
     Purpose :
         Given a function to compute monochromatic T matrix of lambda transformation,

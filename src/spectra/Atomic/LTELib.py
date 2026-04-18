@@ -179,9 +179,7 @@ def LTE_ratio_Cont_(
     return nRatio
 
 
-def LTE_ratio_(
-    erg: T_ARRAY, g: T_ARRAY, stage: T_ARRAY, Te: T_FLOAT | T_INT, Ne: T_FLOAT | T_INT
-) -> T_ARRAY:
+def LTE_ratio_(erg: T_ARRAY, g: T_ARRAY, stage: T_ARRAY, Te: T_FLOAT | T_INT, Ne: T_FLOAT | T_INT) -> T_ARRAY:
     """Compute normalized LTE population
 
     Parameters
@@ -370,9 +368,7 @@ def Aji_to_Bji_cm_(Aji: T_ARRAY | T_FLOAT, w0: T_ARRAY | T_FLOAT) -> T_ARRAY | T
     return Bji
 
 
-def Bji_to_Bij_(
-    Bji: T_ARRAY | T_FLOAT, gi: T_ARRAY | T_INT, gj: T_ARRAY | T_INT
-) -> T_ARRAY | T_FLOAT:
+def Bji_to_Bij_(Bji: T_ARRAY | T_FLOAT, gi: T_ARRAY | T_INT, gj: T_ARRAY | T_INT) -> T_ARRAY | T_FLOAT:
     """[summary]
 
     Parameters
@@ -396,9 +392,7 @@ def Bji_to_Bij_(
     return Bij
 
 
-def planck_hz_(
-    F: T_ARRAY | T_FLOAT | T_INT, T: T_ARRAY | T_FLOAT | T_INT
-) -> T_ARRAY | T_FLOAT | T_INT:
+def planck_hz_(F: T_ARRAY | T_FLOAT | T_INT, T: T_ARRAY | T_FLOAT | T_INT) -> T_ARRAY | T_FLOAT | T_INT:
     r"""
     given frequency and temperature,
     calculate the frequency based planck function.
@@ -457,9 +451,7 @@ def planck_cm_(W: T_ARRAY, T: T_FLOAT) -> T_ARRAY: ...
 def planck_cm_(W: T_FLOAT, T: T_ARRAY) -> T_ARRAY: ...
 
 
-def planck_cm_(
-    W: T_ARRAY | T_FLOAT | T_INT, T: T_ARRAY | T_FLOAT | T_INT
-) -> T_ARRAY | T_FLOAT | T_INT:
+def planck_cm_(W: T_ARRAY | T_FLOAT | T_INT, T: T_ARRAY | T_FLOAT | T_INT) -> T_ARRAY | T_FLOAT | T_INT:
     r"""
     given wavelength and temperature,
     calculate the wavelength based planck function.

@@ -324,7 +324,7 @@ def read_PI_info_(lns: T_LIST[T_STR]) -> T_TUPLE[T_INT, T_INT]:
     return nCont, re  # , _nMesh
 
 
-def read_PI_table_( # noqa: C901
+def read_PI_table_(  # noqa: C901
     rs: T_INT,
     lns: T_LIST[T_STR],
     PI_table_dict: T_DICT[T_INT, T_ARRAY],
@@ -597,7 +597,7 @@ def nLine_nCont_nTran_(stage: T_ARRAY) -> T_TUPLE[T_INT, T_INT, T_INT, T_BOOL]:
     return nLine, nCont, nTran, has_continuum
 
 
-def prepare_idx_ctj_mapping_( # noqa: C901
+def prepare_idx_ctj_mapping_(  # noqa: C901
     Level_info_table: T_CTJ_TABLE, stage: T_ARRAY, isGround: T_ARRAY, nLine: T_INT, nCont: T_INT
 ) -> T_TUPLE[T_IDX_PAIR_TABLE, T_CTJ_PAIR_TABLE, T_IDX_PAIR_TABLE, T_CTJ_PAIR_TABLE]:
     r"""make tuples for mapping
@@ -934,7 +934,7 @@ def make_Atom_RL_(
     return Coe, nRadiativeLine
 
 
-def make_Atom_PI_( # noqa: C901
+def make_Atom_PI_(  # noqa: C901
     path: T_STR | None,
     Level: T_ARRAY,
     Cont: T_ARRAY,

@@ -36,7 +36,7 @@ class Spectrum:  ##: struct contains line & cont mesh
     dop_width_cm: T_ARRAY
 
 
-def init_spectrum_(atom: _Atom.Atom, wMesh: _WavelengthMesh.Wavelength_Mesh, Te: T_FLOAT, Vt: T_FLOAT, Vd: T_FLOAT): # noqa: C901
+def init_spectrum_(atom: _Atom.Atom, wMesh: _WavelengthMesh.Wavelength_Mesh, Te: T_FLOAT, Vt: T_FLOAT, Vd: T_FLOAT):  # noqa: C901
 
     Line_mesh_idxs = wMesh.Line_mesh_idxs
     Line_mesh = wMesh.Line_mesh

@@ -276,7 +276,7 @@ def arrow_without_text_(_ax, _pi, _pj, _direction, _cmap, _norm, _v, _abserr, _a
     return _annotation_obj
 
 
-def read_Grotrian_(_lns): # noqa: C901
+def read_Grotrian_(_lns):  # noqa: C901
     r"""
     read default line connection setup for Grotrian diagram
     """
@@ -430,7 +430,7 @@ class Grotrian:
 
         self.fig = None
 
-    def make_fig(self, _fig=None, _axe=None, _figsize=(6, 8), _dpi=120, _f=200, _removeSpline=None, _resetFig=True): # noqa: C901
+    def make_fig(self, _fig=None, _axe=None, _figsize=(6, 8), _dpi=120, _f=200, _removeSpline=None, _resetFig=True):  # noqa: C901
         r"""
 
         Parameters

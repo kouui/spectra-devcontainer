@@ -249,7 +249,9 @@ def make_Level_file_(
         f.write(f"Title: {title}" + "\n")
         f.write(text_bar_() + "\n")
 
-        for key, val in zip(("Z", "Element", "nLevel"), (Elements.ELEMENT_DICT[sym]["Z"], sym, len(tables)), strict=False):
+        for key, val in zip(
+            ("Z", "Element", "nLevel"), (Elements.ELEMENT_DICT[sym]["Z"], sym, len(tables)), strict=False
+        ):
             f.write(f"{key:<20s}{val}\n")
         f.write(COMMENT_ + "\n")
         f.write(END_ + "\n")

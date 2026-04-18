@@ -721,7 +721,7 @@ def _B_Jbar_(
     return Bij_Jbar, Bji_Jbar, wave_mesh_cm_shifted_all, absorb_prof_cm_all, Jbar_all
 
 
-def _get_Cij_( # noqa: C901
+def _get_Cij_(  # noqa: C901
     Line: T_ARRAY,
     Cont: T_ARRAY,
     Te: T_FLOAT,
