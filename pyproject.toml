@@ -9,6 +9,7 @@ dependencies = [
     "scipy",
     "matplotlib",
     "sympy",
+    "ipykernel",
 ]
 
 [project.optional-dependencies]
@@ -16,9 +17,6 @@ dev = [
     "ruff",
     "pyright",
     "pytest",
-]
-notebook = [
-    "jupyterlab",
 ]
 
 [tool.uv]
