@@ -59,15 +59,16 @@ uv run pytest test/
 
 All new/experimental Python modules (`*.py`) should be placed in `src/spectra/Experimental/` first. Once the module is stable and reviewed, it can be promoted to the appropriate package (e.g., `Atomic/`, `Function/`).
 
-### Local notebooks
+### Local development
 
-To avoid conflicts when syncing with the remote repository (`git pull`), **do not edit notebooks in `notebooks/` directly**. Instead, copy or create notebooks in `notebooks_local/`:
+To avoid conflicts when syncing with the remote repository (`git pull`), use the following gitignored directories for local work:
 
-```
-notebooks_local/       # gitignored — your local workspace
-```
+| Purpose | Directory | Import example |
+|---|---|---|
+| Local notebooks | `notebooks_local/` | — |
+| Local Python modules | `src/spectra/Experimental/local/` | `from spectra.Experimental.local import my_module` |
 
-This folder is excluded from version control, so your local work will not conflict with upstream changes.
+These folders are excluded from version control. When a local module is ready to be shared, move it from `local/` to `src/spectra/Experimental/`.
 
 ## TODO
 
