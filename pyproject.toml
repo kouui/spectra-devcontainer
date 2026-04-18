@@ -1,0 +1,58 @@
+[project]
+name = "spectra"
+version = "0.1.0"
+description = "Spectroscopy and radiative transfer computation library"
+requires-python = ">=3.13"
+dependencies = [
+    "numpy",
+    "numba",
+    "scipy",
+    "matplotlib",
+    "sympy",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff",
+    "pyright",
+    "pytest",
+]
+notebook = [
+    "jupyterlab",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+target-version = "py313"
+src = ["src"]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "N"]
+ignore = [
+    # Naming conventions — project uses non-PEP8 naming throughout:
+    #   PascalCase modules/dirs, trailing-underscore functions/constants,
+    #   PascalCase local variables for physics quantities, T_ type aliases, E_ enums
+    "N801",  # class name should use CapWords — project uses Underscore_PascalCase (Radiative_Line)
+    "N802",  # function name should be lowercase — project uses trailing underscore (init_Atom_)
+    "N803",  # argument name should be lowercase — project uses PascalCase physics args (Te, Ne, Aji)
+    "N806",  # variable in function should be lowercase — project uses PascalCase physics vars (Level, Line)
+    "N812",  # lowercase imported as non-lowercase — project aliases modules as PascalCase
+    "N815",  # mixedCase variable in class scope — physics quantity naming (nLevel, nLine)
+    "N816",  # mixedCase variable in global scope — physics constants (eV2erg_)
+    "N999",  # invalid module name — project uses PascalCase module names (BasicP.py)
+    "E741",  # ambiguous variable name (l, I) — common in physics notation
+    "F403",  # wildcard import — project uses star imports from ImportAll
+    "F405",  # undefined name from star import — consequence of F403
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["spectra"]
+
+[tool.pyright]
+pythonVersion = "3.13"
+venvPath = "."
+venv = ".venv"
+include = ["src"]
