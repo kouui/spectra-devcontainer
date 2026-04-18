@@ -59,7 +59,7 @@ def make_half_line_mesh_(nLambda: T_INT, qcore: T_FLOAT, qwing: T_FLOAT, q: T_AR
     b = 2.0 * _numpy.log(y) / (nLhalf - 1)
     a = qwing / (nLhalf - 2.0 + y * y)
 
-    for i in range(0, nLhalf):
+    for i in range(nLhalf):
         q[i] = a * (i + (_numpy.exp(b * i) - 1.0))
 
 

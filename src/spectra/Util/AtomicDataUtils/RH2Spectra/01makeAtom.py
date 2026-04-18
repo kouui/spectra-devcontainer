@@ -113,7 +113,7 @@ def is_skip_(text: str):
 
 def read_table_(file: str):
     datas: dict[int, LevelRecord] = {}
-    with open(file) as f:
+    with Path(file).open() as f:
         # count = 0
         prefix = None
         for line in f:
@@ -155,7 +155,7 @@ def read_table_(file: str):
 # -------------------------------------------------------------------
 # read RH level table and make .Level
 # -------------------------------------------------------------------
-def read_rh_level_(file: str):
+def read_rh_level_(file: str):  # noqa: C901
 
     def is_start_(text: str):
         if not text.startswith("#"):
@@ -170,7 +170,7 @@ def read_rh_level_(file: str):
         return False
 
     datas: dict[int, LevelRH] = {}
-    with open(file) as f:
+    with Path(file).open() as f:
         isstart = False
         for line in f:
             line = line.strip()
@@ -244,7 +244,7 @@ def make_Level_file_(
     levels: dict[int, LevelRH], tables: dict[int, LevelRecord], outfile: str, title: str, sym: str, prefix: str
 ):
 
-    with open(outfile, "w") as f:
+    with Path(outfile).open("w") as f:
         f.write(text_bar_() + "\n")
         f.write(f"Title: {title}" + "\n")
         f.write(text_bar_() + "\n")
@@ -292,8 +292,7 @@ def make_Level_file_(
 # -------------------------------------------------------------------
 # read RH line table and make .Aji and .RadiativeLine
 # -------------------------------------------------------------------
-def read_rh_line_(file: str):
-
+def read_rh_line_(file: str):  # noqa: C901
     def is_start_(text: str):
         if not text.startswith("#"):
             return False
@@ -308,7 +307,7 @@ def read_rh_line_(file: str):
 
     nwords = 15
     datas: list[LineRH] = []
-    with open(file) as f:
+    with Path(file).open() as f:
         isstart = False
         for line in f:
             line = line.strip()
@@ -367,7 +366,7 @@ def read_rh_line_(file: str):
 
 
 def make_Aji_file_(lines: list[LineRH], tables: dict[int, LevelRecord], outfile: str, prefix: str):
-    with open(outfile, "w") as f:
+    with Path(outfile).open("w") as f:
         f.write(f"{'prefix':<16s}{prefix}\n")
 
         text = "#" + " " * 3
@@ -404,7 +403,7 @@ def make_Aji_file_(lines: list[LineRH], tables: dict[int, LevelRecord], outfile:
 
 
 def make_RadiativeLine_file_(lines: list[LineRH], tables: dict[int, LevelRecord], outfile: str, prefix: str):
-    with open(outfile, "w") as f:
+    with Path(outfile).open("w") as f:
         f.write(text_bar_() + "\n")
         nRadiative = len(lines)
         f.write(f"nRadiative    {nRadiative}" + "\n")
@@ -481,7 +480,7 @@ def make_RadiativeLine_file_(lines: list[LineRH], tables: dict[int, LevelRecord]
 # -------------------------------------------------------------------
 # read RH photoionization table and make .Alpha
 # -------------------------------------------------------------------
-def read_rh_alpha_(file: str):
+def read_rh_alpha_(file: str):  # noqa: C901
 
     def is_start_(text: str):
         if not text.startswith("#"):
@@ -497,7 +496,7 @@ def read_rh_alpha_(file: str):
 
     nwords = 6
     datas: list[AlphaRH] = []
-    with open(file) as f:
+    with Path(file).open() as f:
         isstart = False
         isblock = False
         for line in f:
@@ -581,7 +580,7 @@ def make_Alpha_file_(alphas: list[AlphaRH], tables: dict[int, LevelRecord], outf
 #-----------------------------------------------------------------------------
     """
     depenmap = {"EXPLICIT": "data", "HYDROGENIC": "Hydrogenic"}
-    with open(outfile, "w") as f:
+    with Path(outfile).open("w") as f:
         f.write(header + "\n")
         nCont = len(alphas)
         f.write(f"nCont    {nCont}" + "\n")
@@ -639,7 +638,7 @@ def make_Alpha_file_(alphas: list[AlphaRH], tables: dict[int, LevelRecord], outf
 # read RH collisional excitation/ionization coefficient table
 # and make .CE.Electron and .CI.Electron
 # -------------------------------------------------------------------
-def read_rh_collision_(file: str):
+def read_rh_collision_(file: str):  # noqa: C901
 
     def is_start_(text: str):
         if text.startswith("#"):
@@ -654,7 +653,7 @@ def read_rh_collision_(file: str):
         return False
 
     datas: list[AlphaRH] = []
-    with open(file) as f:
+    with Path(file).open() as f:
         isstart = False
 
         for line in f:
@@ -688,11 +687,11 @@ def read_rh_collision_(file: str):
     return datas, rhtemp
 
 
-def make_CE_file_(temp: ColTempRH, cols: list[CollisionRH], tables: dict[int, LevelRecord], outfile: str, prefix: str):
+def make_CE_file_(temp: ColTempRH, cols: list[CollisionRH], tables: dict[int, LevelRecord], outfile: str, prefix: str):  # noqa: C901
     header = """
 #--------------------------------------------------------------------------------------------------
 # Collisional Excitation Rate
-# type :
+# type ::
 #       ECS -> Effective Collision Strength
 #       CRC -> Collision Rate Coefficient
 # Effective Collision Strengths (Omega_ij[-]) : RH/Atoms_example/CaII.atom
@@ -700,7 +699,7 @@ def make_CE_file_(temp: ColTempRH, cols: list[CollisionRH], tables: dict[int, Le
 #                             = n_e *        CE * T_e^0.5 * f1/f2                      * e^(-dE_ji / (k*T_e))
 #  --> Omega_ij = CE * T_e * g_i / 8.63E-6
 """
-    with open(outfile, "w") as f:
+    with Path(outfile).open("w") as f:
         f.write(header + "\n")
         f.write("Type   ECS" + "\n")
 
@@ -781,7 +780,7 @@ def make_CI_file_(
 # CI [s^-1 K^-1/2 cm^3] : RH/Atoms_example/CaII.atom
 # Collision Rate : n_e * C_ik = n_e * CI * exp(-dE/kT) * sqrt(T) / f2
 """
-    with open(outfile, "w") as f:
+    with Path(outfile).open("w") as f:
         f.write(header + "\n")
         f.write(f"nCont   {nCont}" + "\n")
 
@@ -851,7 +850,7 @@ def make_CI_file_(
 # -------------------------------------------------------------------
 def make_Gro_file_(outfile: str, prefix: str):
 
-    with open(outfile, "w") as f:
+    with Path(outfile).open("w") as f:
         f.write(text_bar_() + "\n")
         f.write(f"{'prefix':<16s}{prefix}\n")
         f.write(text_bar_() + "\n")
@@ -896,7 +895,7 @@ def make_conf_file_(afiles: AtomFiles, outfile: str, outdir: str):
         afiles.RadiativeLine,
         afiles.Gro,
     )
-    with open(outfile, "w") as f:
+    with Path(outfile).open("w") as f:
         for count, (na, fna) in enumerate(zip(names, fnames, strict=False)):
             if count == 0:
                 fna = fna.replace("\\", "\\\\")

@@ -6,9 +6,9 @@
 #    2021/05/18   u.k.   spectra-re
 # -------------------------------------------------------------------------------
 
+from matplotlib.colors import LogNorm
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.colors import LogNorm
 
 
 def set_imshow_ticks_(axe, arr, axis, points=None, fmt="%1.3f", rot=0, fontsize=None):
@@ -170,9 +170,9 @@ def transition_heatmap0(
             ax.set_title(name + f" | {title_prefix}")
         else:
             ax.set_title(name)
-        ax.set_xticks([i for i in range(klevel_max)])
+        ax.set_xticks(list(range(klevel_max)))
         ax.set_xticklabels(ctjs, rotation=75, fontsize=8)
-        ax.set_yticks([i for i in range(klevel_max)])
+        ax.set_yticks(list(range(klevel_max)))
         ax.set_yticklabels(ctjs, rotation=0, fontsize=8)
 
     # colorbar
@@ -212,9 +212,9 @@ def transition_heatmap(fig, axes0, n_SE, mat_dict, ctj_table_level, vmin=None, v
             ax.set_title(name + f" | {title_prefix}")
         else:
             ax.set_title(name)
-        ax.set_xticks([i for i in range(len(ctjs))])
+        ax.set_xticks(list(range(len(ctjs))))
         ax.set_xticklabels(ctjs, rotation=75, fontsize=8)
-        ax.set_yticks([i for i in range(len(ctjs))])
+        ax.set_yticks(list(range(len(ctjs))))
         ax.set_yticklabels(ctjs, rotation=0, fontsize=8)
 
     # colorbar

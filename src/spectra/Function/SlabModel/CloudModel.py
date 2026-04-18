@@ -51,7 +51,7 @@ def SE_to_slab_0D_(
     Src: T_ARRAY = _numpy.zeros_like(Aji)
     line_emissivity: T_ARRAY = Aji * nj
     line_absorption: T_ARRAY = Bij * ni - Bji * nj
-    for k in range(0, nLine):
+    for k in range(nLine):
         if Aji[k] <= 0.0:
             Src[k] = 0.0
             line_emissivity[k] = 0
@@ -66,7 +66,7 @@ def SE_to_slab_0D_(
     arr_prof_1D = _numpy.empty_like(absorb_prof_1d)
     arr_tau_1D = _numpy.empty_like(absorb_prof_1d)
     # arr_wl_1D     = _numpy.empty_like( absorb_prof_1d )
-    for k in range(0, nLine):
+    for k in range(nLine):
         i1 = Line_mesh_idxs[k, 0]
         i2 = Line_mesh_idxs[k, 1]
 

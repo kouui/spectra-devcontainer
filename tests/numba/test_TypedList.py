@@ -1,7 +1,7 @@
 import time
 
-import numpy as np
 from numba.typed import List
+import numpy as np
 
 from numba import njit
 

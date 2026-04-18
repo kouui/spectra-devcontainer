@@ -20,7 +20,6 @@ def HI_bf_cross_sec_(ns: T_VEC_IA, nHI_pop: T_VEC_FA, Te: T_FLOAT):
     r"""
     compute H bound-free total cross section in NLTE case
     """
-    pass
 
 
 # def func_(ns : T_VEC_IA, nH_pop : T_VEC_FA, nH : T_FLOAT, ne : T_FLOAT, Te : T_FLOAT):

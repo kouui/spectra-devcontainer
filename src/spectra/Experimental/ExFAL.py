@@ -7,6 +7,7 @@
 # -------------------------------------------------------------------------------
 
 from dataclasses import dataclass as _dataclass
+from pathlib import Path
 
 import numpy as _numpy
 
@@ -36,12 +37,12 @@ def weight_per_H_():
     return avg_weight
 
 
-def init_FAL_(file: T_STR):
+def init_FAL_(file: T_STR): # noqa: C901
 
     def _is_skip_(_s: T_STR):
         return _s[0] == "*" or len(_s) <= 1
 
-    with open(file) as f:
+    with Path(file).open() as f:
         # read model id
         for line in f:
             if _is_skip_(line):

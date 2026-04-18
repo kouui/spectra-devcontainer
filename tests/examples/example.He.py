@@ -1,10 +1,8 @@
-import os
-
 from spectra.Function.SEquil import SELib
 from spectra.ImportAll import *
 from spectra.Struct import Atmosphere, Atom, Radiation
 
-conf_path = os.path.join(CFG._ROOT_DIR, "data", "conf", "He.conf")
+conf_path = CFG._ROOT_DIR / "data" / "conf" / "He.conf"
 atom, wMesh, path_dict = Atom.init_Atom_(conf_path, is_hydrogen=False)
 # breakpoint()
 # atmos = Atmosphere.Atmosphere0D(Nh=1.E12, Ne=1.E11, Te=7.E3, Vd=0., Vt=5.E5)

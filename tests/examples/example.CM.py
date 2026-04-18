@@ -1,11 +1,9 @@
-import os
-
 from spectra.Function import SlabModel
 from spectra.Function.SEquil import SELib
 from spectra.ImportAll import *
 from spectra.Struct import Atmosphere, Atom, Radiation
 
-conf_path = os.path.join(CFG._ROOT_DIR, "data/conf/H.conf")
+conf_path = CFG._ROOT_DIR / "data/conf/H.conf"
 atom, wMesh, path_dict = Atom.init_Atom_(conf_path, is_hydrogen=True)
 
 atmos = Atmosphere.Atmosphere0D(Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vd=0.0, Vt=5.0e5)

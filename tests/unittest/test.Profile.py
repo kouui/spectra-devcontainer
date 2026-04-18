@@ -22,9 +22,9 @@ class Test_Profile(unittest.TestCase):
 
         x = _numpy.linspace(-3, 3, 61)
         a = 0.1
-        h, f = _Profile.hf_(a, x)
+        h, _f = _Profile.hf_(a, x)
         voigt = _Profile.voigt_(a, x)
-        self.assertTrue(_ALLCLOSE(voigt, h, **{"rtol": 1.0e-03, "atol": 1.0e-20}))
+        self.assertTrue(_ALLCLOSE(voigt, h, rtol=1.0e-03, atol=1.0e-20))
 
 
 if __name__ == "__main__":

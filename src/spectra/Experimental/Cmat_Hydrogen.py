@@ -6,8 +6,8 @@
 #    2024/04/06   k.i.   from H_spectra.
 # -------------------------------------------------------------------------------
 
-import numpy as np
 from mpmath import hyp2f1
+import numpy as np
 
 from spectra import Constants as Cst
 
@@ -27,7 +27,7 @@ def _Dnn(nl, nu):
     nnu = np.size(np.array(nu))
     if nnu > 1:
         DD = np.repeat(0j, nnu)
-        for i in range(0, nnu):
+        for i in range(nnu):
             DD[i] = _Dnn1(nl, nu[i])
         return DD
     return _Dnn1(nl, nu)

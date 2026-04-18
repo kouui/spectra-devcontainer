@@ -1,4 +1,3 @@
-import os
 import unittest
 
 from numpy import allclose as _ALLCLOSE
@@ -16,8 +15,8 @@ class Test_SE_With_H_I(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        conf_path = os.path.join(CFG._ROOT_DIR, "data/conf/H.conf")
-        atom, wMesh, path_dict = Atom.init_Atom_(conf_path, is_hydrogen=True)
+        conf_path = CFG._ROOT_DIR / "data/conf/H.conf"
+        atom, wMesh, _path_dict = Atom.init_Atom_(conf_path, is_hydrogen=True)
 
         atmos = Atmosphere.Atmosphere0D(Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vd=0.0, Vt=5.0e5)
         radiation = Radiation.init_Radiation_(atmos, wMesh, 0.5)

@@ -156,7 +156,7 @@ def population_to_H_(ion: T_STR, ep: T_FLOAT, T: T_VEC_FA, Ne: T_VEC_FA) -> T_VE
 
     ## : ?
     ss = 0.0
-    for m in range(0, si_upper_limit + 1):
+    for m in range(si_upper_limit + 1):
         lsm = 0.0
         for l in range(m, si_upper_limit):
             ion1 = _ElementUtil.sym_and_stage_to_ion_(sym, _RomanUtil.index_to_roman_(l + 1))
@@ -252,7 +252,7 @@ def line_prof_lte_(
         [description]
     """
     ion = line.ion
-    sym, stage = _ElementUtil.ion_to_sym_and_stage_(ion)
+    sym, _stage = _ElementUtil.ion_to_sym_and_stage_(ion)
 
     Z: T_ARRAY = atmos.Z[:]
     Te: T_ARRAY = atmos.Te[:]
@@ -273,7 +273,7 @@ def line_prof_lte_(
 
     xc: T_ARRAY = _ContinuumOpacity.H_LTE_continuum_opacity_(Te[:], Ne[:], Nh[:], wl0)
     # ic : [erg/cm^2/Sr/cm/s]
-    ic, cntrbc, tauc = lte_integ_(Z[:], Te[:], xc[:], wl0, um)
+    ic, _cntrbc, _tauc = lte_integ_(Z[:], Te[:], xc[:], wl0, um)
 
     # am : atomic mass
     am = _ElementUtil.sym_to_mass_(sym)
@@ -287,14 +287,14 @@ def line_prof_lte_(
     prof = _numpy.empty(nw, dtype=DT_NB_FLOAT)
     contrib = _numpy.empty((nw, nZ), dtype=DT_NB_FLOAT)
     contrib: T_ARRAY
-    for j in range(0, nw):
+    for j in range(nw):
         v = dw[j] / dld  # normalize
-        h, f = _Profile.hf_(gamma, v - vv)
+        h, _f = _Profile.hf_(gamma, v - vv)
         # hf,l.a,v-vv,h,f
         # xl : line opacity at a specific wavelength along line-of-sight
         xl = xl0[:] * h
         x = xl[:] + xc[:]
-        intens1, cntrb, tau = lte_integ_(Z[:], Te[:], x[:], wl0, um)
+        intens1, cntrb, _tau = lte_integ_(Z[:], Te[:], x[:], wl0, um)
         prof[j] = intens1
         # if j == j_min:
         #    contrib = cntrb

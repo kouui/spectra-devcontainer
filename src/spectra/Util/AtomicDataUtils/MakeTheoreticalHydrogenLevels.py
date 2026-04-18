@@ -6,6 +6,8 @@
 #    2024/02/02   u.k.
 # -------------------------------------------------------------------------------
 
+from pathlib import Path
+
 from spectra import Constants as CST
 
 TEMPLATE = """#--------------------------------------------------------------------------------------------------
@@ -45,7 +47,7 @@ def make_hydrogen_levels_(nlevel: int, outfile: str):
         erg = (1.3598430e01 * CST.eV2erg_ - Eik) / CST.eV2erg_
         s += f"    {conf:<2d}            -       -          {n:<2d}  -   -     {g:<4d}    1      {erg:.7E}\n"
     template = template.replace("{levels}", s)
-    with open(outfile, "w") as f:
+    with Path(outfile).open("w") as f:
         f.write(template)
     print(f"saved as: {outfile}")
     return 0

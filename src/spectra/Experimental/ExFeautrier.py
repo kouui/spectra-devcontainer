@@ -64,7 +64,8 @@ def direct_feautrier_(tau, I_upper, I_lower, planckB, eps):
     Output:
         S: (ND,), source function, [0,ND]~[upper-lower]
     """
-    assert I_upper.size == 4 and I_lower.size == 4, "Angle quadrature has 4 angle position."
+    assert I_upper.size == 4, "Angle quadrature has 4 angle position."
+    assert I_lower.size == 4, "Angle quadrature has 4 angle position."
     ND = tau.shape[0]
 
     # -- angle quadrature mus and weights
@@ -403,7 +404,8 @@ def angle_averaged_tmat_(
         I_upper = np.zeros(4, dtype=np.double)
     if I_lower is None:
         I_lower = np.zeros(4, dtype=np.double)
-    assert I_upper.size == 4 and I_lower.size == 4, "bad boundary condition."
+    assert I_upper.size == 4, "bad boundary condition."
+    assert I_lower.size == 4, "bad boundary condition."
     ND = tau.shape[0]
     mus = np.array([0.06943184, 0.33000948, 0.66999052, 0.93056816], dtype=np.double)
     ws = np.array([0.17392742, 0.32607258, 0.32607258, 0.17392742], dtype=np.double)

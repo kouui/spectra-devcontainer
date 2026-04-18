@@ -39,7 +39,7 @@ def _v1_read_data_() -> T_DICT[T_INT, T_DICT[T_INT, T_ARRAY]]:
 
     data: T_DICT[T_INT, T_DICT[T_INT, T_ARRAY]] = {}
 
-    with open(file) as f:
+    with file.open() as f:
         for line in f:
             if _is_skip_(line):
                 continue

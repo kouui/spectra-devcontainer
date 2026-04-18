@@ -496,7 +496,7 @@ def _nj_by_ni_To_ni_(nj_by_ni: T_ARRAY, idxI: T_ARRAY, idxJ: T_ARRAY, isGround: 
             ni[j] = nj_by_ni[k] * ni[i]
 
     # loop through line transition
-    for k in range(0, nLine):
+    for k in range(nLine):
         i = idxI[k]
         j = idxJ[k]
         if isGround[i]:
@@ -668,7 +668,7 @@ def _B_Jbar_(
     return Bij_Jbar, Bji_Jbar, wave_mesh_cm_shifted_all, absorb_prof_cm_all, Jbar_all
 
 
-def _get_Cij_(
+def _get_Cij_( # noqa: C901
     Line: T_ARRAY,
     Cont: T_ARRAY,
     Te: T_FLOAT,

@@ -86,7 +86,7 @@ def format_struct_array_(arr: T_ARRAY, level: T_INT) -> T_STR:
     return s
 
 
-def _help_attribute_(obj: T_ANY, level: T_INT):
+def _help_attribute_(obj: T_ANY, level: T_INT): # noqa: C901
 
     prefix = _prefix_(level)
 

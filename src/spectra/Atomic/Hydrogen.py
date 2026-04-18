@@ -14,8 +14,8 @@
 #        - `PI_cross_section_cm()` and `PI_cross_section()`, if `x<1.0` then cross section `alpha=0.`
 # -------------------------------------------------------------------------------
 
-import numpy as _numpy
 from debtcollector import removals as _removals  # type: ignore
+import numpy as _numpy
 from numpy import exp as _exp
 from numpy import log as _log
 from numpy import sqrt as _sqrt

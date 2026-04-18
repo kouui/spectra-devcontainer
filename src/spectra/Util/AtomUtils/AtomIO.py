@@ -324,7 +324,7 @@ def read_PI_info_(lns: T_LIST[T_STR]) -> T_TUPLE[T_INT, T_INT]:
     return nCont, re  # , _nMesh
 
 
-def read_PI_table_(
+def read_PI_table_( # noqa: C901
     rs: T_INT,
     lns: T_LIST[T_STR],
     PI_table_dict: T_DICT[T_INT, T_ARRAY],
@@ -477,7 +477,7 @@ def read_conf_(conf_path: T_STR) -> T_DICT[T_STR, None | T_STR]:
         raise ValueError("`conf_path` should be a string ends with '.conf'")
 
     path_dict_keys = ("folder", "conf", "Level", "Aji", "CEe", "CIe", "PI", "RadiativeLine", "Grotrian")
-    path_dict: T_DICT[T_STR, None | T_STR] = {key: None for key in path_dict_keys}
+    path_dict: T_DICT[T_STR, None | T_STR] = dict.fromkeys(path_dict_keys)
 
     # i = conf_path.rfind('/')
     # folder = conf_path[:i+1]
@@ -485,7 +485,7 @@ def read_conf_(conf_path: T_STR) -> T_DICT[T_STR, None | T_STR]:
     folder = conf.parent
     path_dict["conf"] = str(conf)
 
-    with open(conf_path) as f:
+    with Path(conf_path).open() as f:
         lines = f.readlines()
 
     for ln in lines:
@@ -516,10 +516,10 @@ def make_Atom_Level_(
     path: T_STR,
 ) -> T_TUPLE[T_INT, T_FLOAT, T_FLOAT, T_INT, T_ARRAY, T_TUPLE[T_TUPLE[T_STR, T_STR, T_STR], ...]]:
 
-    with open(path) as f:
+    with Path(path).open() as f:
         fLines = f.readlines()
     # --- read general info
-    rs, title, Z, element, nLevel = read_general_info_(rs=0, lns=fLines)
+    rs, _title, Z, element, nLevel = read_general_info_(rs=0, lns=fLines)
     # Mass : T_FLOAT = ELEMENT_DICT[element]["Mass"]
     Mass: T_FLOAT = _ElementUtil.sym_to_mass_(element)
     # Abun : T_FLOAT = 10**(ELEMENT_DICT[element]["Abundance"]-12.0)
@@ -597,7 +597,7 @@ def nLine_nCont_nTran_(stage: T_ARRAY) -> T_TUPLE[T_INT, T_INT, T_INT, T_BOOL]:
     return nLine, nCont, nTran, has_continuum
 
 
-def prepare_idx_ctj_mapping_(
+def prepare_idx_ctj_mapping_( # noqa: C901
     Level_info_table: T_CTJ_TABLE, stage: T_ARRAY, isGround: T_ARRAY, nLine: T_INT, nCont: T_INT
 ) -> T_TUPLE[T_IDX_PAIR_TABLE, T_CTJ_PAIR_TABLE, T_IDX_PAIR_TABLE, T_CTJ_PAIR_TABLE]:
     r"""make tuples for mapping
@@ -625,7 +625,7 @@ def prepare_idx_ctj_mapping_(
         Line_dict[key] = []
         Cont_dict[key] = []
 
-    for i in range(0, nLevel):
+    for i in range(nLevel):
         for j in range(i + 1, nLevel):
             # i : lower level
             # j : upper level
@@ -732,7 +732,7 @@ def make_Atom_Line_(
 
     data_source_Aji: T_E_ATOMIC_DATA_SOURCE
     if path is not None:  # normal case
-        with open(path) as f:
+        with Path(path).open() as f:
             fLines = f.readlines()
         read_Line_info_(fLines, Line["AJI"][:], Line_ctj_table)
         data_source_Aji = E_ATOMIC_DATA_SOURCE.EXPERIMENT
@@ -847,12 +847,12 @@ def make_Atom_CECI_(
         Coe["idxJ"][:] = Tran["idxJ"][:]
 
     else:
-        with open(path_electron) as file:
+        with Path(path_electron).open() as file:
             fLines = file.readlines()
 
         # read Temperature grid for interpolation
         if tran_type == "CE":
-            rs, nTe, Te, CE_type = read_CE_temperature_(fLines)
+            rs, nTe, Te, _CE_type = read_CE_temperature_(fLines)
         elif tran_type == "CI":
             rs, nTe, Te = read_CI_temperature_(fLines)
 
@@ -914,7 +914,7 @@ def make_Atom_RL_(
         nRadiativeLine = 0
         Coe = _numpy.zeros(nRadiativeLine, dtype=dtype)
     else:
-        with open(path) as f:
+        with Path(path).open() as f:
             fLines = f.readlines()
 
         nRadiativeLine, rs = read_Radiative_Line_number_(fLines)
@@ -934,7 +934,7 @@ def make_Atom_RL_(
     return Coe, nRadiativeLine
 
 
-def make_Atom_PI_(
+def make_Atom_PI_( # noqa: C901
     path: T_STR | None,
     Level: T_ARRAY,
     Cont: T_ARRAY,
@@ -986,7 +986,7 @@ def make_Atom_PI_(
     else:
         data_source_PI = E_ATOMIC_DATA_SOURCE.EXPERIMENT
 
-        with open(path) as f:
+        with Path(path).open() as f:
             fLines = f.readlines()
 
         nCont = Cont.shape[0]
@@ -1008,7 +1008,7 @@ def make_Atom_PI_(
             cont_ctj_table=Cont_ctj_table,
         )
 
-        sorted_keys = sorted(list(alpha_table_dict.keys()))
+        sorted_keys = sorted(alpha_table_dict.keys())
         if len(sorted_keys) != nCont:
             raise ValueError("number of read alpha table != nCont")
 

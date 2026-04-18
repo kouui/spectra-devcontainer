@@ -6,8 +6,9 @@
 #    2021/06/18   u.k.   spectra-re
 # -------------------------------------------------------------------------------
 
-import math
 from collections import Counter
+import math
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 
@@ -197,7 +198,7 @@ def line_with_text_(
                 "ha": "center",
                 "va": "center",
                 "rotation": _tangle,
-                "bbox": dict(boxstyle="round", fc="white", ec="white", pad=0.2),
+                "bbox": {"boxstyle": "round", "fc": "white", "ec": "white", "pad": 0.2},
             },
         )
     else:
@@ -269,13 +270,13 @@ def arrow_without_text_(_ax, _pi, _pj, _direction, _cmap, _norm, _v, _abserr, _a
         xycoords="data",
         xytext=_xytext,
         textcoords="data",
-        arrowprops=dict(color=_cmap(_norm(_v)), width=_lwidth, headwidth=_asize),
+        arrowprops={"color": _cmap(_norm(_v)), "width": _lwidth, "headwidth": _asize},
     )
 
     return _annotation_obj
 
 
-def read_Grotrian_(_lns):
+def read_Grotrian_(_lns): # noqa: C901
     r"""
     read default line connection setup for Grotrian diagram
     """
@@ -397,7 +398,7 @@ class Grotrian:
             self.position = {}
             _exclude = {}
         else:
-            with open(_path) as file:
+            with Path(_path).open() as file:
                 _fLines = file.readlines()
             line_plot, self.prefix, self.position, _exclude = read_Grotrian_(_fLines)
 
@@ -429,7 +430,7 @@ class Grotrian:
 
         self.fig = None
 
-    def make_fig(self, _fig=None, _axe=None, _figsize=(6, 8), _dpi=120, _f=200, _removeSpline=None, _resetFig=True):
+    def make_fig(self, _fig=None, _axe=None, _figsize=(6, 8), _dpi=120, _f=200, _removeSpline=None, _resetFig=True): # noqa: C901
         r"""
 
         Parameters
