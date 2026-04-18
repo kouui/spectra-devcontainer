@@ -12,7 +12,7 @@
 from .Types import T_STR, T_BOOL, T_INT, T_NORETURN
 import os
 
-_ROOT_DIR : T_STR = os.path.abspath( os.path.join( os.path.dirname(__file__), ".." ) )
+_ROOT_DIR : T_STR = os.path.abspath( os.path.join( os.path.dirname(__file__), "..", ".." ) )
 
 
 #-------------------------------------------------------------------------------
