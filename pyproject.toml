@@ -100,3 +100,6 @@ pythonVersion = "3.13"
 venvPath = "."
 venv = ".venv"
 include = ["src", "tests"]
+reportPossiblyUnboundVariable = false
+reportInvalidTypeForm = false
+reportOperatorIssue = false

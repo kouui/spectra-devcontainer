@@ -19,7 +19,7 @@ class Test_SE_With_H_I(unittest.TestCase):
         atom, wMesh, _path_dict = Atom.init_Atom_(str(conf_path), is_hydrogen=True)
 
         atmos = Atmosphere.Atmosphere0D(Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vd=0.0, Vt=5.0e5)
-        radiation = Radiation.init_Radiation_(atmos, wMesh, 0.5)
+        radiation = Radiation.init_Radiation_(atmos, wMesh)
         SE_con, Rate_con = SELib.cal_SE_with_Nh_Te_(atom, atmos, wMesh, radiation, None)
 
         self.atmos = atmos
@@ -43,7 +43,7 @@ class Test_SE_With_H_I(unittest.TestCase):
             ],
             dtype=DT_NB_FLOAT,
         )
-        self.assertTrue(_ALLCLOSE(n_LTE, n_LTE_correct, **_KWGS_CLOSE))
+        self.assertTrue(_ALLCLOSE(n_LTE, n_LTE_correct, **_KWGS_CLOSE))  # type: ignore[arg-type]
 
     def test_SE(self):
 
@@ -62,7 +62,7 @@ class Test_SE_With_H_I(unittest.TestCase):
             ],
             dtype=DT_NB_FLOAT,
         )
-        self.assertTrue(_ALLCLOSE(n_SE, n_SE_correct, **_KWGS_CLOSE))
+        self.assertTrue(_ALLCLOSE(n_SE, n_SE_correct, **_KWGS_CLOSE))  # type: ignore[arg-type]
 
     def test_Ne(self):
 

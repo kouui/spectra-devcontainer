@@ -661,7 +661,7 @@ class Grotrian:
             "dot per inch" (resolution) to save figure, default : 120s
         """
 
-        self.fig.savefig(_filename, dpi=_dpi)
+        self.fig.savefig(_filename, dpi=_dpi)  # type: ignore[union-attr]
 
     def show_fig(self):
         pass
@@ -829,13 +829,13 @@ class Grotrian:
             _lp, _rp = _rp, _lp
 
         # compute the angle to rotate text
-        _w, _h = self.fig.get_size_inches()
+        _w, _h = self.fig.get_size_inches()  # type: ignore[union-attr]
         _dx = (_rp[0] - _lp[0]) / self.xr * _w
         _dy = (_rp[1] - _lp[1]) / self.yr * _h
         _tangle = math.atan2(_dy, _dx)
-        _tangle = math.degrees(_tangle)
+        _tangle = int(math.degrees(_tangle))
         # plot line and text
-        _ax = self.fig.gca()
+        _ax = self.fig.gca()  # type: ignore[union-attr]
         _line_obj, _text_obj = line_with_text_(
             _ax=_ax,
             _lp=_lp,
@@ -859,7 +859,7 @@ class Grotrian:
         _pi = pos_lvl_i["xs"][0] + (pos_lvl_i["xs"][1] - pos_lvl_i["xs"][0]) * _ri, pos_lvl_i["ys"][0]
         _pj = pos_lvl_j["xs"][0] + (pos_lvl_j["xs"][1] - pos_lvl_j["xs"][0]) * _rj, pos_lvl_j["ys"][0]
 
-        _ax = self.fig.gca()
+        _ax = self.fig.gca()  # type: ignore[union-attr]
         _annotation_obj = arrow_without_text_(
             _ax=_ax,
             _pi=_pi,
@@ -958,12 +958,12 @@ class Grotrian:
 
         # colorbar ax
         _temp = [[1, 1]]
-        _temp_ax = self.fig.add_axes([0.9, 9, 0.001, 0.001])
+        _temp_ax = self.fig.add_axes((0.9, 9, 0.001, 0.001))  # type: ignore[union-attr]
         _img = _temp_ax.imshow(_temp, cmap=_cmap, norm=_norm)
         _temp_ax.set_visible(False)
         if _cax is None:
-            _cax = self.fig.add_axes([0.84, 0.15, 0.02, 0.7])
-        self.fig.colorbar(_img, cax=_cax, orientation="vertical")
+            _cax = self.fig.add_axes((0.84, 0.15, 0.02, 0.7))  # type: ignore[union-attr]
+        self.fig.colorbar(_img, cax=_cax, orientation="vertical")  # type: ignore[union-attr]
 
 
 def init_vertical_r1r2_(xs_lower, xs_upper):

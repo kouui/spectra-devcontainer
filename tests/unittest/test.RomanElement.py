@@ -30,11 +30,11 @@ class Test_Element(unittest.TestCase):
 
     def test_sym_to_mass(self):
 
-        self.assertTrue(_ISCLOSE(_ElementUtil.sym_to_mass_("He"), 4.0026, **_KWGS_CLOSE))
+        self.assertTrue(_ISCLOSE(_ElementUtil.sym_to_mass_("He"), 4.0026, **_KWGS_CLOSE))  # type: ignore[arg-type]
 
     def test_sym_to_Abun(self):
 
-        self.assertTrue(_ISCLOSE(_ElementUtil.sym_to_abun_("He"), 10.0 ** (10.93 - 12.0), **_KWGS_CLOSE))
+        self.assertTrue(_ISCLOSE(_ElementUtil.sym_to_abun_("He"), 10.0 ** (10.93 - 12.0), **_KWGS_CLOSE))  # type: ignore[arg-type]
 
     def test_format_ion(self):
 

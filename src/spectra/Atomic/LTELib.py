@@ -225,7 +225,7 @@ def einsteinA_to_einsteinBs_hz_(
     f0: T_ARRAY | T_FLOAT,
     gi: T_ARRAY | T_INT,
     gj: T_ARRAY | T_INT,
-) -> T_TUPLE[T_ARRAY | T_ARRAY, T_TUPLE[T_FLOAT, T_FLOAT]]:
+) -> tuple[T_ARRAY | T_FLOAT, T_ARRAY | T_FLOAT]:
     """
 
     given Einstein A coefficient Aij,
@@ -292,7 +292,7 @@ def einsteinA_to_einsteinBs_cm_(
     w0: T_ARRAY | T_FLOAT,
     gi: T_ARRAY | T_INT,
     gj: T_ARRAY | T_INT,
-) -> T_TUPLE[T_ARRAY | T_ARRAY, T_TUPLE[T_FLOAT, T_FLOAT]]:
+) -> tuple[T_ARRAY | T_FLOAT, T_ARRAY | T_FLOAT]:
     r"""
 
     given Einstein A coefficient Aij,

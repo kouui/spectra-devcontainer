@@ -93,7 +93,11 @@ def interpolate_PI_alpha_(alpha_table: T_ARRAY, alpha_table_idxs: T_ARRAY, conti
         # fill_value = alpha_table[1,0], alpha_table[1,-1]
         fill_value = alpha_table_sub[1, -1], alpha_table_sub[1, 0]  # could be `alpha_table[1,-1],0`
         bsp_obj: _interp1d = _interp1d(
-            x=alpha_table_sub[0, :], y=alpha_table_sub[1, :], kind="cubic", bounds_error=False, fill_value=fill_value
+            x=alpha_table_sub[0, :],
+            y=alpha_table_sub[1, :],
+            kind="cubic",
+            bounds_error=False,
+            fill_value=fill_value,  # type: ignore[arg-type]
         )  # no extrapolate
         alpha_mesh[k, :] = bsp_obj(continuum_mesh[k, :])
 

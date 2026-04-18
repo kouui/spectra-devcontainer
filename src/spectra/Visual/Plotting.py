@@ -6,6 +6,7 @@
 #    2021/05/18   u.k.   spectra-re
 # -------------------------------------------------------------------------------
 
+from matplotlib.axes import Axes as _MplAxes
 from matplotlib.colors import LogNorm
 import matplotlib.pyplot as plt
 import numpy as np
@@ -65,7 +66,7 @@ def set_imshow_ticks_(axe, arr, axis, points=None, fmt="%1.3f", rot=0, fontsize=
             points = axe.get_xticks()[:-1].astype(np.int64)
         elif axis in ("y",):
             points = axe.get_yticks()[:-1].astype(np.int64)
-        points = points[points >= 0]
+        points = points[points >= 0]  # type: ignore
 
     # -- format ticklabels
     ticklabels = [("{:" + f"{fmt[1:]}" + "}").format(arr_[i]) for i in points]
@@ -132,7 +133,7 @@ def axes_no_padding_(fig_kw=None, axe_kw=None):
 
     axe_dict = {}
     for key, val in axe_kw.items():
-        ax_ = fig.add_axes(val)
+        ax_ = fig.add_axes(tuple(val))  # type: ignore[arg-type]
         axe_dict[key] = ax_
         remove_tick_ticklabel_(ax_, kind="xy")
         remove_spline_(ax_, pos=("left", "right", "top", "bottom"))
@@ -176,7 +177,7 @@ def transition_heatmap0(
         ax.set_yticklabels(ctjs, rotation=0, fontsize=8)
 
     # colorbar
-    cax = fig.add_axes([0.48, 0.15, 0.02, 0.7])
+    cax = fig.add_axes((0.48, 0.15, 0.02, 0.7))
     fig.colorbar(im, cax=cax, orientation="vertical")
 
     plt.show()
@@ -185,7 +186,7 @@ def transition_heatmap0(
 
 def transition_heatmap(fig, axes0, n_SE, mat_dict, ctj_table_level, vmin=None, vmax=None, cmap="cool", title_prefix=""):
     ## mat_dict = {  'Radiative':Rmat, 'Collision': Cmat  }
-    if isinstance(axes0, plt.Axes):
+    if isinstance(axes0, _MplAxes):
         axes = (axes0,)
     else:
         axes = axes0

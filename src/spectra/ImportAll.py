@@ -24,12 +24,12 @@ from .Warnings import WARN_
 
 np_vec = _numpy.vectorize
 
-nb_List: T_TYPE[List | T_LIST]
+nb_List: T_TYPE[List | T_LIST]  # type: ignore[reportGeneralTypeIssues]
 if CFG._IS_JIT:
     # from numba.typed import List # type: ignore
-    nb_List = List
+    nb_List = List  # type: ignore[assignment]
 else:
-    nb_List = list
+    nb_List = list  # type: ignore[assignment]
 del List
 
 ## : numba TypedDict much slower than numpy struct array

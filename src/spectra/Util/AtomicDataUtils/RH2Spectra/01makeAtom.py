@@ -241,7 +241,7 @@ def term2L_(term: str):
 
 
 def make_Level_file_(
-    levels: dict[int, LevelRH], tables: dict[int, LevelRecord], outfile: str, title: str, sym: str, prefix: str
+    levels: dict[int, LevelRH], tables: dict[int, LevelRecord], outfile: str, title: str, sym: str, prefix: str | None
 ):
 
     with Path(outfile).open("w") as f:
@@ -367,7 +367,7 @@ def read_rh_line_(file: str):  # noqa: C901
     return datas
 
 
-def make_Aji_file_(lines: list[LineRH], tables: dict[int, LevelRecord], outfile: str, prefix: str):
+def make_Aji_file_(lines: list[LineRH], tables: dict[int, LevelRecord], outfile: str, prefix: str | None):
     with Path(outfile).open("w") as f:
         f.write(f"{'prefix':<16s}{prefix}\n")
 
@@ -404,7 +404,7 @@ def make_Aji_file_(lines: list[LineRH], tables: dict[int, LevelRecord], outfile:
             f.write(text + "\n")
 
 
-def make_RadiativeLine_file_(lines: list[LineRH], tables: dict[int, LevelRecord], outfile: str, prefix: str):
+def make_RadiativeLine_file_(lines: list[LineRH], tables: dict[int, LevelRecord], outfile: str, prefix: str | None):
     with Path(outfile).open("w") as f:
         f.write(text_bar_() + "\n")
         nRadiative = len(lines)
@@ -558,7 +558,7 @@ def read_rh_alpha_(file: str):  # noqa: C901
     return datas
 
 
-def make_Alpha_file_(alphas: list[AlphaRH], tables: dict[int, LevelRecord], outfile: str, prefix: str):
+def make_Alpha_file_(alphas: list[AlphaRH], tables: dict[int, LevelRecord], outfile: str, prefix: str | None):
     header = """
 #-----------------------------------------------------------------------------
 # Note :
@@ -684,12 +684,14 @@ def read_rh_collision_(file: str):  # noqa: C901
             fac = 1.0e6 if kind in ("CE", "CI") else 1.0
             rhcol = CollisionRH(j=j, i=i, kind=kind, coes=[float(w) * fac for w in words[3 : 3 + ntemp]])
             ##: CE & CI [m^3 K^-1/2] --> *1.E-6 [cm^3 K^-1/2]
-            datas.append(rhcol)
+            datas.append(rhcol)  # type: ignore[arg-type]
 
     return datas, rhtemp
 
 
-def make_CE_file_(temp: ColTempRH, cols: list[CollisionRH], tables: dict[int, LevelRecord], outfile: str, prefix: str):  # noqa: C901
+def make_CE_file_(  # noqa: C901
+    temp: ColTempRH, cols: list[CollisionRH], tables: dict[int, LevelRecord], outfile: str, prefix: str | None
+):
     header = """
 #--------------------------------------------------------------------------------------------------
 # Collisional Excitation Rate
@@ -774,7 +776,12 @@ def make_CE_file_(temp: ColTempRH, cols: list[CollisionRH], tables: dict[int, Le
 
 
 def make_CI_file_(
-    temp: ColTempRH, cols: list[CollisionRH], tables: dict[int, LevelRecord], outfile: str, prefix: str, nCont: int
+    temp: ColTempRH,
+    cols: list[CollisionRH],
+    tables: dict[int, LevelRecord],
+    outfile: str,
+    prefix: str | None,
+    nCont: int,
 ):
     header = """
 #--------------------------------------------------------------------------------------------------
@@ -850,7 +857,7 @@ def make_CI_file_(
 # -------------------------------------------------------------------
 # make .Grotrian file
 # -------------------------------------------------------------------
-def make_Gro_file_(outfile: str, prefix: str):
+def make_Gro_file_(outfile: str, prefix: str | None):
 
     with Path(outfile).open("w") as f:
         f.write(text_bar_() + "\n")
@@ -884,7 +891,7 @@ def make_Gro_file_(outfile: str, prefix: str):
 # -------------------------------------------------------------------
 # make .conf file
 # -------------------------------------------------------------------
-def make_conf_file_(afiles: AtomFiles, outfile: str, outdir: str):
+def make_conf_file_(afiles: AtomFiles, outfile: str, outdir: str | Path):
 
     names = ("folder", "Level", "Aji", "CEe", "CIe", "PI", "RadiativeLine", "Grotrian")
     fnames = (
@@ -1016,11 +1023,11 @@ def main():
     rhcols, rhcoltemp = read_rh_collision_(args.rhpath)
 
     ##: step 13. make .CE.Electron file
-    make_CE_file_(rhcoltemp, rhcols, tables, afile.CEe, prefix)
+    make_CE_file_(rhcoltemp, rhcols, tables, afile.CEe, prefix)  # type: ignore[arg-type]
 
     ##: step 14. make .CI.Electron file
     nCont = len(rhalphas)
-    make_CI_file_(rhcoltemp, rhcols, tables, afile.CIe, prefix, nCont)
+    make_CI_file_(rhcoltemp, rhcols, tables, afile.CIe, prefix, nCont)  # type: ignore[arg-type]
 
     ##: step 15. make .Grotrian file
     make_Gro_file_(afile.Gro, prefix)

@@ -11,39 +11,39 @@ from enum import IntEnum as _IntEnum
 
 
 class E_ATOMIC_DATA_SOURCE(_IntEnum):
-    EXPERIMENT: int = 1
-    CALCULATE: int = 2
+    EXPERIMENT = 1
+    CALCULATE = 2
 
 
 class E_ATOM(_IntEnum):
-    HYDROGEN: int = 1
-    HYDROGEN_LIKE: int = 2
-    NORMAL: int = 3
+    HYDROGEN = 1
+    HYDROGEN_LIKE = 2
+    NORMAL = 3
 
 
 class E_COLLISIONAL_TRANSITION(_IntEnum):
-    EXCITATION: int = 1
-    IONIZATION: int = 2
+    EXCITATION = 1
+    IONIZATION = 2
 
 
 class E_COLLISIONAL_TRANSITION_SOURCE(_IntEnum):
-    ELECTRON: int = 1
-    PROTON: int = 2
-    CHARGE_TRANSFER: int = 3
+    ELECTRON = 1
+    PROTON = 2
+    CHARGE_TRANSFER = 3
 
 
 class E_COLLISIONAL_TRANSITION_FORMULA(_IntEnum):
-    OMEGA: int = 1
+    OMEGA = 1
 
 
 class E_ABSORPTION_PROFILE_TYPE(_IntEnum):
-    VOIGT: int = 0
-    GAUSSIAN: int = 1
+    VOIGT = 0
+    GAUSSIAN = 1
 
 
 class E_ATMOSPHERE_COORDINATE_TYPE(_IntEnum):
-    POINT: int = 0
-    CARTESIAN: int = 1
+    POINT = 0
+    CARTESIAN = 1
 
 
 # import numba as _numba

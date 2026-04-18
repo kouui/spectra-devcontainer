@@ -8,7 +8,7 @@ from numba import njit
 
 def make_array_lists(shapes):
 
-    typed_list = List()
+    typed_list = List()  # type: ignore[operator]
     reflected_list = []
 
     for shape in shapes:

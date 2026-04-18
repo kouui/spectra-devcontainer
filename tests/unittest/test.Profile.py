@@ -16,7 +16,7 @@ class Test_Profile(unittest.TestCase):
         a = 0
         gaussian = _Profile.gaussian_(x)
         voigt = _Profile.voigt_(a, x)
-        self.assertTrue(_ALLCLOSE(voigt, gaussian, **_KWGS_CLOSE))
+        self.assertTrue(_ALLCLOSE(voigt, gaussian, **_KWGS_CLOSE))  # type: ignore[arg-type]
 
     def test_voigt_hf(self):
 

@@ -474,7 +474,7 @@ def cal_SE_(
         rate_only,
     )
 
-    SE_con = _Container.SE_Container(
+    SE_con = _Container.SE_Container(  # type: ignore[call-arg]
         n_SE=n_SE,
         n_LTE=n_LTE,
         nj_by_ni=nj_by_ni,

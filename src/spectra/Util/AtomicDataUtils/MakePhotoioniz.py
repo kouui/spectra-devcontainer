@@ -112,6 +112,6 @@ def v1_photoioniz_cross_section_(wave: T_VEC_FA, nZ: T_INT, ioniz_stage: T_INT) 
 
     params = _V1_DATA[nZ][ioniz_stage]
 
-    rate_coe = _v1_fit_func_(wave, *params)
+    rate_coe = _v1_fit_func_(wave, *params)  # type: ignore[arg-type]
 
     return rate_coe

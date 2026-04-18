@@ -9,6 +9,6 @@ from .conftest import assert_close
 class TestRelativeFlux:
     def test_scalar(self, ref):
         assert_close(
-            Thin.relative_flux_(6.27e8, CST.c_ / 1216e-8, 1e5),
+            Thin.relative_flux_(6.27e8, CST.c_ / 1216e-8, int(1e5)),
             ref["Thin.relative_flux_scalar"],
         )

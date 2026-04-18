@@ -52,7 +52,7 @@ set to
 def _SET_NUMBA_THREAD_(threading_layer: T_STR = "threadsafe", n_thread: T_INT = 2) -> None:
     r""" """
 
-    nb_config.THREADING_LAYER = threading_layer
+    nb_config.THREADING_LAYER = threading_layer  # type: ignore[attr-defined]
     """ set to thread safe library : tbb, omp, workqueue, default : workqueue. tbb if possible """
 
     nb_set_num_threads(n_thread)

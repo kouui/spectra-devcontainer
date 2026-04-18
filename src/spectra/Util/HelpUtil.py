@@ -78,7 +78,7 @@ def format_struct_array_(arr: T_ARRAY, level: T_INT) -> T_STR:
     prefix = _prefix_(level)
     dtype = arr.dtype
     s = ""
-    for field_name in dtype.names:
+    for field_name in dtype.names:  # type: ignore[arg-type]
         s += f"{prefix + ' ' + field_name:{_LENGTH_NAME}s}{' ' * _LENGTH_SPACE}"
         s += f"{arr[field_name].dtype.name:{_LENGTH_TYPE}s}{' ' * _LENGTH_SPACE}"
         s += f"s: {arr[field_name].shape}\n"
