@@ -6,7 +6,6 @@
 #    2021/05/18   u.k.   spectra-re
 # -------------------------------------------------------------------------------
 import numpy as _numpy
-from debtcollector import removals as _removals  # type: ignore
 
 from ..ImportAll import *
 
@@ -98,9 +97,6 @@ def saha_distribution_(gi: T_VEC_IA, gk: T_VEC_IA, chi: T_VEC_FA, Ne: T_VEC_IFA,
     return ratio
 
 
-_removals.remove
-
-
 def LTE_ratio_Line_(g: T_ARRAY, idxI: T_ARRAY, idxJ: T_ARRAY, w0: T_ARRAY, Te: T_UNION[T_FLOAT, T_INT]) -> T_ARRAY:
     """Compute LTE population ratio nj/ni for each line transition
 
@@ -138,9 +134,6 @@ def LTE_ratio_Line_(g: T_ARRAY, idxI: T_ARRAY, idxJ: T_ARRAY, w0: T_ARRAY, Te: T
         nRatio[k] = boltzmann_distribution_(gi, gj, chi, Te)
 
     return nRatio
-
-
-_removals.remove
 
 
 def LTE_ratio_Cont_(
@@ -186,9 +179,6 @@ def LTE_ratio_Cont_(
     return nRatio
 
 
-_removals.remove
-
-
 def LTE_ratio_(
     erg: T_ARRAY, g: T_ARRAY, stage: T_ARRAY, Te: T_UNION[T_FLOAT, T_INT], Ne: T_UNION[T_FLOAT, T_INT]
 ) -> T_ARRAY:
@@ -230,9 +220,6 @@ def LTE_ratio_(
         nRatio[:] /= nRatio[:].sum()
 
     return nRatio
-
-
-_removals.remove
 
 
 def einsteinA_to_einsteinBs_hz_(
@@ -358,9 +345,6 @@ def einsteinA_to_einsteinBs_cm_(
     return Bji, Bij
 
 
-_removals.remove
-
-
 def Aji_to_Bji_cm_(Aji: T_UNION[T_ARRAY, T_FLOAT], w0: T_UNION[T_ARRAY, T_FLOAT]) -> T_UNION[T_ARRAY, T_FLOAT]:
     """Given Einstein Aji coefficient, compute Einstein Bji coefficient
 
@@ -384,9 +368,6 @@ def Aji_to_Bji_cm_(Aji: T_UNION[T_ARRAY, T_FLOAT], w0: T_UNION[T_ARRAY, T_FLOAT]
     Bji = Aji / factor
 
     return Bji
-
-
-_removals.remove
 
 
 def Bji_to_Bij_(
@@ -413,9 +394,6 @@ def Bji_to_Bij_(
     Bij = Bji * gj / gi
 
     return Bij
-
-
-_removals.remove
 
 
 def planck_hz_(

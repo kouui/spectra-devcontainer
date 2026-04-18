@@ -19,7 +19,6 @@
 
 
 import numpy as _numpy
-from debtcollector import removals as _removals  # type: ignore
 from numpy import exp as _exp
 from numpy import sqrt as _sqrt
 
@@ -302,7 +301,6 @@ def Hp_ff_cross_sec_(Te: T_VEC_FA, w: T_VEC_FA, Ne: T_VEC_FA, Z: T_INT = 1) -> T
 # -----------------------------------------------------------------------------
 # HI free-free CrossSection in LTE per 1 HI atom
 # -----------------------------------------------------------------------------
-_removals.remove
 
 
 def HI_ff_cross_sec_(Te: T_VEC_IFA, w: T_VEC_IFA) -> T_VEC_FA:

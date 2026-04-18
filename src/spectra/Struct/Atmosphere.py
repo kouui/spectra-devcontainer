@@ -19,7 +19,6 @@ import numpy as _numpy
 
 from ..Atomic import ContinuumOpacity as _ContinuumOpacity
 from ..Experimental import ExTau as _Tau
-
 from ..ImportAll import *
 
 # -------------------------------------------------------------------------------

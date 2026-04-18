@@ -56,7 +56,7 @@ def read_general_info_(rs: T_INT, lns: T_LIST[T_STR]) -> T_TUPLE[T_INT, T_STR, T
     3. Element
     4. nLevel
     """
-    for i, ln in enumerate(lns[rs:]):
+    for _i, ln in enumerate(lns[rs:]):
         if skip_line_(ln):
             continue
         if check_end_(ln):
@@ -101,7 +101,7 @@ def read_Level_info_(
     """
     idx = 0
     # _prefix = ''
-    for i, ln in enumerate(lns[rs:]):
+    for _i, ln in enumerate(lns[rs:]):
         if skip_line_(ln):
             continue
         elif check_end_(ln):
@@ -120,7 +120,7 @@ def read_Level_info_(
             elif prefix[-1] == ".":
                 Level_info["configuration"].append(prefix[:-1])
             else:
-                assert False
+                raise AssertionError()
         else:
             Level_info["configuration"].append(prefix + words[0])
 
@@ -144,7 +144,7 @@ def read_Line_info_(lns: T_LIST[T_STR], Aji: T_ARRAY, line_ctj_table: T_CTJ_PAIR
     """read Line information"""
     # _count = 0
     # _prefix = ''
-    for i, ln in enumerate(lns[:]):
+    for _i, ln in enumerate(lns[:]):
         if skip_line_(ln):
             continue
         elif check_end_(ln):
@@ -168,7 +168,7 @@ def read_Line_info_(lns: T_LIST[T_STR], Aji: T_ARRAY, line_ctj_table: T_CTJ_PAIR
 
 def read_CE_temperature_(lns: T_LIST[T_STR]) -> T_TUPLE[T_INT, T_INT, T_LIST[T_FLOAT], T_STR]:
     """read Temperature grid for interpolation"""
-    for i, ln in enumerate(lns[:]):
+    for _i, ln in enumerate(lns[:]):
         if skip_line_(ln):
             continue
         elif check_end_(ln):
@@ -203,7 +203,7 @@ def read_CE_table_(
     """read CE table for interpolation"""
     # _count = 0
     # _prefix = ''
-    for i, ln in enumerate(lns[rs:]):
+    for _i, ln in enumerate(lns[rs:]):
         if skip_line_(ln):
             continue
         elif check_end_(ln):
@@ -234,7 +234,7 @@ def read_CI_temperature_(lns: T_LIST[T_STR]) -> T_TUPLE[T_INT, T_INT, T_LIST[T_F
     r"""
     read Temperature grid for interpolation
     """
-    for i, ln in enumerate(lns[:]):
+    for _i, ln in enumerate(lns[:]):
         if skip_line_(ln):
             continue
         elif check_end_(ln):
@@ -268,7 +268,7 @@ def read_CI_table_(
     """read CI table for interpolation"""
     # _count = 0
     # _prefix = ''
-    for i, ln in enumerate(lns[rs:]):
+    for _i, ln in enumerate(lns[rs:]):
         if skip_line_(ln):
             continue
         elif check_end_(ln):
@@ -288,7 +288,7 @@ def read_CI_table_(
             elif prefix[-1] == ".":
                 ctj_ij = ((prefix + words[0], words[1], words[2]), (prefix[:-1], words[4], words[5]))
             else:
-                assert False
+                raise AssertionError()
         else:
             ctj_ij = ((prefix + words[0], words[1], words[2]), (prefix + words[3], words[4], words[5]))
 
@@ -304,7 +304,7 @@ def read_CI_table_(
 
 def read_PI_info_(lns: T_LIST[T_STR]) -> T_TUPLE[T_INT, T_INT]:
     """read nCont and nMesh for Photoionization"""
-    for i, ln in enumerate(lns[:]):
+    for _i, ln in enumerate(lns[:]):
         if skip_line_(ln):
             continue
         elif check_end_(ln):
@@ -338,7 +338,7 @@ def read_PI_table_(
     readMesh = False
     PI_wdep_dict.clear()
     # _prefix = ''
-    for i, ln in enumerate(lns[rs:]):
+    for _i, ln in enumerate(lns[rs:]):
         if skip_line_(ln):
             continue
         elif check_end_(ln):
@@ -359,7 +359,7 @@ def read_PI_table_(
                 elif prefix[-1] == ".":
                     ctj_ij = ((prefix + words[0], words[1], words[2]), (prefix[:-1], words[4], words[5]))
                 else:
-                    assert False
+                    raise AssertionError()
             else:
                 ctj_ij = ((prefix + words[0], words[1], words[2]), (prefix + words[3], words[4], words[5]))
 
@@ -403,7 +403,7 @@ def read_PI_table_(
 
 def read_Radiative_Line_number_(lns: T_LIST[T_STR]) -> T_TUPLE[T_INT, T_INT]:
     """read nRadiativeLine"""
-    for i, ln in enumerate(lns[:]):
+    for _i, ln in enumerate(lns[:]):
         if skip_line_(ln):
             continue
         elif check_end_(ln):
@@ -431,7 +431,7 @@ def read_Mesh_info_(
     r"""read CI table for interpolation"""
     count = 0
     # _prefix = ''
-    for i, ln in enumerate(lns[rs:]):
+    for _i, ln in enumerate(lns[rs:]):
         if skip_line_(ln):
             continue
         elif check_end_(ln):
@@ -494,8 +494,8 @@ def read_conf_(conf_path: T_STR) -> T_DICT[T_STR, T_UNION[None, T_STR]]:
 
         try:
             _ = path_dict[words[0]]
-        except KeyError:
-            raise ValueError(f"{words[0]} is not a valid key")
+        except KeyError as err:
+            raise ValueError(f"{words[0]} is not a valid key") from err
 
         if words[0] == "folder":
             path_dict[words[0]] = str((folder / words[1]).resolve())
@@ -1013,7 +1013,7 @@ def make_Atom_PI_(
             raise ValueError("number of read alpha table != nCont")
 
         n_total_mesh_length = 0
-        for i, key in enumerate(sorted_keys):
+        for _i, key in enumerate(sorted_keys):
             if PI_wdep_dict[key] == "Hydrogenic":
                 n_total_mesh_length += nContMesh
             else:

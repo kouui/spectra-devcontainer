@@ -1,5 +1,6 @@
-from numpy import isclose as _ISCLOSE
 import unittest
+
+from numpy import isclose as _ISCLOSE
 
 from spectra.ImportAll import *
 from spectra.Util import ElementUtil as _ElementUtil

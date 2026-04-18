@@ -24,7 +24,7 @@ def Level_ctj_table_to_Level_info_(
         "J": [],
     }
 
-    for i, ctj in enumerate(Level_ctj_table):
+    for _i, ctj in enumerate(Level_ctj_table):
         Level_info["configuration"].append(ctj[0])
         Level_info["term"].append(ctj[1])
         Level_info["J"].append(ctj[2])

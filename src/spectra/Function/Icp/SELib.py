@@ -102,7 +102,7 @@ def cal_SE_with_Pg_Te_Ne_single_Atom_(
     # ICP only measures the ion pressure
     Ng = Pg / (0.5 * atom.Mass * CST.mH_ * Vt * Vt + kTi)  # + Ne2Ng * kTe)
     # atmos.Ne = Ng * Ne2Ng
-    Ne2Ng = atmos.Ne / Ng
+    _Ne2Ng = atmos.Ne / Ng
     if rate_only:
         SE_con, tran_rate_con = cal_SE_(atom, atmos, wMesh, radiation, Nh_SE, stage_pop, rate_only)
         atmos.Nh = Ng
@@ -294,7 +294,7 @@ def cal_SE_with_Ne_Te_(
 
     SE_con, tran_rate_con = cal_SE_(atom, atmos, wMesh, radiation, Nh_SE, stage_pop)
 
-    if is_hydrogen := (atom._atom_type == E_ATOM.HYDROGEN):
+    if atom._atom_type == E_ATOM.HYDROGEN:
         atmos.Nh = atmos.Ne / (1.0e-4 + SE_con.n_SE[-1])
 
     return SE_con, tran_rate_con
@@ -504,7 +504,7 @@ def cal_SE_(
 
 def _ni_nj_LTE_(Level: T_ARRAY, Line: T_ARRAY, Cont: T_ARRAY, Te: T_FLOAT, Ne: T_FLOAT) -> T_TUPLE[T_ARRAY, T_ARRAY]:
 
-    nLevel = Level.shape[0]
+    _nLevel = Level.shape[0]
     nLine = Line.shape[0]
     nCont = Cont.shape[0]
     nTran = nLine + nCont
@@ -991,7 +991,7 @@ def SEfit_fac_func_(x0: T_ARRAY, Rmat: T_ARRAY, Cmat: T_ARRAY, ion_pop: T_ARRAY,
     pprint.pprint(A)
     pprint.pprint(b)
     pprint.pprint(nArr)
-    assert False
+    raise AssertionError()
     # -------------------------------------------------------------
     # constrains from ion_pop
     # -------------------------------------------------------------

@@ -28,9 +28,9 @@ def WARN_(text: T_STR):
 
     if CFG._IS_JIT:
         with objmode():
-            WARNINGS.warn(text)
+            WARNINGS.warn(text, stacklevel=2)
     else:
-        WARNINGS.warn(text)
+        WARNINGS.warn(text, stacklevel=2)
 
 
 if CFG._IS_JIT:

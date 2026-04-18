@@ -1,8 +1,9 @@
 import time
 
 import numpy as np
-from numba import njit
 from numba.typed import List
+
+from numba import njit
 
 
 def make_array_lists(shapes):

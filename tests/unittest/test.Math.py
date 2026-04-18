@@ -1,5 +1,6 @@
-from numpy import allclose as _ALLCLOSE
 import unittest
+
+from numpy import allclose as _ALLCLOSE
 
 from spectra.ImportAll import *
 from spectra.Math import GaussLeg

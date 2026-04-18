@@ -1,8 +1,9 @@
+import os
+import unittest
+
 from numpy import allclose as _ALLCLOSE
 from numpy import array as _array
 from numpy import isclose as _ISCLOSE
-import os
-import unittest
 
 from spectra.Function.SEquil import SELib
 from spectra.ImportAll import *

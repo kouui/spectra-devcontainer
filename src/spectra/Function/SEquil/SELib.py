@@ -80,7 +80,7 @@ def cal_SE_with_Pg_Te_single_Atom_(
 ):
     Pg = atmos.Pg
     Te = atmos.Te
-    Vt = atmos.Vt
+    _Vt = atmos.Vt
     kT = CST.k_ * Te
 
     is_hydrogen = atom._atom_type == E_ATOM.HYDROGEN
@@ -442,7 +442,7 @@ def cal_SE_(
 
 def _ni_nj_LTE_(Level: T_ARRAY, Line: T_ARRAY, Cont: T_ARRAY, Te: T_FLOAT, Ne: T_FLOAT) -> T_TUPLE[T_ARRAY, T_ARRAY]:
 
-    nLevel = Level.shape[0]
+    _nLevel = Level.shape[0]
     nLine = Line.shape[0]
     nCont = Cont.shape[0]
     nTran = nLine + nCont

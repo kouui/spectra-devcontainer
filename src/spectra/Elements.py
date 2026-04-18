@@ -92,7 +92,7 @@ ELEMENT_IONIZPOTENTIAL = tuple((_numpy.array(val["IonizeEV"], dtype=DT_NB_FLOAT)
 
 WEIGHTED_TOTAL_MASS = 0.0
 TOTAL_ABUN = 0.0
-for key, val in ELEMENT_DICT.items():
+for _key, val in ELEMENT_DICT.items():
     abun = 10.0 ** (val["Abundance"] - 12.0)
     mass = val["Mass"]
     # print(key, abun * mass)

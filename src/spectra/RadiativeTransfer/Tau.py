@@ -59,4 +59,4 @@ def z_to_dtau_(z: T_ARRAY, alpha: T_ARRAY):
         difference of optical depth
     """
     nZ = z.shape[0]
-    dtau = _numpy.zeros(nZ, dtype=DT_NB_FLOAT)
+    _dtau = _numpy.zeros(nZ, dtype=DT_NB_FLOAT)

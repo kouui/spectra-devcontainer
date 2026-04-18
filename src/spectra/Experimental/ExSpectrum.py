@@ -48,7 +48,7 @@ def init_spectrum_(atom: _Atom.Atom, wMesh: _WavelengthMesh.Wavelength_Mesh, Te:
     nCont = atom.nCont
 
     ##: append line mesh (cm)
-    nRL = atom.nRL
+    _nRL = atom.nRL
     RL_coe = atom.RL.Coe
     RL_lineindex = RL_coe["lineIndex"].copy()
 

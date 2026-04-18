@@ -8,10 +8,9 @@
 
 from dataclasses import dataclass as _dataclass
 
+from ..ImportAll import *
 from ..Util.AtomUtils import AtomIO as _AtomIO
 from . import WavelengthMesh as _WavelengthMesh
-
-from ..ImportAll import *
 
 # -------------------------------------------------------------------------------
 # struct

@@ -122,16 +122,20 @@ def remove_spline_(*args, pos=("left", "right", "top", "bottom")):
             ax.spines[p].set_visible(False)
 
 
-def axes_no_padding_(fig_kw={"figsize": (8, 4), "dpi": 100}, axe_kw={"ax1": [0, 0, 1, 1]}):
+def axes_no_padding_(fig_kw=None, axe_kw=None):
     r""" """
+    if fig_kw is None:
+        fig_kw = {"figsize": (8, 4), "dpi": 100}
+    if axe_kw is None:
+        axe_kw = {"ax1": [0, 0, 1, 1]}
     fig = plt.figure(figsize=fig_kw["figsize"], dpi=fig_kw["dpi"])
 
     axe_dict = {}
     for key, val in axe_kw.items():
         ax_ = fig.add_axes(val)
         axe_dict[key] = ax_
-        remove_tick_ticklabel(ax_, kind="xy")
-        remove_spline(ax_, pos=("left", "right", "top", "bottom"))
+        remove_tick_ticklabel_(ax_, kind="xy")
+        remove_spline_(ax_, pos=("left", "right", "top", "bottom"))
 
     return fig, axe_dict
 
@@ -160,7 +164,7 @@ def transition_heatmap0(
 
     fig, axs = plt.subplots(1, 2, figsize=figsize, dpi=100, sharey=True)
 
-    for ax, name in zip(axs, ("Radiative", "Collision")):
+    for ax, name in zip(axs, ("Radiative", "Collision"), strict=False):
         im = ax.imshow(tran_mat[name] + numeric_error, origin="lower", cmap=cmap, norm=norm)
         if name == "Radiative" and title_prefix != "":
             ax.set_title(name + f" | {title_prefix}")
@@ -195,14 +199,14 @@ def transition_heatmap(fig, axes0, n_SE, mat_dict, ctj_table_level, vmin=None, v
         tran_dict[k] = v[:, :] * n_SE.reshape(1, -1) + numeric_error
 
     if vmin is None:
-        vmin = mat.min()
+        vmin = min(m.min() for m in tran_dict.values())
     if vmax is None:
-        vmax = mat.max()
+        vmax = max(m.max() for m in tran_dict.values())
     norm = LogNorm(vmin, vmax, clip=True)
 
     # fig, axs = plt.subplots(1,1, figsize=figsize, dpi=100)
 
-    for i, (ax, name) in enumerate(zip(axes, tran_dict.keys())):
+    for i, (ax, name) in enumerate(zip(axes, tran_dict.keys(), strict=False)):
         im = ax.imshow(tran_dict[name], origin="lower", cmap=cmap, norm=norm)
         if i == 0 and title_prefix != "":
             ax.set_title(name + f" | {title_prefix}")

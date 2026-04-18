@@ -49,7 +49,7 @@ def _prepare_dict_(_atom, _conf_prefix, _scaleFunc, _exclude):
     # -------------------------------------------------------------------------
     # create and count list of (conf, term)
     # -------------------------------------------------------------------------
-    _conf_term = list(zip(_Level_info["configuration"], _Level_info["term"]))
+    _conf_term = list(zip(_Level_info["configuration"], _Level_info["term"], strict=False))
     _count = Counter(_conf_term)
     # -------------------------------------------------------------------------
 
@@ -75,7 +75,7 @@ def _prepare_dict_(_atom, _conf_prefix, _scaleFunc, _exclude):
 
         try:
             _L = CST.L_s2i_[_term[-1]]
-        except:
+        except Exception:
             _L = 0
 
         if _count[(_conf, _term)] == 1:
@@ -320,7 +320,7 @@ def read_Grotrian_(_lns):
                 elif _prefix[-1] == ".":
                     _ctj = (_prefix[:-1], _words[1], _words[2])
                 else:
-                    assert False
+                    raise AssertionError()
             else:
                 _ctj = (_prefix + _words[0], _words[1], _words[2])
 
@@ -338,7 +338,7 @@ def read_Grotrian_(_lns):
                 elif _prefix[-1] == ".":
                     _ctj_ij = ((_prefix + _words[0], _words[1], _words[2]), (_prefix[:-1], _words[4], _words[5]))
                 else:
-                    assert False
+                    raise AssertionError()
             else:
                 _ctj_ij = ((_prefix + _words[0], _words[1], _words[2]), (_prefix + _words[3], _words[4], _words[5]))
 
@@ -429,7 +429,7 @@ class Grotrian:
 
         self.fig = None
 
-    def make_fig(self, _fig=None, _axe=None, _figsize=(6, 8), _dpi=120, _f=200, _removeSpline=[], _resetFig=True):
+    def make_fig(self, _fig=None, _axe=None, _figsize=(6, 8), _dpi=120, _f=200, _removeSpline=None, _resetFig=True):
         r"""
 
         Parameters
@@ -444,6 +444,9 @@ class Grotrian:
         _f : int
             enlarge factor to show fine structure explicitly, default : 200
         """
+
+        if _removeSpline is None:
+            _removeSpline = []
 
         Lset = self.Lset
         singlet = self.singlet
@@ -559,7 +562,7 @@ class Grotrian:
             # compute mean term energy
             y_count = 0.0
             y_mean = 0
-            for k1, v1 in v0.items():
+            for _k1, v1 in v0.items():
                 y_mean += v1[0]
                 y_count += 1
             y_mean /= y_count

@@ -11,9 +11,8 @@ from dataclasses import dataclass as _dataclass
 
 import numpy as _numpy
 
-from ..Util import MeshUtil as _MeshUtil
-
 from ..ImportAll import *
+from ..Util import MeshUtil as _MeshUtil
 
 
 @_dataclass(**STRUCT_KWGS_UNFROZEN)

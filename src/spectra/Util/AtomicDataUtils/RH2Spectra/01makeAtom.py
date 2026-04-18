@@ -189,7 +189,7 @@ def read_rh_level_(file: str):
             ##: read
             words = line.split("'")
             assert len(words) == 3, "text splited by ' must have length==3"
-            label = words[1]
+            _label = words[1]
             line = words[0] + words[2]
             words = [w.strip() for w in line.split()]
 
@@ -249,7 +249,7 @@ def make_Level_file_(
         f.write(f"Title: {title}" + "\n")
         f.write(text_bar_() + "\n")
 
-        for key, val in zip(("Z", "Element", "nLevel"), (Elements.ELEMENT_DICT[sym]["Z"], sym, len(tables))):
+        for key, val in zip(("Z", "Element", "nLevel"), (Elements.ELEMENT_DICT[sym]["Z"], sym, len(tables)), strict=False):
             f.write(f"{key:<20s}{val}\n")
         f.write(COMMENT_ + "\n")
         f.write(END_ + "\n")
@@ -263,7 +263,7 @@ def make_Level_file_(
             text += f"{name:<12s}"
         f.write(text + "\n")
 
-        for k, rec in tables.items():
+        for _k, rec in tables.items():
             n = conf2n_(rec.conf)
             L = term2L_(rec.term)
             s2p1 = term2s2p1_(rec.term)
@@ -625,7 +625,7 @@ def make_Alpha_file_(alphas: list[AlphaRH], tables: dict[int, LevelRecord], outf
             text += f"{alpha0:.4E}"
             f.write(text + "\n")
             f.write(COMMENT_ + "\n")
-            for w, a in zip(rhalpha.waves, rhalpha.alphas):
+            for w, a in zip(rhalpha.waves, rhalpha.alphas, strict=False):
                 s1 = f"{w:.1f}"
                 s2 = f"{a:.4E}"
                 f.write(f"{s1:>18s}    {s2:>12s}" + "\n")
@@ -653,7 +653,6 @@ def read_rh_collision_(file: str):
             return True
         return False
 
-    nwords = 6
     datas: list[AlphaRH] = []
     with open(file) as f:
         isstart = False
@@ -698,7 +697,7 @@ def make_CE_file_(temp: ColTempRH, cols: list[CollisionRH], tables: dict[int, Le
 #       CRC -> Collision Rate Coefficient
 # Effective Collision Strengths (Omega_ij[-]) : RH/Atoms_example/CaII.atom
 # Collision Rate : n_e * C_ij = n_e * ( 8.63e-6 * (Omega_ij*f1/f2) ) / (g_i * T_e^0.5) * e^(-dE_ji / (k*T_e))
-#                             = n_e *        CE * T_e^0.5 * f1/f2                      * e^(-dE_ji / (k*T_e)) 
+#                             = n_e *        CE * T_e^0.5 * f1/f2                      * e^(-dE_ji / (k*T_e))
 #  --> Omega_ij = CE * T_e * g_i / 8.63E-6
 """
     with open(outfile, "w") as f:
@@ -750,7 +749,7 @@ def make_CE_file_(temp: ColTempRH, cols: list[CollisionRH], tables: dict[int, Le
             if kind not in ("CE", "OMEGA"):
                 continue
             if kind == "CE":
-                for t, c in zip(temp.temps, coes0):
+                for t, c in zip(temp.temps, coes0, strict=False):
                     coes.append(c * gi * t / 8.63e-6)
             else:
                 coes = coes0
@@ -899,7 +898,7 @@ def make_conf_file_(afiles: AtomFiles, outfile: str, outdir: str):
     )
     with open(outfile, "w") as f:
         count = 0
-        for na, fna in zip(names, fnames):
+        for na, fna in zip(names, fnames, strict=False):
             if count == 0:
                 fna = fna.replace("\\", "\\\\")
             if count > 0:

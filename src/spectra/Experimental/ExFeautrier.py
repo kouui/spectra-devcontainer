@@ -225,7 +225,7 @@ def formal_featrier_2nd_(tau, S, mu, I_upper, I_lower, method="elimination"):
             j[d] = D[d] * j[d + 1] + E[d]
 
     else:
-        assert False, "method keyword surports 'matrix' or 'elimination'. "
+        raise AssertionError("method keyword surports 'matrix' or 'elimination'. ")
 
     return j
 
@@ -371,7 +371,7 @@ def tmat_improved_RH_(tau, mu, r0=0, rn=0):
 
 
 def angle_averaged_tmat_(
-    TmatirxFunc, tau, I_upper=np.zeros(4, dtype=np.double), I_lower=np.zeros(4, dtype=np.double), r0=0, rn=0
+    TmatirxFunc, tau, I_upper=None, I_lower=None, r0=0, rn=0
 ):
     """
     Purpose :
@@ -399,6 +399,10 @@ def angle_averaged_tmat_(
         T_average: (ND,ND), Angle averaged T matrix
         Tmats: (4,ND,ND), T matrix for 4 mu's
     """
+    if I_upper is None:
+        I_upper = np.zeros(4, dtype=np.double)
+    if I_lower is None:
+        I_lower = np.zeros(4, dtype=np.double)
     assert I_upper.size == 4 and I_lower.size == 4, "bad boundary condition."
     ND = tau.shape[0]
     mus = np.array([0.06943184, 0.33000948, 0.66999052, 0.93056816], dtype=np.double)

@@ -1,7 +1,7 @@
-from numpy import allclose as _ALLCLOSE
 import unittest
 
 import numpy as _numpy
+from numpy import allclose as _ALLCLOSE
 
 from spectra.ImportAll import *
 from spectra.RadiativeTransfer import Profile as _Profile

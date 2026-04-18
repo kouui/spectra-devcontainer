@@ -30,7 +30,7 @@ class Population_Container:
 def weight_per_H_():
 
     avg_weight = 0.0
-    for name, val in _ELEMENT_DICT.items():
+    for _name, val in _ELEMENT_DICT.items():
         avg_weight += val["Mass"] * 10 ** (val["Abundance"] - 12.0)
 
     return avg_weight
@@ -60,7 +60,7 @@ def init_FAL_(file: T_STR):
         for line in f:
             if _is_skip_(line):
                 continue
-            gravity = 10 ** (float(line.strip()))
+            _gravity = 10 ** (float(line.strip()))
             break
 
         # read number of depth mesh

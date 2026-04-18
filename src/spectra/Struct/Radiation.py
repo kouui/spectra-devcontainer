@@ -17,10 +17,9 @@ import numpy as _numpy
 
 from ..Atomic import LTELib as _LTELib
 from ..Atomic import PhotoIonize as _PhotoIonize
+from ..ImportAll import *
 from . import Atmosphere as _Atmosphere
 from . import WavelengthMesh as _WavelengthMesh
-
-from ..ImportAll import *
 
 
 @_dataclass(**STRUCT_KWGS_UNFROZEN)

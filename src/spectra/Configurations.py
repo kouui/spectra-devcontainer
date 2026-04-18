@@ -9,8 +9,9 @@
 
 from pathlib import Path
 
-from numba import set_num_threads as nb_set_num_threads  # type: ignore
 from numba.core import config as nb_config  # type: ignore
+
+from numba import set_num_threads as nb_set_num_threads  # type: ignore
 
 from .Types import T_BOOL, T_INT, T_STR
 
