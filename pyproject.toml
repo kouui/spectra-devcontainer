@@ -60,6 +60,7 @@ extend-ignore = [
     "SIM108",  # ternary operator — if-else blocks are clearer for physics expressions
     "SIM118",  # use `key in dict` — project uses explicit `.keys()` calls
     "PIE808",  # unnecessary range start — `range(0, n)` is explicit and clear
+    "B007",  # loop variable not used — variable may be used after loop body
 ]
 ignore = [
     # Naming conventions — project uses non-PEP8 naming throughout:
