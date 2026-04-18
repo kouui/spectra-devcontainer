@@ -13,6 +13,13 @@
 
 from dataclasses import dataclass as _dataclass
 
+import numpy as _numpy
+
+from ..Atomic import LTELib as _LTELib
+from ..Atomic import PhotoIonize as _PhotoIonize
+from . import Atmosphere as _Atmosphere
+from . import WavelengthMesh as _WavelengthMesh
+
 from ..ImportAll import *
 
 
@@ -21,14 +28,6 @@ class Radiation:
     backRad: T_ARRAY  # 2d, (2, n_wavelength)
 
     PI_intensity: T_ARRAY  # 2d, (nCont, _N_CONT_MESH )
-
-
-import numpy as _numpy
-
-from ..Atomic import LTELib as _LTELib
-from ..Atomic import PhotoIonize as _PhotoIonize
-from . import Atmosphere as _Atmosphere
-from . import WavelengthMesh as _WavelengthMesh
 
 
 def init_Radiation_(

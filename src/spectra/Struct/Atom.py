@@ -8,6 +8,9 @@
 
 from dataclasses import dataclass as _dataclass
 
+from ..Util.AtomUtils import AtomIO as _AtomIO
+from . import WavelengthMesh as _WavelengthMesh
+
 from ..ImportAll import *
 
 # -------------------------------------------------------------------------------
@@ -103,9 +106,6 @@ class Atom:
 # -------------------------------------------------------------------------------
 # init function
 # -------------------------------------------------------------------------------
-
-from ..Util.AtomUtils import AtomIO as _AtomIO
-from . import WavelengthMesh as _WavelengthMesh
 
 
 def init_Atom_(

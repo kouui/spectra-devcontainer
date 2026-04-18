@@ -9,6 +9,10 @@
 
 from dataclasses import dataclass as _dataclass
 
+import numpy as _numpy
+
+from ..Util import MeshUtil as _MeshUtil
+
 from ..ImportAll import *
 
 
@@ -31,10 +35,6 @@ class Wavelength_Mesh:
     Line_mesh_share: T_ARRAY  # 1d,
     Line_mesh_share_idxs: T_ARRAY  # 2d,   (nLine, 2)
 
-
-import numpy as _numpy
-
-from ..Util import MeshUtil as _MeshUtil
 
 _N_CONT_MESH: T_INT = 41
 _N_LINE_MESH: T_INT = 41

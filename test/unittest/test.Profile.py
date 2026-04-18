@@ -1,13 +1,12 @@
 from numpy import allclose as _ALLCLOSE
-
-_KWGS_CLOSE = {"rtol": 1.0e-05, "atol": 1.0e-20}
-
 import unittest
 
 import numpy as _numpy
 
 from spectra.ImportAll import *
 from spectra.RadiativeTransfer import Profile as _Profile
+
+_KWGS_CLOSE = {"rtol": 1.0e-05, "atol": 1.0e-20}
 
 
 class Test_Profile(unittest.TestCase):

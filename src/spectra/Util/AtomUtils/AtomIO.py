@@ -22,6 +22,7 @@ from pathlib import Path
 import numpy as _numpy
 
 from ...ImportAll import *
+from .. import ElementUtil as _ElementUtil
 
 # -------------------------------------------------------------------------------
 # basic function to manipulate data files
@@ -509,8 +510,6 @@ def read_conf_(conf_path: T_STR) -> T_DICT[T_STR, T_UNION[None, T_STR]]:
 # -------------------------------------------------------------------------------
 # functions for constructing structs
 # -------------------------------------------------------------------------------
-
-from .. import ElementUtil as _ElementUtil
 
 
 def make_Atom_Level_(

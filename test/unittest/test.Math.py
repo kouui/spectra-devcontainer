@@ -1,11 +1,10 @@
 from numpy import allclose as _ALLCLOSE
-
-_KWGS_CLOSE = {"rtol": 1.0e-05, "atol": 1.0e-20}
-
 import unittest
 
 from spectra.ImportAll import *
 from spectra.Math import GaussLeg
+
+_KWGS_CLOSE = {"rtol": 1.0e-05, "atol": 1.0e-20}
 
 
 class Test_Gauss_Leg(unittest.TestCase):

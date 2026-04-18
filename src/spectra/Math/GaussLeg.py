@@ -6,11 +6,11 @@
 #    2021/05/18   u.k.   spectra-re
 # -------------------------------------------------------------------------------
 
+import numpy as _numpy
+
 from ..ImportAll import *
 
 _ERROR = 3.0e-14
-
-import numpy as _numpy
 
 
 def gauss_quad_coe_(a: T_FLOAT, b: T_FLOAT, n: T_INT) -> T_TUPLE[T_ARRAY, T_ARRAY]:

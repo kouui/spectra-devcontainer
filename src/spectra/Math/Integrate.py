@@ -9,6 +9,7 @@
 import numpy as _numpy
 
 from ..ImportAll import *
+from . import BasicM
 
 # -----------------------------------------------------------------------------
 # Trapzoidal integral
@@ -183,9 +184,6 @@ def _simps_even_(y: T_ARRAY, x: T_ARRAY) -> T_FLOAT:
 
     result = 0.5 * (result + val)
     return result
-
-
-from . import BasicM
 
 
 def simpson_(y: T_ARRAY, x: T_UNION[T_ARRAY, None] = None, dx: T_UNION[T_FLOAT, T_INT, None] = None) -> T_FLOAT:

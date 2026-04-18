@@ -15,6 +15,11 @@
 
 from dataclasses import dataclass as _dataclass
 
+import numpy as _numpy
+
+from ..Atomic import ContinuumOpacity as _ContinuumOpacity
+from ..Experimental import ExTau as _Tau
+
 from ..ImportAll import *
 
 # -------------------------------------------------------------------------------
@@ -87,12 +92,6 @@ class AtmosphereC1D:
 # k.i.	'04/10/27	calc a.tauc
 #       2021.5.13      k.i. from val.pro
 # -------------------------------------------------------------------------------
-
-import numpy as _numpy
-
-from ..Atomic import ContinuumOpacity as _ContinuumOpacity
-from ..Experimental import ExTau as _Tau
-
 
 def init_VAL_(val_type: T_STR = "C") -> AtmosphereC1D:
 

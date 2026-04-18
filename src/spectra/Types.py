@@ -9,6 +9,11 @@
 from typing import Literal as T_LITERAL
 from typing import Union as T_UNION
 
+# reference : https://numpy.org/devdocs/reference/typing.html
+from numpy import ndarray as _ndarray
+
+from .Enums import *
+
 # -------------------------------------------------------------------------------
 # fundamental types
 # -------------------------------------------------------------------------------
@@ -19,9 +24,6 @@ T_STR = str
 T_BOOL = bool
 
 T_SLICE = slice
-
-# reference : https://numpy.org/devdocs/reference/typing.html
-from numpy import ndarray as _ndarray
 
 T_ARRAY = _ndarray
 del _ndarray
@@ -46,7 +48,6 @@ T_IDX_PAIR_TABLE = tuple[tuple[T_INT, T_INT], ...]
 # -------------------------------------------------------------------------------
 # Enum types
 # -------------------------------------------------------------------------------
-from .Enums import *
 
 T_E_ATOMIC_DATA_SOURCE = T_LITERAL[E_ATOMIC_DATA_SOURCE.EXPERIMENT, E_ATOMIC_DATA_SOURCE.CALCULATE]
 T_E_ATOM = T_LITERAL[E_ATOM.HYDROGEN, E_ATOM.HYDROGEN_LIKE, E_ATOM.NORMAL]

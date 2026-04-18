@@ -1,12 +1,11 @@
 from numpy import isclose as _ISCLOSE
-
-_KWGS_CLOSE = {"rtol": 1.0e-05, "atol": 1.0e-20}
-
 import unittest
 
 from spectra.ImportAll import *
 from spectra.Util import ElementUtil as _ElementUtil
 from spectra.Util import RomanUtil as _RomanUtil
+
+_KWGS_CLOSE = {"rtol": 1.0e-05, "atol": 1.0e-20}
 
 
 class Test_Roman(unittest.TestCase):

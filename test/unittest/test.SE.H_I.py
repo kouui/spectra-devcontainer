@@ -1,15 +1,14 @@
 from numpy import allclose as _ALLCLOSE
 from numpy import array as _array
 from numpy import isclose as _ISCLOSE
-
-_KWGS_CLOSE = {"rtol": 1.0e-05, "atol": 1.0e-20}
-
 import os
 import unittest
 
 from spectra.Function.SEquil import SELib
 from spectra.ImportAll import *
 from spectra.Struct import Atmosphere, Atom, Radiation
+
+_KWGS_CLOSE = {"rtol": 1.0e-05, "atol": 1.0e-20}
 
 
 class Test_SE_With_H_I(unittest.TestCase):

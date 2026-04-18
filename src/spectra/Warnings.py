@@ -8,13 +8,13 @@
 
 import warnings as WARNINGS
 
+from numba import njit as _nb_njit  # type: ignore
+from numba import objmode  # type: ignore
+
 from . import Configurations as CFG
 from .Types import *
 
 WARNINGS.simplefilter("once", UserWarning)
-
-from numba import njit as _nb_njit  # type: ignore
-from numba import objmode  # type: ignore
 
 _NB_NJIT_KWGS: T_DICT[T_STR, T_BOOL] = {
     "cache": CFG._IS_CACHE,

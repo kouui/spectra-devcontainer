@@ -9,6 +9,9 @@
 
 from pathlib import Path
 
+from numba import set_num_threads as nb_set_num_threads  # type: ignore
+from numba.core import config as nb_config  # type: ignore
+
 from .Types import T_BOOL, T_INT, T_STR
 
 _ROOT_DIR: Path = Path(__file__).resolve().parent.parent.parent
@@ -43,9 +46,6 @@ set to
 """
 
 # mypy: ignore-errors
-
-from numba import set_num_threads as nb_set_num_threads  # type: ignore
-from numba.core import config as nb_config  # type: ignore
 
 
 def _SET_NUMBA_THREAD_(threading_layer: T_STR = "threadsafe", n_thread: T_INT = 2) -> None:
