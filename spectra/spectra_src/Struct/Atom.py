@@ -269,4 +269,179 @@ def init_Atom_(conf_path : T_STR, is_hydrogen : T_BOOL = False
     return atom, waveMesh , path_dict
 
 
+def init_theoretical_hydrogen_atom_(
+    nLevel : T_INT = 8,
+) -> T_TUPLE[Atom, _WavelengthMesh.Wavelength_Mesh]:
+    """Create an `Atom` struct for hydrogen from purely theoretical atomic
+    data. No file I/O, no conf parsing, no delegation to `init_Atom_`.
+
+    The Level numpy array and CTJ table are constructed directly from the
+    hydrogenic energy formula, then the remaining atomic data (Aji, CE,
+    CI, PI, RL) are obtained by calling the existing `AtomIO.make_Atom_*_`
+    helpers with `path=None`, which already route hydrogen to the analytic
+    formulas in `spectra_src.Atomic.Hydrogen` and
+    `spectra_src.Function.Hydrogen.DegenerateN`.
+
+    Parameters
+    ----------
+    nLevel : T_INT, optional
+        Total number of levels including the continuum. Must be >= 3.
+        Default is 8 (n = 1..7 bound + continuum).
+
+    Returns
+    -------
+    atom : Atom
+    waveMesh : Wavelength_Mesh
+    """
+    import numpy as _numpy
+    from .. import Constants as _CST
+    from ..Util import ElementUtil as _ElementUtil
+
+    if nLevel < 3:
+        raise ValueError("`nLevel` must be >= 3 (n=1 bound + >=1 excited + continuum)")
+
+    Z       : T_INT   = 1
+    element : T_STR   = "H"
+    Mass    : T_FLOAT = _ElementUtil.sym_to_mass_(element)
+    Abun    : T_FLOAT = _ElementUtil.sym_to_abun_(element)
+
+    # build Level numpy array directly (mirrors the Level struct built by
+    # AtomIO.make_Atom_Level_, but from the analytic hydrogenic formula)
+    _level_dtype = _numpy.dtype([
+        ('erg',      T_FLOAT),
+        ('g',        T_INT),
+        ('stage',    T_INT),
+        ('gamma',    T_FLOAT),
+        ('isGround', T_BOOL),
+        ('n',        T_INT),
+    ])
+    Level = _numpy.zeros(nLevel, dtype=_level_dtype)
+    _Level_info_list : T_LIST[T_TUPLE[T_STR,T_STR,T_STR]] = []
+
+    R_H = 109677.59                           # [cm^-1], Hydrogen Rydberg const w/ proton mass
+    Ry  = R_H * _CST.c_ * _CST.h_             # Rydberg energy unit [erg]
+    ionization_erg = 1.3598430E+01 * _CST.eV2erg_
+
+    # n=1 ground state (1s 2S 1/2), stage=1
+    Level[0]["erg"]      = 0.0
+    Level[0]["g"]        = 2
+    Level[0]["stage"]    = 1
+    Level[0]["n"]        = 1
+    Level[0]["isGround"] = 1
+    _Level_info_list.append(("1s", "2S", "1/2"))
+
+    # n=2..nLevel-1 bound states, stage=1
+    for k in range(1, nLevel - 1):
+        n = k + 1
+        Level[k]["erg"]      = ionization_erg - Ry * (1.0 / n**2)
+        Level[k]["g"]        = 2 * n * n
+        Level[k]["stage"]    = 1
+        Level[k]["n"]        = n
+        Level[k]["isGround"] = 0
+        _Level_info_list.append((f"{n}", "-", "-"))
+
+    # continuum, stage=2
+    Level[nLevel-1]["erg"]      = ionization_erg
+    Level[nLevel-1]["g"]        = 1
+    Level[nLevel-1]["stage"]    = 2
+    Level[nLevel-1]["n"]        = 0
+    Level[nLevel-1]["isGround"] = 1
+    _Level_info_list.append(("-", "-", "-"))
+
+    Level_info_table : T_TUPLE[T_TUPLE[T_STR,T_STR,T_STR],...] = tuple(_Level_info_list)
+
+    _atom_type = E_ATOM.HYDROGEN
+
+    # counts and CTJ/index mapping tables
+    nLine, nCont, nTran, _has_continuum = _AtomIO.nLine_nCont_nTran_(Level["stage"])
+    Line_idx_table, Line_ctj_table, Cont_idx_table, Cont_ctj_table = \
+        _AtomIO.prepare_idx_ctj_mapping_(
+            Level_info_table, Level["stage"], Level["isGround"], nLine, nCont)
+    _ctj_table = CTJ_Table(Level=Level_info_table, Line=Line_ctj_table, Cont=Cont_ctj_table)
+    _idx_table = Index_Table(Line=Line_idx_table, Cont=Cont_idx_table)
+
+    # Cont
+    Cont = _AtomIO.make_Atom_Cont_(nCont, Cont_idx_table, Level)
+
+    # Line (path=None -> Aji computed from Hydrogen.einstein_A_coefficient_)
+    Line, data_source_Aji = _AtomIO.make_Atom_Line_(
+        None, Level, Line_idx_table, Line_ctj_table, _atom_type)
+
+    # CE (path=None -> empty tables, CALCULATE source; rates computed in SELib)
+    Te_table_CE, Omega_table_CE, Coe_CE, _tt, _ts, _tf = _AtomIO.make_Atom_CECI_(
+        None, "CE", nLine, Line, Level, Level_info_table, Line_ctj_table)
+    CE = Collisional_Transition(
+        _transition_type    = _tt,
+        _transition_source  = _ts,
+        _transition_formula = _tf,
+        Te_table            = Te_table_CE,
+        Omega_table         = Omega_table_CE,
+        Coe                 = Coe_CE,
+    )
+    data_source_CE = E_ATOMIC_DATA_SOURCE.CALCULATE
+
+    # CI (path=None -> empty tables, CALCULATE source)
+    Te_table_CI, Omega_table_CI, Coe_CI, _tt, _ts, _tf = _AtomIO.make_Atom_CECI_(
+        None, "CI", nCont, Cont, Level, Level_info_table, Cont_ctj_table)
+    CI = Collisional_Transition(
+        _transition_type    = _tt,
+        _transition_source  = _ts,
+        _transition_formula = _tf,
+        Te_table            = Te_table_CI,
+        Omega_table         = Omega_table_CI,
+        Coe                 = Coe_CI,
+    )
+    data_source_CI = E_ATOMIC_DATA_SOURCE.CALCULATE
+
+    # RL (path=None -> empty)
+    Coe_RL, nRadiativeLine = _AtomIO.make_Atom_RL_(None, Level_info_table, Line_ctj_table)
+    RL = Radiative_Line(nRadiativeLine=nRadiativeLine, Coe=Coe_RL)
+
+    # wavelength mesh
+    waveMesh = _WavelengthMesh.init_Wave_Mesh_(Cont, Line, RL.Coe)
+
+    # PI (path=None + HYDROGEN -> cross section from DegenerateN)
+    alpha_table, alpha_table_idxs, Coe_PI, alpha_interp, data_source_PI = \
+        _AtomIO.make_Atom_PI_(
+            None, Level, Cont, waveMesh.Cont_mesh,
+            _atom_type, Level_info_table, Cont_ctj_table)
+    PI = Photo_Ionization(
+        alpha_table      = alpha_table,
+        alpha_table_idxs = alpha_table_idxs,
+        Coe              = Coe_PI,
+        alpha_interp     = alpha_interp,
+    )
+
+    _atomic_data_source = ATOMIC_DATA_SOURCE(
+        AJI = data_source_Aji,
+        CE  = data_source_CE,
+        CI  = data_source_CI,
+        PI  = data_source_PI,
+    )
+
+    atom = Atom(
+        Z                   = Z,
+        Mass                = Mass,
+        Abun                = Abun,
+        nLevel              = nLevel,
+        nLine               = nLine,
+        nCont               = nCont,
+        nTran               = nTran,
+        nRL                 = nRadiativeLine,
+        Level               = Level,
+        Line                = Line,
+        Cont                = Cont,
+        _has_continuum      = _has_continuum,
+        _atomic_data_source = _atomic_data_source,
+        _atom_type          = _atom_type,
+        _ctj_table          = _ctj_table,
+        _idx_table          = _idx_table,
+        CE                  = CE,
+        CI                  = CI,
+        PI                  = PI,
+        RL                  = RL,
+    )
+    return atom, waveMesh
+
+
 
