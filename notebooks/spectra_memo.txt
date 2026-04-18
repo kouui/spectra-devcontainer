@@ -1,0 +1,27 @@
+To do
+
+
+</font>
+
+spectra code 
+- Hydrogen model (S2)
+
+
+# Goals
+## basic
+- emission mechanism of OI 777nm. how upper level populates?（黄）
+- understand the principle of spectroscopic diagnostic tools 
+    + dnesity pair
+    + temperature from line ratio
+- Why He D3 is visible on the limb but not on the disk?
+- What is the emission mechanism of He lines in flares
+- What determines the intensity ratio of He 5897(D3 tripret) and 6678A (singlet)
+- What determines the intensity ratio of series of Hydrogen emission lines?
+- Why Ha absorption disapear 
+- Calculate Ha strength of an erupting promimence（黄）
+- determine physical state of prominences/spicule from spectroscopy
+- develop new diagnostic tools 
+
+## polarization
+- polarization code,  Zeeman & Atomic polarization
+<br>
