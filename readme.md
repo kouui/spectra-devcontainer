@@ -105,3 +105,8 @@ besides `notebooks/basic`, any folder in `notebook/` will not be checked during 
 ### update source code
 
 ### code development
+
+### TODO
+
+- [ ] update `spectra/data/atom` folder. Prof Ichimoto may has the latest data file.
+- [ ] implement different kinds of Doppler velocity: relative to solar spectra, relative to observer.
