@@ -6,7 +6,10 @@
 #    2021/05/18   u.k.   spectra-re
 # -------------------------------------------------------------------------------
 
+from typing import Any as T_ANY
 from typing import Literal as T_LITERAL
+from typing import NoReturn as T_NORETURN
+from typing import overload as OVERLOAD
 
 # reference : https://numpy.org/devdocs/reference/typing.html
 from numpy import ndarray as _ndarray
@@ -18,9 +21,13 @@ from .Enums import *
 # -------------------------------------------------------------------------------
 
 T_FLOAT = float
-T_INT = int  # _numpy.int64
+T_INT = int
 T_STR = str
 T_BOOL = bool
+T_LIST = list
+T_DICT = dict
+T_TUPLE = tuple
+T_TYPE = type
 
 T_SLICE = slice
 
@@ -66,6 +73,40 @@ T_E_ATMOSPHERE_COORDINATE_TYPE = T_LITERAL[E_ATMOSPHERE_COORDINATE_TYPE.POINT, E
 DT_NB_FLOAT = "float64"
 DT_NB_INT = "int64"
 DT_NB_COMPLEX = "complex128"
+
+__all__ = [
+    "DT_NB_COMPLEX",
+    "DT_NB_FLOAT",
+    "DT_NB_INT",
+    "OVERLOAD",
+    "T_ANY",
+    "T_ARRAY",
+    "T_BOOL",
+    "T_CTJ_PAIR",
+    "T_CTJ_PAIR_TABLE",
+    "T_CTJ_TABLE",
+    "T_DICT",
+    "T_E_ABSORPTION_PROFILE_TYPE",
+    "T_E_ATMOSPHERE_COORDINATE_TYPE",
+    "T_E_ATOM",
+    "T_E_ATOMIC_DATA_SOURCE",
+    "T_E_COLLISIONAL_TRANSITION",
+    "T_E_COLLISIONAL_TRANSITION_FORMULA",
+    "T_E_COLLISIONAL_TRANSITION_SOURCE",
+    "T_FLOAT",
+    "T_IDX_PAIR_TABLE",
+    "T_INT",
+    "T_LIST",
+    "T_LITERAL",
+    "T_NORETURN",
+    "T_SLICE",
+    "T_STR",
+    "T_TUPLE",
+    "T_TYPE",
+    "T_VEC_FA",
+    "T_VEC_IA",
+    "T_VEC_IFA",
+]
 # import numba.types as nb_types     # type: ignore
 #
 # T_NB_FLOAT1D = nb_types.float64[:]         # type: ignore

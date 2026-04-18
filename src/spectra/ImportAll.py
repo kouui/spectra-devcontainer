@@ -9,18 +9,20 @@
 # from .ImportExternalModule import *
 
 
-
-# -------------------------------------------------------------------------------
-# numba related functions/class
-# -------------------------------------------------------------------------------
-## : numba TypedList slower than built in list
-# https://github.com/numba/numba/issues/4584
-# from numba.typed import List as nb_List # type: ignore
 from numba.typed import List  # type: ignore
+import numpy as _numpy
+
+from numba import njit as nb_njit  # type: ignore
+from numba import vectorize as nb_vec  # type: ignore
 
 from . import Configurations as CFG
+from . import Constants as CST
+from .Elements import ELEMENT_ABUN, ELEMENT_IONIZPOTENTIAL, ELEMENT_MASS, ELEMENT_SYMBOL, ELEMENT_Z
 from .Enums import *
 from .Types import *
+from .Warnings import WARN_
+
+np_vec = _numpy.vectorize
 
 nb_List: T_TYPE[List | T_LIST]
 if CFG._IS_JIT:
@@ -96,3 +98,74 @@ STRUCT_KWGS_UNFROZEN: T_DICT[T_STR, T_BOOL] = {
 # -------------------------------------------------------------------------------
 # logging and warning
 # -------------------------------------------------------------------------------
+
+__all__ = [
+    # Configurations
+    "CFG",
+    # Constants
+    "CST",
+    "DT_NB_COMPLEX",
+    # Types — numba dtypes
+    "DT_NB_FLOAT",
+    "DT_NB_INT",
+    "ELEMENT_ABUN",
+    "ELEMENT_IONIZPOTENTIAL",
+    "ELEMENT_MASS",
+    # Elements
+    "ELEMENT_SYMBOL",
+    "ELEMENT_Z",
+    "E_ABSORPTION_PROFILE_TYPE",
+    "E_ATMOSPHERE_COORDINATE_TYPE",
+    "E_ATOM",
+    # Enums
+    "E_ATOMIC_DATA_SOURCE",
+    "E_COLLISIONAL_TRANSITION",
+    "E_COLLISIONAL_TRANSITION_FORMULA",
+    "E_COLLISIONAL_TRANSITION_SOURCE",
+    "NB_NJIT_KWGS",
+    "NB_NJIT_KWGS_PARALLEL",
+    "NB_VEC_KWGS",
+    "NP_VEC_KWGS",
+    "OVERLOAD",
+    # struct
+    "STRUCT_KWGS",
+    "STRUCT_KWGS_UNFROZEN",
+    "T_ANY",
+    "T_ARRAY",
+    "T_BOOL",
+    "T_CTJ_PAIR",
+    "T_CTJ_PAIR_TABLE",
+    "T_CTJ_TABLE",
+    "T_DICT",
+    "T_E_ABSORPTION_PROFILE_TYPE",
+    "T_E_ATMOSPHERE_COORDINATE_TYPE",
+    "T_E_ATOM",
+    # Types — enum literals
+    "T_E_ATOMIC_DATA_SOURCE",
+    "T_E_COLLISIONAL_TRANSITION",
+    "T_E_COLLISIONAL_TRANSITION_FORMULA",
+    "T_E_COLLISIONAL_TRANSITION_SOURCE",
+    # Types — fundamental
+    "T_FLOAT",
+    "T_IDX_PAIR_TABLE",
+    "T_INT",
+    "T_LIST",
+    "T_LITERAL",
+    "T_NORETURN",
+    "T_SLICE",
+    "T_STR",
+    "T_TUPLE",
+    "T_TYPE",
+    "T_VEC_FA",
+    "T_VEC_IA",
+    # Types — composite
+    "T_VEC_IFA",
+    # Warnings
+    "WARN_",
+    "nb_List",
+    # numba
+    "nb_njit",
+    "nb_vec",
+    # numpy
+    "np_vec",
+]
