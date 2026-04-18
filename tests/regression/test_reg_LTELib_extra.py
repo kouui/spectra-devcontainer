@@ -47,3 +47,20 @@ class TestBjiToBij:
         Bji = LTELib.Aji_to_Bji_cm_(6.27e8, 1216e-8)
         assert_close(LTELib.Bji_to_Bij_(Bji, 2, 8),
                      ref["LTELib.Bji_to_Bij"])
+
+
+class TestUfunc:
+    def test_H_I(self, ref):
+        assert_close(LTELib.Ufunc_("H_I", 5040.0), ref["LTELib.Ufunc_H_I_5040"])
+        assert_close(LTELib.Ufunc_("H_I", 7000.0), ref["LTELib.Ufunc_H_I_7000"])
+
+    def test_He_I(self, ref):
+        assert_close(LTELib.Ufunc_("He_I", 5040.0), ref["LTELib.Ufunc_He_I_5040"])
+
+    def test_Ca_II(self, ref):
+        assert_close(LTELib.Ufunc_("Ca_II", 5040.0), ref["LTELib.Ufunc_Ca_II_5040"])
+        assert_close(LTELib.Ufunc_("Ca_II", 7000.0), ref["LTELib.Ufunc_Ca_II_7000"])
+
+    def test_Fe_I(self, ref):
+        assert_close(LTELib.Ufunc_("Fe_I", 5040.0), ref["LTELib.Ufunc_Fe_I_5040"])
+        assert_close(LTELib.Ufunc_("Fe_I", 7000.0), ref["LTELib.Ufunc_Fe_I_7000"])

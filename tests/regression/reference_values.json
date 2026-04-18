@@ -835,5 +835,13 @@
   "RomanUtil.roman_to_index_II": 2,
   "RomanUtil.roman_to_index_X": 10,
   "RomanUtil.shift_roman_II_1": "III",
-  "RomanUtil.shift_roman_V_m2": "III"
+  "RomanUtil.shift_roman_V_m2": "III",
+  "LTELib.Ufunc_H_I_5040": 2.0000000199681045,
+  "LTELib.Ufunc_H_I_7000": 2.0000000199681045,
+  "LTELib.Ufunc_He_I_5040": 1.0,
+  "LTELib.Ufunc_He_I_7000": 1.0,
+  "LTELib.Ufunc_Ca_II_5040": 2.2071406019642366,
+  "LTELib.Ufunc_Ca_II_7000": 2.6469111869320963,
+  "LTELib.Ufunc_Fe_I_5040": 27.99045769302985,
+  "LTELib.Ufunc_Fe_I_7000": 36.78161115313441
 }
