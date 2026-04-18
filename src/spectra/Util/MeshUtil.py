@@ -1,26 +1,23 @@
-
-
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # function definition of wavelength mesh utility
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # VERSION
 #
-# 0.1.0 
+# 0.1.0
 #    2021/05/18   u.k.   spectra-re
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
+
+import numpy as _numpy
 
 from ..ImportAll import *
 from ..Math import BasicM
 
-import numpy as _numpy
-
-
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # construct wavelength mesh
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 
-def make_half_line_mesh_(nLambda : T_INT, qcore : T_FLOAT, qwing : T_FLOAT, 
-                         q : T_ARRAY):
+
+def make_half_line_mesh_(nLambda: T_INT, qcore: T_FLOAT, qwing: T_FLOAT, q: T_ARRAY):
     """
     Construct half line mesh. Following RH's `getlambda.c`.
     called by it's wrapper function `makeLineMesh_Full`
@@ -48,25 +45,25 @@ def make_half_line_mesh_(nLambda : T_INT, qcore : T_FLOAT, qwing : T_FLOAT,
     - change qwing, you change how far your Doppler width mesh reach
     - change qcore, you change how dense in line core.
     """
-    if not BasicM.is_odd_(nLambda) : 
-        raise ValueError( "`nLambda` should be an odd number." )
+    if not BasicM.is_odd_(nLambda):
+        raise ValueError("`nLambda` should be an odd number.")
 
-    nLhalf = nLambda//2 + 1
+    nLhalf = nLambda // 2 + 1
 
-    if qwing <= 2*qcore:
+    if qwing <= 2 * qcore:
         beta = 1.0
     else:
         beta = 0.5 * qwing / qcore
 
-    y = beta + (beta*beta + (beta-1.)*nLhalf + 2. - 3.*beta)**(0.5)
+    y = beta + (beta * beta + (beta - 1.0) * nLhalf + 2.0 - 3.0 * beta) ** (0.5)
     b = 2.0 * _numpy.log(y) / (nLhalf - 1)
-    a = qwing / (nLhalf - 2. + y*y)
+    a = qwing / (nLhalf - 2.0 + y * y)
 
     for i in range(0, nLhalf):
-        q[i] = a * (i + (_numpy.exp(b*i)-1.))
+        q[i] = a * (i + (_numpy.exp(b * i) - 1.0))
 
 
-def make_full_line_mesh_(nLambda : T_INT, qcore : T_FLOAT = 2.5, qwing : T_FLOAT = 10.) -> T_ARRAY:
+def make_full_line_mesh_(nLambda: T_INT, qcore: T_FLOAT = 2.5, qwing: T_FLOAT = 10.0) -> T_ARRAY:
     """
     Construct Full line mesh.
     Calls inner function `makeLineMesh_Half` to construct half part
@@ -101,12 +98,12 @@ def make_full_line_mesh_(nLambda : T_INT, qcore : T_FLOAT = 2.5, qwing : T_FLOAT
     mesh = _numpy.empty(nLambda, dtype=DT_NB_FLOAT)
     nLmid = nLambda // 2
     make_half_line_mesh_(nLambda, qcore, qwing, mesh[nLmid:])
-    mesh[:nLmid] = -1. * mesh[nLmid+1:][::-1]
+    mesh[:nLmid] = -1.0 * mesh[nLmid + 1 :][::-1]
 
     return mesh
 
 
-def make_continuum_mesh_(nLambda : T_INT) -> T_ARRAY:
+def make_continuum_mesh_(nLambda: T_INT) -> T_ARRAY:
     """
     Given number of mesh points,
     compute a mesh distribution sampling most aroung wavelength edge.
@@ -125,13 +122,14 @@ def make_continuum_mesh_(nLambda : T_INT) -> T_ARRAY:
 
     """
     mesh = _numpy.empty(nLambda, dtype=DT_NB_FLOAT)
-    for j in range(1, nLambda+1):
-        qj = ( nLambda + 1.- j ) / nLambda
-        mesh[j-1] = qj**(0.5)
+    for j in range(1, nLambda + 1):
+        qj = (nLambda + 1.0 - j) / nLambda
+        mesh[j - 1] = qj ** (0.5)
 
     return mesh
 
-def half_to_full_(arr_half : T_ARRAY, isMinus : T_BOOL = False) -> T_ARRAY:
+
+def half_to_full_(arr_half: T_ARRAY, isMinus: T_BOOL = False) -> T_ARRAY:
     r"""
     create full (anti-)symmetric full array according to half array
 
@@ -152,7 +150,7 @@ def half_to_full_(arr_half : T_ARRAY, isMinus : T_BOOL = False) -> T_ARRAY:
 
     """
     _nLmid = arr_half.shape[0]
-    _nLfull = (_nLmid-1) * 2 + 1
+    _nLfull = (_nLmid - 1) * 2 + 1
     _arr_full = _numpy.zeros(_nLfull, dtype=arr_half.dtype)
 
     fac = -1 if isMinus else 1
@@ -162,7 +160,8 @@ def half_to_full_(arr_half : T_ARRAY, isMinus : T_BOOL = False) -> T_ARRAY:
 
     return _arr_full
 
-def array_from_1D_(arr_1D : T_ARRAY, mesh_idxs : T_ARRAY, k : T_INT) -> T_ARRAY :
+
+def array_from_1D_(arr_1D: T_ARRAY, mesh_idxs: T_ARRAY, k: T_INT) -> T_ARRAY:
     """extract target sub-array from a 1D array containing sub-arrays with different size
 
     Parameters
@@ -179,17 +178,16 @@ def array_from_1D_(arr_1D : T_ARRAY, mesh_idxs : T_ARRAY, k : T_INT) -> T_ARRAY 
     T_ARRAY
         target sub-array
     """
-    i1 : T_INT = mesh_idxs[k,:]
-    i2 : T_INT = mesh_idxs[k,:]
+    i1: T_INT = mesh_idxs[k, :]
+    i2: T_INT = mesh_idxs[k, :]
 
     return arr_1D[i1:i2].copy()
 
 
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # numba optimization
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 if CFG._IS_JIT:
-
-    make_half_line_mesh_      = nb_njit( **NB_NJIT_KWGS ) (make_half_line_mesh_)
-    make_full_line_mesh_      = nb_njit( **NB_NJIT_KWGS ) (make_full_line_mesh_)
+    make_half_line_mesh_ = nb_njit(**NB_NJIT_KWGS)(make_half_line_mesh_)
+    make_full_line_mesh_ = nb_njit(**NB_NJIT_KWGS)(make_full_line_mesh_)

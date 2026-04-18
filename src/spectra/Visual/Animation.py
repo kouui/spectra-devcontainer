@@ -1,23 +1,19 @@
-
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # definition of functions for animation
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # VERSION
 # 0.1.0
-#    2021/07/04   u.k.   
-# 0.1.0 
+#    2021/07/04   u.k.
+# 0.1.0
 #    2021/05/18   u.k.   spectra-re
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
+
 
 from ..ImportAll import *
-
-import matplotlib.pyplot as plt
-from matplotlib import animation
-#from IPython.display import display, HTML
+# from IPython.display import display, HTML
 
 
-
-#def image_array_to_animation(image_array : T_ARRAY):
+# def image_array_to_animation(image_array : T_ARRAY):
 #    """return images sequence as an animation
 #
 #    Parameters
@@ -33,7 +29,7 @@ from matplotlib import animation
 #
 #
 #    ''' Display images sequence as an animation in jupyter notebook
-#    
+#
 #    Args:
 #        image_array(numpy.ndarray): image_array.shape equal to (num_images, height, width, num_channels)
 #    '''

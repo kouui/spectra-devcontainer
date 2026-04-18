@@ -1,29 +1,22 @@
-
-
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # function definition of Solving Statistial Equilibrium equations
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # VERSION
 #
-# 0.1.0 
+# 0.1.0
 #    2021/05/18   u.k.   spectra-re
-#-------------------------------------------------------------------------------
-
-from ..ImportAll import *
+# -------------------------------------------------------------------------------
 
 import numpy as _numpy
 
-#-------------------------------------------------------------------------------
-# fill radiative/collisional transition matrix 
-#-------------------------------------------------------------------------------
+from ..ImportAll import *
 
-def set_matrixC_(
-         Cmat : T_ARRAY, 
-         Cji  : T_ARRAY, 
-         Cij  : T_ARRAY, 
-         idxI : T_ARRAY, 
-         idxJ : T_ARRAY, 
-         Ne   : T_UNION[T_FLOAT, T_INT]):
+# -------------------------------------------------------------------------------
+# fill radiative/collisional transition matrix
+# -------------------------------------------------------------------------------
+
+
+def set_matrixC_(Cmat: T_ARRAY, Cji: T_ARRAY, Cij: T_ARRAY, idxI: T_ARRAY, idxJ: T_ARRAY, Ne: T_UNION[T_FLOAT, T_INT]):
     r"""
     Compute the collisional rate matrix.
 
@@ -31,15 +24,15 @@ def set_matrixC_(
     ----------
 
     Cmat : T_ARRAY, 2d
-        collisional rate matrix, a 2D Array to store computed results, 
+        collisional rate matrix, a 2D Array to store computed results,
         [:math:`s^{-1}`]
 
     Cji : T_ARRAY, 1d
-        downward collisional transition rate, 
+        downward collisional transition rate,
         [:math:`s^{-1} \cdot cm^{3}`]
 
     Cij : T_ARRAY, 1d
-        upward collisional transition rate, 
+        upward collisional transition rate,
         [:math:`s^{-1} \cdot cm^{3}`]
 
     idxI : T_ARRAY, 1d
@@ -49,7 +42,7 @@ def set_matrixC_(
         level index of upper level j, [-]
 
     Ne: T_UNION[T_FLOAT, T_INT]
-        electron density, 
+        electron density,
         [:math:`cm^{-3}`]
 
     Notes
@@ -71,21 +64,16 @@ def set_matrixC_(
 
     n_row, n_col = Cmat.shape
     if n_row != n_col:
-        raise ValueError( "Cmat should be a squared matrix" )
+        raise ValueError("Cmat should be a squared matrix")
 
     nTran = Cji.size
     for k in range(nTran):
         i, j = idxI[k], idxJ[k]
-        Cmat[i,j] += Ne * Cji[k]
-        Cmat[j,i] += Ne * Cij[k]
+        Cmat[i, j] += Ne * Cji[k]
+        Cmat[j, i] += Ne * Cij[k]
 
-def set_matrixR_(
-         Rmat      : T_ARRAY, 
-         Rji_spon  : T_ARRAY,
-         Rji_stim  : T_ARRAY, 
-         Rij       : T_ARRAY, 
-         idxI      : T_ARRAY, 
-         idxJ      : T_ARRAY):
+
+def set_matrixR_(Rmat: T_ARRAY, Rji_spon: T_ARRAY, Rji_stim: T_ARRAY, Rij: T_ARRAY, idxI: T_ARRAY, idxJ: T_ARRAY):
     r"""
     Compute the radiative rate matrix.
 
@@ -128,26 +116,28 @@ def set_matrixR_(
     """
     n_row, n_col = Rmat.shape
     if n_row != n_col:
-        raise ValueError( "Rmat should be a squared matrix" )
+        raise ValueError("Rmat should be a squared matrix")
 
     nTran = Rji_spon.size
     for k in range(nTran):
         i, j = idxI[k], idxJ[k]
-        Rmat[i,j] += Rji_spon[k] + Rji_stim[k]
-        Rmat[j,i] += Rij[k]
+        Rmat[i, j] += Rji_spon[k] + Rji_stim[k]
+        Rmat[j, i] += Rij[k]
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
 # solving system of equations
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 
-def solve_SE_(Rmat : T_ARRAY, Cmat : T_ARRAY) -> T_ARRAY:
+
+def solve_SE_(Rmat: T_ARRAY, Cmat: T_ARRAY) -> T_ARRAY:
     r"""Solve the linear equation system of statistical equilibrium.
 
     Parameters
     ----------
 
     Rmat : T_ARRAY, (nLevel,nLevel)
-        radiative transition rate matrix, 
+        radiative transition rate matrix,
         [:math:`s^{-1}`]
 
     Cmat : T_ARRAY, (nLevel,nLevel)
@@ -158,37 +148,37 @@ def solve_SE_(Rmat : T_ARRAY, Cmat : T_ARRAY) -> T_ARRAY:
     -------
 
     nArr : T_ARRAY, (nLevel,)
-        normalized level population. 
+        normalized level population.
         [:math:`cm^{-3}`]
 
     """
 
     nLevel = Rmat.shape[0]
-    A = Cmat[:,:] + Rmat[:,:]
+    A = Cmat[:, :] + Rmat[:, :]
     b = _numpy.zeros(nLevel, dtype=DT_NB_FLOAT)
 
-    #-------------------------------------------------------------
+    # -------------------------------------------------------------
     # diagnal components
-    #-------------------------------------------------------------
+    # -------------------------------------------------------------
     for k in range(nLevel):
-        A[k,k] = -A[:,k].sum()
+        A[k, k] = -A[:, k].sum()
 
-    #-------------------------------------------------------------
+    # -------------------------------------------------------------
     # abundance definition equation
-    #-------------------------------------------------------------
-    A[-1,:] = 1.
-    b[-1] = 1.
+    # -------------------------------------------------------------
+    A[-1, :] = 1.0
+    b[-1] = 1.0
 
     nArr = _numpy.linalg.solve(A, b)
 
     return nArr
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
 # numba optimization
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 
 if CFG._IS_JIT:
-
-    set_matrixC_ = nb_njit(**NB_NJIT_KWGS) (set_matrixC_)
-    set_matrixR_ = nb_njit(**NB_NJIT_KWGS) (set_matrixR_)
-    solve_SE_    = nb_njit(**NB_NJIT_KWGS) (solve_SE_)
+    set_matrixC_ = nb_njit(**NB_NJIT_KWGS)(set_matrixC_)
+    set_matrixR_ = nb_njit(**NB_NJIT_KWGS)(set_matrixR_)
+    solve_SE_ = nb_njit(**NB_NJIT_KWGS)(solve_SE_)

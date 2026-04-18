@@ -1,12 +1,11 @@
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # definition of functions for make hydrogen .Level file with theretical formulas
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # VERSION
-# 0.1.0 
-#    2024/02/02   u.k.   
-#-------------------------------------------------------------------------------
+# 0.1.0
+#    2024/02/02   u.k.
+# -------------------------------------------------------------------------------
 
-from spectra import Configurations as CFG
 from spectra import Constants as CST
 
 TEMPLATE = """#--------------------------------------------------------------------------------------------------
@@ -27,25 +26,26 @@ END
 #--------------------------------------------------------------------------------------------------
 """
 
-def make_hydrogen_levels_(nlevel:int,outfile:str):
+
+def make_hydrogen_levels_(nlevel: int, outfile: str):
     if nlevel < 3:
         nlevel = 3
         print("nlevel < 3, nlevel is set to 3")
-    
-    template = TEMPLATE.replace("{nLevel}",f"{nlevel}")
+
+    template = TEMPLATE.replace("{nLevel}", f"{nlevel}")
     s = ""
-    for i in range(2,nlevel): ## exclude n=1 and continuum
+    for i in range(2, nlevel):  ## exclude n=1 and continuum
         n = conf = i
-        g = 2*n*n
+        g = 2 * n * n
         # ionization energy
         # Eik = CST.E_Rydberg_ * (1./n**2)
-        R_H = 109677.59                # [cm-1],  Hydrogen Rydberg const w/ proton mass
-        Ry  = R_H * CST.c_*CST.h_      # Rydberg energy unit
-        Eik = Ry * (1./n**2)
-        erg = (1.3598430E+01*CST.eV2erg_ - Eik) / CST.eV2erg_
+        R_H = 109677.59  # [cm-1],  Hydrogen Rydberg const w/ proton mass
+        Ry = R_H * CST.c_ * CST.h_  # Rydberg energy unit
+        Eik = Ry * (1.0 / n**2)
+        erg = (1.3598430e01 * CST.eV2erg_ - Eik) / CST.eV2erg_
         s += f"    {conf:<2d}            -       -          {n:<2d}  -   -     {g:<4d}    1      {erg:.7E}\n"
     template = template.replace("{levels}", s)
-    with open(outfile, 'w') as f:
+    with open(outfile, "w") as f:
         f.write(template)
     print(f"saved as: {outfile}")
     return 0
@@ -53,13 +53,13 @@ def make_hydrogen_levels_(nlevel:int,outfile:str):
 
 if __name__ == "__main__":
     import argparse
+
     # Create the parser
-    parser = argparse.ArgumentParser(description='create hydrogen .Level file with theretical formula')
+    parser = argparse.ArgumentParser(description="create hydrogen .Level file with theretical formula")
     # Add arguments
-    parser.add_argument('outfile', type=str, help='path of output file')
-    parser.add_argument('-nl', '--nlevel', type=int, default=8, help='Number of levels including continuum, must >=3')
+    parser.add_argument("outfile", type=str, help="path of output file")
+    parser.add_argument("-nl", "--nlevel", type=int, default=8, help="Number of levels including continuum, must >=3")
     # Parse arguments
     args = parser.parse_args()
-
 
     make_hydrogen_levels_(args.nlevel, args.outfile)

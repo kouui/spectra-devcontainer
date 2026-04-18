@@ -50,9 +50,12 @@ ignore = [
     "N815",  # mixedCase variable in class scope — physics quantity naming (nLevel, nLine)
     "N816",  # mixedCase variable in global scope — physics constants (eV2erg_)
     "N999",  # invalid module name — project uses PascalCase module names (BasicP.py)
+    "E402",  # module level import not at top — project uses mid-file imports after class definitions
     "E741",  # ambiguous variable name (l, I) — common in physics notation
     "F403",  # wildcard import — project uses star imports from ImportAll
     "F405",  # undefined name from star import — consequence of F403
+    "F811",  # redefinition of unused name — false positive on @OVERLOAD patterns
+    "N814",  # camelCase imported as constant — project aliases modules as camelCase
 ]
 
 [tool.ruff.lint.isort]

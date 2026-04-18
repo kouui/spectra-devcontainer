@@ -1,39 +1,37 @@
-
-
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # configurations in spectra
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # VERSION
-# 0.1.0 
+# 0.1.0
 #    2021/05/18   u.k.   spectra-re
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 
 
-from .Types import T_STR, T_BOOL, T_INT, T_NORETURN
 from pathlib import Path
 
-_ROOT_DIR : Path = Path(__file__).resolve().parent.parent.parent
+from .Types import T_BOOL, T_INT, T_STR
+
+_ROOT_DIR: Path = Path(__file__).resolve().parent.parent.parent
 
 
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # for numba configuratoin
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 
 
+_IS_JIT: T_BOOL = False
 
-_IS_JIT       : T_BOOL = False
+_IS_NOGIL: T_BOOL = True
 
-_IS_NOGIL     : T_BOOL = True
+_IS_PARALLEL: T_BOOL = False
 
-_IS_PARALLEL  : T_BOOL = False
+_IS_CACHE: T_BOOL = True
 
-_IS_CACHE     : T_BOOL = True
+_IS_FASTMATH: T_BOOL = False
 
-_IS_FASTMATH  : T_BOOL = False
+_IS_PARALLEL: T_BOOL = False
 
-_IS_PARALLEL  : T_BOOL = False
-
-_VEC_TARGET   : T_STR  = "cpu"
+_VEC_TARGET: T_STR = "cpu"
 
 """whether to turn on the JIT compilation in all *.py files,
 since sphinx does no understand numba thus can not generate documentation for numba jitted functions.
@@ -46,10 +44,11 @@ set to
 
 # mypy: ignore-errors
 
-from numba.core import config as nb_config # type: ignore
-from numba import set_num_threads as nb_set_num_threads # type: ignore
+from numba import set_num_threads as nb_set_num_threads  # type: ignore
+from numba.core import config as nb_config  # type: ignore
 
-def _SET_NUMBA_THREAD_(threading_layer : T_STR ='threadsafe', n_thread : T_INT = 2) -> None:
+
+def _SET_NUMBA_THREAD_(threading_layer: T_STR = "threadsafe", n_thread: T_INT = 2) -> None:
     r""" """
 
     nb_config.THREADING_LAYER = threading_layer
@@ -59,4 +58,3 @@ def _SET_NUMBA_THREAD_(threading_layer : T_STR ='threadsafe', n_thread : T_INT =
     """ limiting the number of threads """
 
     return None
-

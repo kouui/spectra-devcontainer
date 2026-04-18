@@ -1,30 +1,29 @@
-
-
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # function definition of Photoionization process
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # VERSION
 #
-# 0.1.0 
+# 0.1.0
 #    2021/05/18   u.k.   spectra-re
 # 0.0.1
 #    2021/05/08   u.k.
 #        - func interpolate_PI_alpha : flip boundary value `_fill_value`
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
+
+import numpy as _numpy
+
+# from scipy.interpolate import splrep as _splrep
+# from scipy.interpolate import splev as _splev
+from scipy.interpolate import interp1d as _interp1d  # type: ignore
 
 from ..ImportAll import *
 from ..Math import Integrate
 
-import numpy as _numpy
-#from scipy.interpolate import splrep as _splrep
-#from scipy.interpolate import splev as _splev
-from scipy.interpolate import interp1d as _interp1d # type: ignore
 
-
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # interpolate data
-#-------------------------------------------------------------------------------
-def interpolate_PI_intensity_(backRad : T_ARRAY, continuum_mesh : T_ARRAY) -> T_ARRAY:
+# -------------------------------------------------------------------------------
+def interpolate_PI_intensity_(backRad: T_ARRAY, continuum_mesh: T_ARRAY) -> T_ARRAY:
     """Given continuum mesh, interpolate background intensity profile
 
     Parameters
@@ -44,25 +43,23 @@ def interpolate_PI_intensity_(backRad : T_ARRAY, continuum_mesh : T_ARRAY) -> T_
     """
 
     ## scipy interpolation
-    #_fill_value = (_backRad[1,0],_backRad[1,-1])
-    #_bsp_obj = interp1d(x=_backRad[0,:], y=_backRad[1,:], bounds_error=False, fill_value=_fill_value)
+    # _fill_value = (_backRad[1,0],_backRad[1,-1])
+    # _bsp_obj = interp1d(x=_backRad[0,:], y=_backRad[1,:], bounds_error=False, fill_value=_fill_value)
 
     intensity_mesh = _numpy.empty(continuum_mesh.shape, dtype=DT_NB_FLOAT)
     intensity_mesh_1d = intensity_mesh.reshape(-1)
-    intensity_mesh_1d[:] = _numpy.interp(continuum_mesh[:,:].copy().reshape(-1), backRad[0,:], backRad[1,:])
-    #for k in range(continuum_mesh.shape[0]):
-        ## scipy interpolation
-        #_intensity_mesh[k,:] = splev(_continuum_mesh[k,:], _bsp_obj, ext=3)
-        #_intensity_mesh[k,:] = _bsp_obj(_continuum_mesh[k,:])
+    intensity_mesh_1d[:] = _numpy.interp(continuum_mesh[:, :].copy().reshape(-1), backRad[0, :], backRad[1, :])
+    # for k in range(continuum_mesh.shape[0]):
+    ## scipy interpolation
+    # _intensity_mesh[k,:] = splev(_continuum_mesh[k,:], _bsp_obj, ext=3)
+    # _intensity_mesh[k,:] = _bsp_obj(_continuum_mesh[k,:])
 
-        #intensity_mesh[k,:] = _numpy.interp(continuum_mesh[k,:], backRad[0,:], backRad[1,:])
+    # intensity_mesh[k,:] = _numpy.interp(continuum_mesh[k,:], backRad[0,:], backRad[1,:])
 
     return intensity_mesh
 
 
-
-def interpolate_PI_alpha_(alpha_table : T_ARRAY, alpha_table_idxs : T_ARRAY,
-                          continuum_mesh : T_ARRAY) -> T_ARRAY:
+def interpolate_PI_alpha_(alpha_table: T_ARRAY, alpha_table_idxs: T_ARRAY, continuum_mesh: T_ARRAY) -> T_ARRAY:
     """Given continuum mesh, interpolate photoionization cross section
 
     only for the photoionization cross section, we use scipy cubic interpolation
@@ -73,7 +70,7 @@ def interpolate_PI_alpha_(alpha_table : T_ARRAY, alpha_table_idxs : T_ARRAY,
 
     alpha_table : T_ARRAY, 2d
         concanated array of table of photoionization cross section, wavelength_cm vs alpha_cm^2
-    
+
     alpha_table_idxs : T_ARRAY, 2d
         index array to find the array of each continuum transition in alpha_table
 
@@ -89,35 +86,31 @@ def interpolate_PI_alpha_(alpha_table : T_ARRAY, alpha_table_idxs : T_ARRAY,
 
     alpha_mesh = _numpy.empty(continuum_mesh.shape, dtype=DT_NB_FLOAT)
     for k in range(continuum_mesh.shape[0]):
-        
-        i, j = alpha_table_idxs[k,:]
+        i, j = alpha_table_idxs[k, :]
         alpha_table_sub = alpha_table[:, i:j]
 
         ## scipy cubic interpolation
-        #fill_value = alpha_table[1,0], alpha_table[1,-1]
-        fill_value = alpha_table_sub[1,-1], alpha_table_sub[1,0] # could be `alpha_table[1,-1],0`
-        bsp_obj : _interp1d = _interp1d(x=alpha_table_sub[0,:], y=alpha_table_sub[1,:], kind="cubic",
-                            bounds_error=False, fill_value=fill_value)  # no extrapolate
-        alpha_mesh[k,:] = bsp_obj(continuum_mesh[k,:])
+        # fill_value = alpha_table[1,0], alpha_table[1,-1]
+        fill_value = alpha_table_sub[1, -1], alpha_table_sub[1, 0]  # could be `alpha_table[1,-1],0`
+        bsp_obj: _interp1d = _interp1d(
+            x=alpha_table_sub[0, :], y=alpha_table_sub[1, :], kind="cubic", bounds_error=False, fill_value=fill_value
+        )  # no extrapolate
+        alpha_mesh[k, :] = bsp_obj(continuum_mesh[k, :])
 
         ## numpy linear interpolation
-        #_alpha_mesh[k,:] = np.interp(_continuum_mesh[k,:], _alpha_table[0,:], _alpha_table[1,:])
-
+        # _alpha_mesh[k,:] = np.interp(_continuum_mesh[k,:], _alpha_table[0,:], _alpha_table[1,:])
 
     return alpha_mesh
 
 
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # bound free radiative trasition coefficient
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
+
 
 def bound_free_radiative_transition_coefficient_(
-                wave : T_ARRAY, 
-                J : T_ARRAY, 
-                alpha : T_ARRAY, 
-                Te : T_UNION[T_FLOAT,T_INT], 
-                nk_by_ni_LTE : T_FLOAT
-                ) -> T_TUPLE[T_FLOAT, T_FLOAT, T_FLOAT]:
+    wave: T_ARRAY, J: T_ARRAY, alpha: T_ARRAY, Te: T_UNION[T_FLOAT, T_INT], nk_by_ni_LTE: T_FLOAT
+) -> T_TUPLE[T_FLOAT, T_FLOAT, T_FLOAT]:
     r"""Given wavelength mesh, mean intensity (as function of wavelength),
     photoionization cross section, compute
 
@@ -129,19 +122,19 @@ def bound_free_radiative_transition_coefficient_(
     ----------
 
     wave :  T_ARRAY,
-        wavelength mesh, 
+        wavelength mesh,
         [:math:`cm`]
 
     J :  T_ARRAY,
-        mean intensity as function of wavelength, 
+        mean intensity as function of wavelength,
         [:math:`erg/cm^2/Sr/cm/s`]
 
     alpha :  T_ARRAY,
-        photoionization cross section as function of wavelength, 
+        photoionization cross section as function of wavelength,
         [:math:`cm^{2}`]
 
     Te : T_UNION[T_FLOAT,T_INT]
-        Temperature, 
+        Temperature,
         [:math:`K`]
 
     nk_by_ni_LTE : T_FLOAT
@@ -153,7 +146,7 @@ def bound_free_radiative_transition_coefficient_(
     T_TUPLE[T_FLOAT, T_FLOAT, T_FLOAT]
 
     Rik : T_FLOAT
-        Radiative ionization rate, 
+        Radiative ionization rate,
         [:math:`s^{-1} \cdot cm^{-3}`] ? [:math:`s^{-1}`]
 
     Rki_stim : T_FLOAT
@@ -198,30 +191,29 @@ def bound_free_radiative_transition_coefficient_(
     # factor : h\nu
     hv = CST.h_ * CST.c_ / wave
 
-    expo = _numpy.exp( -hv / ( CST.k_*Te ) )
+    expo = _numpy.exp(-hv / (CST.k_ * Te))
 
     integrand_ik = alpha * J / hv
-    Rik = 4. * CST.pi_ * Integrate.trapze_(integrand_ik, wave)
+    Rik = 4.0 * CST.pi_ * Integrate.trapze_(integrand_ik, wave)
 
     # factor : [ni/nk]_{LTE}
-    #factor_ = ne * (gi/gk) / expo[-1] * Te**(-1.5) * Cst.saha_**(-1)
+    # factor_ = ne * (gi/gk) / expo[-1] * Te**(-1.5) * Cst.saha_**(-1)
     factor = 1 / nk_by_ni_LTE
 
     integrand_ki_stim = integrand_ik * expo
-    Rki_stim = factor * 4. * CST.pi_ * Integrate.trapze_(integrand_ki_stim, wave)
+    Rki_stim = factor * 4.0 * CST.pi_ * Integrate.trapze_(integrand_ki_stim, wave)
 
-    #integrand_ki_spon = alpha/hv * (2.*Cst.h_*Cst.c_/wave**3) * expo
-    integrand_ki_spon = alpha/hv * (2.*CST.h_*CST.c_*CST.c_/wave**5) * expo
-    Rki_spon = factor * 4. * CST.pi_ * Integrate.trapze_(integrand_ki_spon, wave)
+    # integrand_ki_spon = alpha/hv * (2.*Cst.h_*Cst.c_/wave**3) * expo
+    integrand_ki_spon = alpha / hv * (2.0 * CST.h_ * CST.c_ * CST.c_ / wave**5) * expo
+    Rki_spon = factor * 4.0 * CST.pi_ * Integrate.trapze_(integrand_ki_spon, wave)
 
     return Rik, Rki_stim, Rki_spon
 
 
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # numba optimization
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 if CFG._IS_JIT:
-
-    bound_free_radiative_transition_coefficient_ = nb_njit(**NB_NJIT_KWGS) (bound_free_radiative_transition_coefficient_)
-    interpolate_PI_intensity_ = nb_njit(**NB_NJIT_KWGS) (interpolate_PI_intensity_)
+    bound_free_radiative_transition_coefficient_ = nb_njit(**NB_NJIT_KWGS)(bound_free_radiative_transition_coefficient_)
+    interpolate_PI_intensity_ = nb_njit(**NB_NJIT_KWGS)(interpolate_PI_intensity_)

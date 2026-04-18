@@ -1,16 +1,15 @@
-
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # function definition of naive/basic physics process
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # VERSION
-# 0.1.0 
+# 0.1.0
 #    2021/05/18   u.k.   spectra-re
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 
 from ..ImportAll import *
 
 
-def wave_to_freq_(wave : T_VEC_IFA) -> T_VEC_IFA:
+def wave_to_freq_(wave: T_VEC_IFA) -> T_VEC_IFA:
     """convert Wavelength to Frequency.
 
     Parameters
@@ -27,7 +26,7 @@ def wave_to_freq_(wave : T_VEC_IFA) -> T_VEC_IFA:
     return CST.c_ / wave
 
 
-def freq_to_wave_(freq : T_VEC_IFA) -> T_VEC_IFA:
+def freq_to_wave_(freq: T_VEC_IFA) -> T_VEC_IFA:
     """convert Frequency to Wavelength.
 
     Parameters
@@ -43,7 +42,7 @@ def freq_to_wave_(freq : T_VEC_IFA) -> T_VEC_IFA:
     return CST.c_ / freq
 
 
-def dop_vel_to_shift_(p0 : T_VEC_IFA, v : T_VEC_IFA) -> T_VEC_IFA:
+def dop_vel_to_shift_(p0: T_VEC_IFA, v: T_VEC_IFA) -> T_VEC_IFA:
     """given Doppler velocity and the line central wavelength/frequency,
     compute Doppler shift in wavelength/frequency.
 
@@ -62,15 +61,16 @@ def dop_vel_to_shift_(p0 : T_VEC_IFA, v : T_VEC_IFA) -> T_VEC_IFA:
 
     return p0 * v / CST.c_
 
-@OVERLOAD
-def doppler_width_(p0 : T_FLOAT, Te : T_FLOAT, Vt : T_FLOAT, am : T_FLOAT) -> T_FLOAT: ...
-@OVERLOAD
-def doppler_width_(p0 : T_ARRAY, Te : T_FLOAT, Vt : T_FLOAT, am : T_FLOAT) -> T_ARRAY: ...
-@OVERLOAD
-def doppler_width_(p0 : T_FLOAT, Te : T_ARRAY, Vt : T_ARRAY, am : T_FLOAT) -> T_ARRAY: ...
 
-def doppler_width_(p0 : T_VEC_IFA, Te : T_VEC_IFA, 
-                       Vt : T_VEC_IFA, am : T_FLOAT) -> T_VEC_IFA:
+@OVERLOAD
+def doppler_width_(p0: T_FLOAT, Te: T_FLOAT, Vt: T_FLOAT, am: T_FLOAT) -> T_FLOAT: ...
+@OVERLOAD
+def doppler_width_(p0: T_ARRAY, Te: T_FLOAT, Vt: T_FLOAT, am: T_FLOAT) -> T_ARRAY: ...
+@OVERLOAD
+def doppler_width_(p0: T_FLOAT, Te: T_ARRAY, Vt: T_ARRAY, am: T_FLOAT) -> T_ARRAY: ...
+
+
+def doppler_width_(p0: T_VEC_IFA, Te: T_VEC_IFA, Vt: T_VEC_IFA, am: T_FLOAT) -> T_VEC_IFA:
     """Given central wavelength/frequency, relative atomic mass of a line,
     and the temperature, turbulent velocity, compute the corresponding
     Doppler Width.
@@ -91,13 +91,12 @@ def doppler_width_(p0 : T_VEC_IFA, Te : T_VEC_IFA,
     T_VEC_IFA
         [description]
     """
-    eta0 = (2. * CST.k_ * Te / ( CST.mH_ * am ) + Vt * Vt )**(0.5)
+    eta0 = (2.0 * CST.k_ * Te / (CST.mH_ * am) + Vt * Vt) ** (0.5)
 
     return p0 * eta0 / CST.c_
 
 
-def update_level_gamma_(Aji : T_ARRAY, idxJ : T_ARRAY, 
-                        gamma : T_ARRAY):
+def update_level_gamma_(Aji: T_ARRAY, idxJ: T_ARRAY, gamma: T_ARRAY):
     """Given Einstein A coefficient of Levels, upper index of Lines,
     compute radiative damping constant for each Level.
 
@@ -116,8 +115,7 @@ def update_level_gamma_(Aji : T_ARRAY, idxJ : T_ARRAY,
         gamma[idxJ[i]] += Aji[i]
 
 
-def update_line_gamma_(idxI : T_ARRAY, idxJ : T_ARRAY, gamma_level : T_ARRAY, 
-                       gamma_line : T_ARRAY):
+def update_line_gamma_(idxI: T_ARRAY, idxJ: T_ARRAY, gamma_level: T_ARRAY, gamma_line: T_ARRAY):
     """Given Einstein radiative damping constant of Levels,
     compute radiative damping constant of Lines.
 
@@ -138,7 +136,7 @@ def update_line_gamma_(idxI : T_ARRAY, idxJ : T_ARRAY, gamma_level : T_ARRAY,
         gamma_line[i] = gamma_level[idxI[i]] + gamma_level[idxJ[i]]
 
 
-def damping_const_a_(gamma_line : T_VEC_FA, dop_width_hz : T_VEC_FA) -> T_VEC_FA:
+def damping_const_a_(gamma_line: T_VEC_FA, dop_width_hz: T_VEC_FA) -> T_VEC_FA:
     """Given the radiative damping constant and
     the Doppler Width (in frequency unit) of the line,
     compute damping constant a.
@@ -155,11 +153,10 @@ def damping_const_a_(gamma_line : T_VEC_FA, dop_width_hz : T_VEC_FA) -> T_VEC_FA
     T_VEC_FA
         damping constant, [-]
     """
-    return gamma_line / ( 4 * CST.pi_ * dop_width_hz )
+    return gamma_line / (4 * CST.pi_ * dop_width_hz)
 
 
-def refractive_index_in_air_(wave : T_UNION[T_FLOAT, T_INT, T_ARRAY],
-                             unit : T_STR) -> T_UNION[T_FLOAT, T_INT, T_ARRAY]:
+def refractive_index_in_air_(wave: T_UNION[T_FLOAT, T_INT, T_ARRAY], unit: T_STR) -> T_UNION[T_FLOAT, T_INT, T_ARRAY]:
     """Given wavelength, calculate the refraction index in air
 
     J. Opt. Soc. Am. 62, 958 (1972)
@@ -176,22 +173,21 @@ def refractive_index_in_air_(wave : T_UNION[T_FLOAT, T_INT, T_ARRAY],
     T_UNION[T_FLOAT, T_ARRAY]
         refraction index in air
     """
-    fac : T_FLOAT = {
-        "cm" : 1.E4,
-        "um" : 1.,
-        "nm" : 1E-3,
-        "AA" : 1E-4,
+    fac: T_FLOAT = {
+        "cm": 1.0e4,
+        "um": 1.0,
+        "nm": 1e-3,
+        "AA": 1e-4,
     }[unit]
 
-    sigma = wave * fac # unit --> um
+    sigma = wave * fac  # unit --> um
 
-    out = 8342.13 + 2406030 / (130 - sigma * sigma ) + 15997. / (38.9 - sigma * sigma)
-    
-    return  out * 1E-8 + 1.
+    out = 8342.13 + 2406030 / (130 - sigma * sigma) + 15997.0 / (38.9 - sigma * sigma)
+
+    return out * 1e-8 + 1.0
 
 
-def air_to_vacuum_(wave : T_UNION[T_FLOAT, T_INT, T_ARRAY],
-                   unit : T_STR) -> T_UNION[T_FLOAT, T_ARRAY]:
+def air_to_vacuum_(wave: T_UNION[T_FLOAT, T_INT, T_ARRAY], unit: T_STR) -> T_UNION[T_FLOAT, T_ARRAY]:
     """Given the wavelength in air, compute the wavelength in vacuum
 
     https://physics.nist.gov/PhysRefData/ASD/Html/lineshelp.html#AIR
@@ -208,11 +204,11 @@ def air_to_vacuum_(wave : T_UNION[T_FLOAT, T_INT, T_ARRAY],
     T_UNION[T_FLOAT, T_INT, T_ARRAY]
         refraction index in air
     """
-    
+
     return wave * refractive_index_in_air_(wave, unit)
 
-def vacuum_to_air_(wave : T_UNION[T_FLOAT, T_INT, T_ARRAY],
-                   unit : T_STR) -> T_UNION[T_FLOAT, T_ARRAY]:
+
+def vacuum_to_air_(wave: T_UNION[T_FLOAT, T_INT, T_ARRAY], unit: T_STR) -> T_UNION[T_FLOAT, T_ARRAY]:
     """Given the wavelength in vacuum, compute the wavelength in air
 
     https://physics.nist.gov/PhysRefData/ASD/Html/lineshelp.html#AIR
@@ -229,17 +225,16 @@ def vacuum_to_air_(wave : T_UNION[T_FLOAT, T_INT, T_ARRAY],
     T_UNION[T_FLOAT, T_INT, T_ARRAY]
         refraction index in air
     """
-    
+
     return wave / refractive_index_in_air_(wave, unit)
 
 
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # numba optimization
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 if CFG._IS_JIT:
-    doppler_width_        = nb_vec( **NB_VEC_KWGS ) ( doppler_width_ )
-    damping_const_a_      = nb_vec( **NB_VEC_KWGS ) ( damping_const_a_ )
+    doppler_width_ = nb_vec(**NB_VEC_KWGS)(doppler_width_)
+    damping_const_a_ = nb_vec(**NB_VEC_KWGS)(damping_const_a_)
     # update_level_gamma_
     # update_line_gamma_
-
