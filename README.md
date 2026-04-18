@@ -17,7 +17,7 @@ uv sync
 
 ## Running Notebooks
 
-Notebooks are located in `notebooks/basic/` and cover topics such as radiative transfer, statistical equilibrium, and absorption profiles.
+Notebooks are located in `notebooks/` and cover topics such as radiative transfer, statistical equilibrium, and absorption profiles.
 
 ### Option A: VS Code (recommended)
 
@@ -52,6 +52,22 @@ uv run ruff check src/
 uv run pyright src/
 uv run pytest test/
 ```
+
+## Conventions
+
+### Custom modules
+
+All new/experimental Python modules (`*.py`) should be placed in `src/spectra/Experimental/` first. Once the module is stable and reviewed, it can be promoted to the appropriate package (e.g., `Atomic/`, `Function/`).
+
+### Local notebooks
+
+To avoid conflicts when syncing with the remote repository (`git pull`), **do not edit notebooks in `notebooks/` directly**. Instead, copy or create notebooks in `notebooks_local/`:
+
+```
+notebooks_local/       # gitignored — your local workspace
+```
+
+This folder is excluded from version control, so your local work will not conflict with upstream changes.
 
 ## TODO
 

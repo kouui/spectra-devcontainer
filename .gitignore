@@ -150,9 +150,8 @@ sphinx/
 *.npy.*
 !data/intensity/atlas/QS/atlas_QS.20221118.npy
 
-# # notebooks
-# notebooks/*
-# !notebooks/basic
+# local notebooks
+notebooks_local/
 
 # pdf
 ref/
