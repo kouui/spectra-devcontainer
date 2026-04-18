@@ -19,6 +19,9 @@ dev = [
     "pyright",
     "pytest",
 ]
+notebook = [
+    "jupyterlab",
+]
 
 [build-system]
 requires = ["hatchling"]
