@@ -25,6 +25,6 @@ class CloudModel_Container:
     tau_1D             : T_ARRAY     # 1d, (sum_of_line_wavelength_mesh,), optical thickness profile, [-]
     prof_1D            : T_ARRAY     # 1d, (sum_of_line_wavelength_mesh,), out intensity profile, [erg/cm^2/Sr/cm/s]
     wl_1D              : T_ARRAY     # 1d, (sum_of_line_wavelength_mesh,), doppler shifted wavelength mesh , [cm]
-    Line_mesh_idxs     : T_ARRAY     # 1d, (sum_of_line_wavelength_mesh,), [-]
+    Line_mesh_idxs     : T_ARRAY     # 1d, (nline,2), [-]
     line_emissivity    : T_ARRAY     # 1d, (nline,), [/cm^3/s/]
     line_absorption    : T_ARRAY     # 1d, (nline,), [/erg/cm/Sr] =emi/src
