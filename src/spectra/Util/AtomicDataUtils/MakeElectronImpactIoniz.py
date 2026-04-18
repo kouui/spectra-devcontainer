@@ -6,7 +6,7 @@
 #    2021/07/13   u.k.   
 #-------------------------------------------------------------------------------
 
-from spectra_src.ImportAll import *
+from spectra.ImportAll import *
 import os
 
 import numpy as _numpy

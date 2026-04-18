@@ -6,9 +6,9 @@ _KWGS_CLOSE = { "rtol" : 1.E-05,  "atol" : 1.E-20}
 
 import os, unittest
 
-from spectra_src.ImportAll import *
-from spectra_src.Struct import Atom, Atmosphere, Radiation
-from spectra_src.Function.SEquil import SELib
+from spectra.ImportAll import *
+from spectra.Struct import Atom, Atmosphere, Radiation
+from spectra.Function.SEquil import SELib
 
 
 class Test_SE_With_H_I(unittest.TestCase):

@@ -1,9 +1,9 @@
 
 
-from spectra_src.ImportAll import *
+from spectra.ImportAll import *
 
-from spectra_src.Struct import Atom
-from spectra_src.Util import HelpUtil
+from spectra.Struct import Atom
+from spectra.Util import HelpUtil
 
 import os
 

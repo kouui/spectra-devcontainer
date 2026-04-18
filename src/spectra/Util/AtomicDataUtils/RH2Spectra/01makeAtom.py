@@ -1,7 +1,7 @@
 # usage : 
 # $ conda activate <spectra-env>
 # $ cd /path/to/spectra/data/atom/Ca_I-II-III
-# $ python ../../../spectra_src/Util/AtomicDataUtils/RH2Spectra/01makeAtom.py CaI+II_45.atom.RH.20220802.txt CaI+II_45.RH.configuration-table.txt ./ -file-prefix rh.
+# $ python ../../../spectra/Util/AtomicDataUtils/RH2Spectra/01makeAtom.py CaI+II_45.atom.RH.20220802.txt CaI+II_45.RH.configuration-table.txt ./ -file-prefix rh.
 
 
 #from glob import glob
@@ -10,8 +10,8 @@ from pprint import pprint
 from dataclasses import dataclass
 import os
 
-from spectra_src import Elements
-from spectra_src import Constants as Cst
+from spectra import Elements
+from spectra import Constants as Cst
 
 #-------------------------------------------------------------------
 # global constants

@@ -1,11 +1,11 @@
 
 
 
-from spectra_src.ImportAll import *
+from spectra.ImportAll import *
 
-from spectra_src.Struct import Atom, Atmosphere, Radiation
-from spectra_src.Function.SEquil import SELib
-from spectra_src.Function import SlabModel 
+from spectra.Struct import Atom, Atmosphere, Radiation
+from spectra.Function.SEquil import SELib
+from spectra.Function import SlabModel 
 
 import os
 

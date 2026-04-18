@@ -1,13 +1,13 @@
 # Theoretical Hydrogen Atom — Workflow
 
 This document describes how `init_theoretical_hydrogen_atom_` in
-`spectra_src/Struct/Atom.py` constructs a fully theoretical hydrogen
+`spectra/Struct/Atom.py` constructs a fully theoretical hydrogen
 `Atom` struct without reading any data file from disk.
 
 ## 1. Entry point
 
 ```python
-from spectra_src.Struct.Atom import init_theoretical_hydrogen_atom_
+from spectra.Struct.Atom import init_theoretical_hydrogen_atom_
 
 atom, waveMesh = init_theoretical_hydrogen_atom_(nLevel=8)
 ```
@@ -155,7 +155,7 @@ the collisional rate matrix in `Function/SEquil/SELib.py`:
 ```
 
 So the collisional rates are lazily computed per temperature, directly
-from the analytic formulas in `spectra_src/Atomic/Hydrogen.py`.
+from the analytic formulas in `spectra/Atomic/Hydrogen.py`.
 
 ## 6. Properties summary
 

@@ -6,9 +6,9 @@ _KWGS_CLOSE = { "rtol" : 1.E-05,  "atol" : 1.E-20}
 
 import os, unittest
 
-from spectra_src.ImportAll import *
+from spectra.ImportAll import *
 
-from spectra_src.RadiativeTransfer import Profile as _Profile
+from spectra.RadiativeTransfer import Profile as _Profile
 
 import numpy as _numpy
 

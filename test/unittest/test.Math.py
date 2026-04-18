@@ -5,9 +5,9 @@ from numpy import allclose as _ALLCLOSE
 _KWGS_CLOSE = { "rtol" : 1.E-05,  "atol" : 1.E-20}
 
 import os, unittest
-from spectra_src.ImportAll import *
+from spectra.ImportAll import *
 
-from spectra_src.Math import GaussLeg
+from spectra.Math import GaussLeg
 
 
 class Test_Gauss_Leg(unittest.TestCase):

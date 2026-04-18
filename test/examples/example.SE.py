@@ -1,9 +1,9 @@
 
 
-from spectra_src.ImportAll import *
+from spectra.ImportAll import *
 
-from spectra_src.Struct import Atom, Atmosphere, Radiation
-from spectra_src.Function.SEquil import SELib
+from spectra.Struct import Atom, Atmosphere, Radiation
+from spectra.Function.SEquil import SELib
 
 import os
 

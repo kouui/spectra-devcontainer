@@ -6,8 +6,8 @@
 #    2024/02/02   u.k.   
 #-------------------------------------------------------------------------------
 
-from spectra_src import Configurations as CFG
-from spectra_src import Constants as CST
+from spectra import Configurations as CFG
+from spectra import Constants as CST
 
 TEMPLATE = """#--------------------------------------------------------------------------------------------------
 Title: Hydrogen atomic model

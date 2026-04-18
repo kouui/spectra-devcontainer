@@ -279,8 +279,8 @@ def init_theoretical_hydrogen_atom_(
     hydrogenic energy formula, then the remaining atomic data (Aji, CE,
     CI, PI, RL) are obtained by calling the existing `AtomIO.make_Atom_*_`
     helpers with `path=None`, which already route hydrogen to the analytic
-    formulas in `spectra_src.Atomic.Hydrogen` and
-    `spectra_src.Function.Hydrogen.DegenerateN`.
+    formulas in `spectra.Atomic.Hydrogen` and
+    `spectra.Function.Hydrogen.DegenerateN`.
 
     Parameters
     ----------

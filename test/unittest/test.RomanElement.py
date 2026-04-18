@@ -6,10 +6,10 @@ _KWGS_CLOSE = { "rtol" : 1.E-05,  "atol" : 1.E-20}
 
 import os, unittest
 
-from spectra_src.ImportAll import *
+from spectra.ImportAll import *
 
-from spectra_src.Util import RomanUtil as _RomanUtil
-from spectra_src.Util import ElementUtil as _ElementUtil
+from spectra.Util import RomanUtil as _RomanUtil
+from spectra.Util import ElementUtil as _ElementUtil
 
 
 class Test_Roman(unittest.TestCase):

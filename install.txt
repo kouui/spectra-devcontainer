@@ -1,4 +1,4 @@
-# assuming your path to spectra_src folder is /path/to/spectra/spectra_src
+# assuming your path to spectra folder is /path/to/spectra/spectra
 # assuming your path to anaconda3 or miniconda3 is /path/to/anaconda3
 
 # step.1 create a new environment
