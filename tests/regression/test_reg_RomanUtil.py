@@ -4,8 +4,6 @@ import pytest
 
 from spectra.Util import RomanUtil
 
-from .conftest import assert_close
-
 
 class TestIndexToRoman:
     def test_basic(self, ref):

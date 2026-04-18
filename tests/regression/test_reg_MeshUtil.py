@@ -1,7 +1,5 @@
 """Regression tests for spectra.Util.MeshUtil"""
 
-import numpy as np
-
 from spectra.Util import MeshUtil
 
 from .conftest import assert_close

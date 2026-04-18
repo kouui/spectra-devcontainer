@@ -63,8 +63,7 @@ class TestIonConversion:
 
 class TestIonizPotential:
     def test_Ca_II(self, ref):
-        assert_close(ElementUtil.ion_to_ioniz_potential_("Ca_II"),
-                     ref["ElementUtil.ion_to_ioniz_potential_Ca_II"])
+        assert_close(ElementUtil.ion_to_ioniz_potential_("Ca_II"), ref["ElementUtil.ion_to_ioniz_potential_Ca_II"])
 
 
 class TestShiftIon:

@@ -8,7 +8,9 @@ from .conftest import assert_close
 
 
 class TestGauntFactor:
-    @pytest.mark.parametrize("ni,x", [(1, 1.5), (1, 2.0), (1, 5.0), (2, 1.5), (2, 2.0), (2, 5.0), (3, 1.5), (3, 2.0), (3, 5.0)])
+    @pytest.mark.parametrize(
+        "ni,x", [(1, 1.5), (1, 2.0), (1, 5.0), (2, 1.5), (2, 2.0), (2, 5.0), (3, 1.5), (3, 2.0), (3, 5.0)]
+    )
     def test_gaunt_factor(self, ref, ni, x):
         assert_close(Hydrogen.gaunt_factor_(ni, x), ref[f"Hydrogen.gaunt_factor_ni{ni}_x{x}"])
 
@@ -26,21 +28,39 @@ class TestEinsteinA:
 
 
 class TestCERateCoe:
-    @pytest.mark.parametrize("ni,nj,Te", [
-        (1, 2, 5000), (1, 2, 7000), (1, 2, 10000),
-        (1, 3, 5000), (1, 3, 7000), (1, 3, 10000),
-        (2, 3, 5000), (2, 3, 7000), (2, 3, 10000),
-    ])
+    @pytest.mark.parametrize(
+        "ni,nj,Te",
+        [
+            (1, 2, 5000),
+            (1, 2, 7000),
+            (1, 2, 10000),
+            (1, 3, 5000),
+            (1, 3, 7000),
+            (1, 3, 10000),
+            (2, 3, 5000),
+            (2, 3, 7000),
+            (2, 3, 10000),
+        ],
+    )
     def test_CE(self, ref, ni, nj, Te):
         assert_close(Hydrogen.CE_rate_coe_(ni, nj, float(Te)), ref[f"Hydrogen.CE_ni{ni}_nj{nj}_Te{Te}"])
 
 
 class TestCIRateCoe:
-    @pytest.mark.parametrize("ni,Te", [
-        (1, 5000), (1, 7000), (1, 10000),
-        (2, 5000), (2, 7000), (2, 10000),
-        (3, 5000), (3, 7000), (3, 10000),
-    ])
+    @pytest.mark.parametrize(
+        "ni,Te",
+        [
+            (1, 5000),
+            (1, 7000),
+            (1, 10000),
+            (2, 5000),
+            (2, 7000),
+            (2, 10000),
+            (3, 5000),
+            (3, 7000),
+            (3, 10000),
+        ],
+    )
     def test_CI(self, ref, ni, Te):
         assert_close(Hydrogen.CI_rate_coe_(ni, float(Te)), ref[f"Hydrogen.CI_ni{ni}_Te{Te}"])
 

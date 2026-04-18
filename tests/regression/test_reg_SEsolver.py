@@ -12,14 +12,22 @@ class TestSolveSE:
         nLevel = 4
         Rmat = np.zeros((nLevel, nLevel))
         Cmat = np.zeros((nLevel, nLevel))
-        Rmat[0, 1] = 1e8; Rmat[1, 0] = 1e6
-        Rmat[0, 2] = 5e7; Rmat[2, 0] = 1e5
-        Rmat[1, 2] = 3e7; Rmat[2, 1] = 2e6
-        Rmat[0, 3] = 1e7; Rmat[3, 0] = 1e4
-        Cmat[0, 1] = 5e5; Cmat[1, 0] = 1e4
-        Cmat[0, 2] = 3e5; Cmat[2, 0] = 5e3
-        Cmat[1, 2] = 2e5; Cmat[2, 1] = 1e4
-        Cmat[0, 3] = 1e5; Cmat[3, 0] = 1e3
+        Rmat[0, 1] = 1e8
+        Rmat[1, 0] = 1e6
+        Rmat[0, 2] = 5e7
+        Rmat[2, 0] = 1e5
+        Rmat[1, 2] = 3e7
+        Rmat[2, 1] = 2e6
+        Rmat[0, 3] = 1e7
+        Rmat[3, 0] = 1e4
+        Cmat[0, 1] = 5e5
+        Cmat[1, 0] = 1e4
+        Cmat[0, 2] = 3e5
+        Cmat[2, 0] = 5e3
+        Cmat[1, 2] = 2e5
+        Cmat[2, 1] = 1e4
+        Cmat[0, 3] = 1e5
+        Cmat[3, 0] = 1e3
         n_SE = SEsolver.solve_SE_(Rmat, Cmat)
         assert_close(n_SE, ref["SEsolver.solve_SE_4level"])
 
@@ -27,11 +35,16 @@ class TestSolveSE:
         nLevel = 4
         Rmat = np.zeros((nLevel, nLevel))
         Cmat = np.zeros((nLevel, nLevel))
-        Rmat[0, 1] = 1e8; Rmat[1, 0] = 1e6
-        Rmat[0, 2] = 5e7; Rmat[2, 0] = 1e5
-        Rmat[1, 2] = 3e7; Rmat[2, 1] = 2e6
-        Rmat[0, 3] = 1e7; Rmat[3, 0] = 1e4
-        Cmat[0, 1] = 5e5; Cmat[1, 0] = 1e4
+        Rmat[0, 1] = 1e8
+        Rmat[1, 0] = 1e6
+        Rmat[0, 2] = 5e7
+        Rmat[2, 0] = 1e5
+        Rmat[1, 2] = 3e7
+        Rmat[2, 1] = 2e6
+        Rmat[0, 3] = 1e7
+        Rmat[3, 0] = 1e4
+        Cmat[0, 1] = 5e5
+        Cmat[1, 0] = 1e4
         n_SE = SEsolver.solve_SE_(Rmat, Cmat)
         assert_close(np.sum(n_SE), 1.0, rtol=1e-12)
 
@@ -39,8 +52,10 @@ class TestSolveSE:
         nLevel = 3
         Rmat = np.zeros((nLevel, nLevel))
         Cmat = np.zeros((nLevel, nLevel))
-        Rmat[0, 1] = 1e8; Rmat[1, 0] = 1e6
-        Rmat[0, 2] = 5e7; Rmat[2, 0] = 1e5
+        Rmat[0, 1] = 1e8
+        Rmat[1, 0] = 1e6
+        Rmat[0, 2] = 5e7
+        Rmat[2, 0] = 1e5
         n_SE = SEsolver.solve_SE_(Rmat, Cmat)
         assert np.all(n_SE >= 0)
 

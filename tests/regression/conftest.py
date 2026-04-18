@@ -9,7 +9,7 @@ _REF_PATH = Path(__file__).parent / "reference_values.json"
 
 @pytest.fixture(scope="session")
 def ref():
-    with open(_REF_PATH) as f:
+    with _REF_PATH.open() as f:
         return json.load(f)
 
 

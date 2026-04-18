@@ -36,7 +36,5 @@ class TestArrayFrom1D:
     def test_extract(self, ref):
         arr_1D = np.array([10.0, 20.0, 30.0, 40.0, 50.0, 60.0])
         mesh_idxs = np.array([[0, 3], [3, 6]])
-        assert_close(MeshUtil.array_from_1D_(arr_1D, mesh_idxs, 0),
-                     ref["MeshUtil.array_from_1D_k0"])
-        assert_close(MeshUtil.array_from_1D_(arr_1D, mesh_idxs, 1),
-                     ref["MeshUtil.array_from_1D_k1"])
+        assert_close(MeshUtil.array_from_1D_(arr_1D, mesh_idxs, 0), ref["MeshUtil.array_from_1D_k0"])
+        assert_close(MeshUtil.array_from_1D_(arr_1D, mesh_idxs, 1), ref["MeshUtil.array_from_1D_k1"])

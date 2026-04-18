@@ -19,6 +19,7 @@ dev = [
     "ruff",
     "pyright",
     "pytest",
+    "pre-commit",
 ]
 notebook = [
     "jupyterlab",
