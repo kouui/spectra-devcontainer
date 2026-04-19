@@ -474,7 +474,7 @@ def cal_SE_(
         rate_only,
     )
 
-    SE_con = _Container.SE_Container(  # type: ignore[call-arg]
+    SE_con = _Container.SE_Container(
         n_SE=n_SE,
         n_LTE=n_LTE,
         nj_by_ni=nj_by_ni,
@@ -482,6 +482,10 @@ def cal_SE_(
         absorb_prof_1d=absorb_prof_cm_all,
         Line_mesh_idxs=Line_mesh_idxs,
         Jbar=Jbar_all,
+        Ntotal=0.0,
+        Nh=atmos.Nh,
+        Ne=Ne,
+        Te=Te,
     )
 
     tran_rate_con = _Container.TranRates_Container(
