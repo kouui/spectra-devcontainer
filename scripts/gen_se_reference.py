@@ -9,8 +9,9 @@ The existing file is not sort-ordered, so ``sort_keys=False`` is used to
 preserve the historic ad-hoc key order; new keys are appended at the tail.
 This keeps the diff surgical (only the 18 added keys appear).
 
-Idempotent: re-running overwrites the 18 keys with identical values (assuming
-deterministic inputs). Other keys are preserved.
+Re-running the script overwrites the 18 keys with identical values given
+deterministic inputs. Keys introduced by earlier runs but no longer in the
+CASES table are NOT pruned — the script only inserts/overwrites.
 
 To regenerate on the behavior-locking commit, run this script inside a
 throwaway worktree checked out at that commit.
@@ -19,6 +20,7 @@ throwaway worktree checked out at that commit.
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 import sys
 from typing import Any
@@ -92,8 +94,12 @@ def _extract_field(case_key: str, field: str, SE_con: Any, atmos: Any) -> Any:
     """Mirror the assertion's source: `atmos.Ne` for H x Pg_Te, SE_con.* otherwise."""
     if field == "Ne":
         # Only H x Pg_Te asserts atmos.Ne (it is iterated by the self-consistent
-        # loop). Stored as a scalar float.
-        assert case_key == "H_SE_Pg_Te", f"unexpected Ne assertion for {case_key}"
+        # loop). Using a raise instead of `assert` so `python -O` cannot bypass
+        # the guard.
+        if case_key != "H_SE_Pg_Te":
+            raise ValueError(
+                f"unexpected atmos.Ne assertion for {case_key}; update _extract_field if a new test really needs it"
+            )
         return float(atmos.Ne)
     value = getattr(SE_con, field)
     if hasattr(value, "tolist"):
@@ -101,7 +107,7 @@ def _extract_field(case_key: str, field: str, SE_con: Any, atmos: Any) -> Any:
     return float(value)
 
 
-def _run_case(case: dict[str, Any]) -> dict[str, Any]:
+def _run_case(case: dict[str, Any]) -> tuple[dict[str, Any], float]:
     conf_path = str(CFG._ROOT_DIR / case["conf"])
     atom, wMesh, _ = Atom.init_Atom_(conf_path, is_hydrogen=case["is_hydrogen"])
     atmos = Atmosphere.Atmosphere0D(**case["atmos_kwargs"])
@@ -110,8 +116,17 @@ def _run_case(case: dict[str, Any]) -> dict[str, Any]:
     entry = getattr(SELib, case["entry"])
     SE_con, _ = entry(atom, atmos, wMesh, radiation, None)
 
+    # Sanity gate on the physics output, independent of whether the case asserts
+    # n_SE in the reference JSON.
+    n_sum = float(SE_con.n_SE.sum())
+    if not math.isfinite(n_sum) or abs(n_sum - 1.0) > 0.05:
+        raise RuntimeError(
+            f"{case['key']}: n_SE.sum()={n_sum:.6f} fails sanity check (expected finite value within 5% of 1.0)"
+        )
+
     key_prefix = f"E2E.{case['key']}"
-    return {f"{key_prefix}.{field}": _extract_field(case["key"], field, SE_con, atmos) for field in case["fields"]}
+    new_keys = {f"{key_prefix}.{field}": _extract_field(case["key"], field, SE_con, atmos) for field in case["fields"]}
+    return new_keys, n_sum
 
 
 def main() -> None:
@@ -122,8 +137,7 @@ def main() -> None:
 
     before = len(merged)
     for case in CASES:
-        new_keys = _run_case(case)
-        n_sum = sum(new_keys[f"E2E.{case['key']}.n_SE"])
+        new_keys, n_sum = _run_case(case)
         print(
             f"generated E2E.{case['key']:20s}  n_SE.sum()={n_sum:.6f}  (+{len(new_keys)} keys)",
             flush=True,
