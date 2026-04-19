@@ -6,6 +6,12 @@
 #    2021/08/10   u.k.
 # -------------------------------------------------------------------------------
 
+# pyright: reportPossiblyUnboundVariable=false
+#   Experimental loader with a long chain of conditional-branch assignments
+#   (`nDep`, `n_pop`, `scale_str`, `model`, `nLevel`) that pyright cannot
+#   narrow. Experimental has no regression coverage, so the guarantee is
+#   weaker than the Stage 2 target; revisit when the module is productised.
+
 from dataclasses import dataclass as _dataclass
 from pathlib import Path
 

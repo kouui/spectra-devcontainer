@@ -55,7 +55,17 @@ def read_general_info_(rs: T_INT, lns: T_LIST[T_STR]) -> T_TUPLE[T_INT, T_STR, T
     2. Z
     3. Element
     4. nLevel
+
+    All four keys are required; a missing one raises ``ValueError`` rather
+    than propagating an unbound local.
     """
+    # Initialise before the loop so `re = rs + i + 1` is well-defined when
+    # `lns[rs:]` is empty (also silences reportPossiblyUnboundVariable).
+    i: T_INT = -1
+    Title: T_STR = ""
+    Z: T_INT = -1
+    Element: T_STR = ""
+    nLevel: T_INT = -1
     for i, ln in enumerate(lns[rs:]):
         if skip_line_(ln):
             continue
@@ -74,6 +84,8 @@ def read_general_info_(rs: T_INT, lns: T_LIST[T_STR]) -> T_TUPLE[T_INT, T_STR, T
         if ln.split()[0].strip().lower() == "nlevel":
             nLevel = int(ln.split()[-1].strip())
 
+    if Z < 0 or nLevel < 0 or Element == "":
+        raise ValueError("missing Z, Element, or nLevel in Level config header")
     re = rs + i + 1
 
     return re, Title, Z, Element, nLevel
@@ -100,7 +112,10 @@ def read_Level_info_(
     5. n
     """
     idx = 0
-    # _prefix = ''
+    # `prefix` is an empty string until a `prefix <value>` line is seen; stays
+    # empty for Level files without explicit prefix blocks.
+    prefix: T_STR = ""
+    i: T_INT = -1
     for i, ln in enumerate(lns[rs:]):
         if skip_line_(ln):
             continue
@@ -142,9 +157,8 @@ def read_Level_info_(
 
 def read_Line_info_(lns: T_LIST[T_STR], Aji: T_ARRAY, line_ctj_table: T_CTJ_PAIR_TABLE):
     """read Line information"""
-    # _count = 0
-    # _prefix = ''
-    for i, ln in enumerate(lns[:]):
+    prefix: T_STR = ""
+    for ln in lns[:]:
         if skip_line_(ln):
             continue
         elif check_end_(ln):
@@ -163,11 +177,17 @@ def read_Line_info_(lns: T_LIST[T_STR], Aji: T_ARRAY, line_ctj_table: T_CTJ_PAIR
         if ctj_ij in line_ctj_table:
             line_index = line_ctj_table.index(ctj_ij)
             Aji[line_index] += float(words[6])
-            # _count += 1
 
 
 def read_CE_temperature_(lns: T_LIST[T_STR]) -> T_TUPLE[T_INT, T_INT, T_LIST[T_FLOAT], T_STR]:
-    """read Temperature grid for interpolation"""
+    """read Temperature grid for interpolation.
+
+    Both ``type`` and ``temperature`` lines are required; missing either
+    raises ``ValueError`` rather than returning unbound defaults.
+    """
+    i: T_INT = -1
+    Te: T_LIST[T_FLOAT] = []
+    CE_type: T_STR = ""
     for i, ln in enumerate(lns[:]):
         if skip_line_(ln):
             continue
@@ -183,6 +203,8 @@ def read_CE_temperature_(lns: T_LIST[T_STR]) -> T_TUPLE[T_INT, T_INT, T_LIST[T_F
         if words[0].lower() == "temperature":
             Te = [float(v) for v in words[1:]]
 
+    if not Te or CE_type == "":
+        raise ValueError("missing type/temperature in CE header")
     nTe = len(Te)
     re = i + 1
 
@@ -201,9 +223,8 @@ def read_CE_table_(
     line_ctj_table: T_CTJ_PAIR_TABLE,
 ):
     """read CE table for interpolation"""
-    # _count = 0
-    # _prefix = ''
-    for i, ln in enumerate(lns[rs:]):
+    prefix: T_STR = ""
+    for ln in lns[rs:]:
         if skip_line_(ln):
             continue
         elif check_end_(ln):
@@ -227,13 +248,13 @@ def read_CE_table_(
             f1[line_index] = float(words[-2])
             f2[line_index] = float(words[-1])
 
-            # _count += 1
-
 
 def read_CI_temperature_(lns: T_LIST[T_STR]) -> T_TUPLE[T_INT, T_INT, T_LIST[T_FLOAT]]:
     r"""
     read Temperature grid for interpolation
     """
+    i: T_INT = -1
+    Te: T_LIST[T_FLOAT] = []
     for i, ln in enumerate(lns[:]):
         if skip_line_(ln):
             continue
@@ -243,12 +264,11 @@ def read_CI_temperature_(lns: T_LIST[T_STR]) -> T_TUPLE[T_INT, T_INT, T_LIST[T_F
         words = ln.split()
         words = [v.strip() for v in words]
 
-        # if _words[0].lower() == "ncont":
-        #    _nCont = int( _words[1] )
-
         if words[0].lower() == "temperature":
             Te = [float(_v) for _v in words[1:]]
 
+    if not Te:
+        raise ValueError("missing temperature in CI header")
     nTe = len(Te)
     re = i + 1
 
@@ -266,9 +286,8 @@ def read_CI_table_(
     cont_ctj_table: T_CTJ_PAIR_TABLE,
 ):
     """read CI table for interpolation"""
-    # _count = 0
-    # _prefix = ''
-    for i, ln in enumerate(lns[rs:]):
+    prefix: T_STR = ""
+    for ln in lns[rs:]:
         if skip_line_(ln):
             continue
         elif check_end_(ln):
@@ -299,11 +318,11 @@ def read_CI_table_(
             CI_table[contIndex, :] += [float(v) for v in words[6:-1]]
             f2[contIndex] = float(words[-1])
 
-        # _count += 1
-
 
 def read_PI_info_(lns: T_LIST[T_STR]) -> T_TUPLE[T_INT, T_INT]:
     """read nCont and nMesh for Photoionization"""
+    i: T_INT = -1
+    nCont: T_INT = -1
     for i, ln in enumerate(lns[:]):
         if skip_line_(ln):
             continue
@@ -316,12 +335,11 @@ def read_PI_info_(lns: T_LIST[T_STR]) -> T_TUPLE[T_INT, T_INT]:
         if words[0].lower() == "ncont":
             nCont = int(words[1])
 
-        # if _words[0].lower() == "nmesh":
-        #    _nMesh = int( _words[1] )
-
+    if nCont < 0:
+        raise ValueError("missing nCont in PI header")
     re = i + 1
 
-    return nCont, re  # , _nMesh
+    return nCont, re
 
 
 def read_PI_table_(  # noqa: C901
@@ -333,12 +351,25 @@ def read_PI_table_(  # noqa: C901
     level_info_table: T_CTJ_TABLE,
     cont_ctj_table: T_CTJ_PAIR_TABLE,
 ):
-    """read PI table for interpolation"""
+    """read PI table for interpolation.
+
+    Parses a series of {header, N-mesh-rows} blocks. Within a mesh-rows
+    branch the reader keeps reusing ``contIndex``, ``nLambda``, ``wavedep``
+    and ``mesh_array`` set by the last header line; the ``readMesh`` flag
+    gates that access. The dummy defaults below are only there so pyright
+    can prove every access is bound — they are never read because the
+    gating flag starts at ``False``.
+    """
     countMesh = 0
     readMesh = False
     PI_wdep_dict.clear()
-    # _prefix = ''
-    for i, ln in enumerate(lns[rs:]):
+    # pyright-only defaults, guarded at runtime by ``readMesh``.
+    prefix: T_STR = ""
+    contIndex: T_INT = -1
+    nLambda: T_INT = 0
+    wavedep: T_STR = ""
+    mesh_array: T_ARRAY = _numpy.zeros((2, 0), T_FLOAT)
+    for ln in lns[rs:]:
         if skip_line_(ln):
             continue
         elif check_end_(ln):
@@ -403,6 +434,8 @@ def read_PI_table_(  # noqa: C901
 
 def read_Radiative_Line_number_(lns: T_LIST[T_STR]) -> T_TUPLE[T_INT, T_INT]:
     """read nRadiativeLine"""
+    i: T_INT = -1
+    nRadiativeLine: T_INT = -1
     for i, ln in enumerate(lns[:]):
         if skip_line_(ln):
             continue
@@ -415,6 +448,8 @@ def read_Radiative_Line_number_(lns: T_LIST[T_STR]) -> T_TUPLE[T_INT, T_INT]:
         if words[0].lower() == "nradiative":
             nRadiativeLine = int(words[1])
 
+    if nRadiativeLine < 0:
+        raise ValueError("missing nRadiative in RadiativeLine header")
     re = i + 1
 
     return nRadiativeLine, re
@@ -430,8 +465,8 @@ def read_Mesh_info_(
 ):
     r"""read CI table for interpolation"""
     count = 0
-    # _prefix = ''
-    for i, ln in enumerate(lns[rs:]):
+    prefix: T_STR = ""
+    for ln in lns[rs:]:
         if skip_line_(ln):
             continue
         elif check_end_(ln):
