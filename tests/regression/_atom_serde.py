@@ -232,12 +232,17 @@ def dump_atom(atom: Any, wave_mesh: Any, path_dict: dict[str, str | None], name:
 
 
 def _compare_value(key: str, actual: Any, expected: Any) -> None:
-    """Per-key type-dispatched assertion with informative message on failure."""
-    # shape-only sentinel
+    """Per-key type-dispatched assertion with informative message on failure.
+
+    ``actual`` is always produced by ``dump_atom`` (same shape as ``expected``),
+    so shape-only sentinels appear on both sides in that branch.
+    """
+    # shape-only sentinel: both sides are sentinels, compare stored shapes
     if isinstance(expected, dict) and "_shape_only" in expected:
-        actual_shape = list(_np.asarray(actual).shape)
-        assert actual_shape == expected["_shape_only"], (
-            f"{key}: shape mismatch, got {actual_shape}, expected {expected['_shape_only']}"
+        assert isinstance(actual, dict), f"{key}: expected shape-only sentinel, got {type(actual).__name__}"
+        assert "_shape_only" in actual, f"{key}: expected shape-only sentinel, got dict without key"
+        assert actual["_shape_only"] == expected["_shape_only"], (
+            f"{key}: shape mismatch, got {actual['_shape_only']}, expected {expected['_shape_only']}"
         )
         return
 
@@ -271,22 +276,29 @@ def _compare_value(key: str, actual: Any, expected: Any) -> None:
     raise TypeError(f"{key}: unsupported expected type {type(expected).__name__}")
 
 
+def _leaf_is_str(obj: Any) -> bool:
+    """Recursively peek into nested lists; True iff the leaf element is a str."""
+    while isinstance(obj, list):
+        if not obj:
+            return False
+        obj = obj[0]
+    return isinstance(obj, str)
+
+
 def _compare_list(key: str, actual: Any, expected: list) -> None:
     """Dispatch list comparison.
 
-    ``expected`` came from ``.tolist()`` or a nested-list tuple, so it's
-    either (a) a numeric (nested) list, (b) a list of strings / list of
-    list-of-strings (ctj tables), or (c) empty.
+    ``expected`` came from ``.tolist()`` or from serialized ctj/idx tables, so
+    it's one of: (a) empty, (b) (nested) list with string leaves
+    (ctj tables), (c) numeric (nested) list.
     """
     if not expected:
         actual_np = _np.asarray(actual)
         assert actual_np.size == 0, f"{key}: expected empty, got {actual!r}"
         return
 
-    first = expected[0]
-    is_nested_str = isinstance(first, list) and first and isinstance(first[0], str)
-    if isinstance(first, str) or is_nested_str:
-        assert actual == expected, f"{key}: value mismatch (str/nested-str)"
+    if _leaf_is_str(expected):
+        assert actual == expected, f"{key}: value mismatch (string leaves)"
         return
 
     actual_np = _np.asarray(actual)
