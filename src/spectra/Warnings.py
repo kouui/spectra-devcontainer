@@ -8,8 +8,8 @@
 
 import warnings as WARNINGS
 
-from numba import njit as _nb_njit  # type: ignore
-from numba import objmode  # type: ignore
+from numba import njit as _nb_njit
+from numba import objmode
 
 from . import Configurations as CFG
 from .Types import *

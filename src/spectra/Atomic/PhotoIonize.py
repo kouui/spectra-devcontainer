@@ -14,7 +14,7 @@ import numpy as _numpy
 
 # from scipy.interpolate import splrep as _splrep
 # from scipy.interpolate import splev as _splev
-from scipy.interpolate import interp1d as _interp1d  # type: ignore
+from scipy.interpolate import interp1d as _interp1d
 
 from ..ImportAll import *
 from ..Math import Integrate
@@ -97,7 +97,7 @@ def interpolate_PI_alpha_(alpha_table: T_ARRAY, alpha_table_idxs: T_ARRAY, conti
             y=alpha_table_sub[1, :],
             kind="cubic",
             bounds_error=False,
-            fill_value=fill_value,  # type: ignore[arg-type]
+            fill_value=fill_value,
         )  # no extrapolate
         alpha_mesh[k, :] = bsp_obj(continuum_mesh[k, :])
 

@@ -100,5 +100,6 @@ pythonVersion = "3.13"
 venvPath = "."
 venv = ".venv"
 include = ["src", "tests"]
+stubPath = "typings"
 reportPossiblyUnboundVariable = false
 reportOperatorIssue = false
