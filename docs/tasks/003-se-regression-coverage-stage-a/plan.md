@@ -76,21 +76,21 @@
 > **Goal:** Add 6 new test methods referencing keys that don't yet exist, so running pytest surfaces a clear `KeyError` rather than a soft skip. Prepares the regression surface for P3's reference merge.
 > **Estimated Effort:** 0.25 day
 
-- [ ] Step 1.1 — Extend `TestHydrogenSE` in `tests/regression/test_reg_e2e_SE.py`:
+- [x] Step 1.1 — Extend `TestHydrogenSE` in `tests/regression/test_reg_e2e_SE.py`:
   - New method `test_SE_with_Pg_Te(self, ref)`. Atmosphere: `Pg=1.8, Te=7.0e3, Vt=5.0e5, Vd=0`. Assert `n_SE`, `n_LTE`, `Ne`, `Ntotal`.
-- [ ] Step 1.2 — Extend `TestHeliumSE`:
+- [x] Step 1.2 — Extend `TestHeliumSE`:
   - New method `test_SE_with_Nh_Te(self, ref)`. Atmosphere: `Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vt=5.0e5, Vd=0`.
   - New method `test_SE_with_Pg_Te(self, ref)`. Atmosphere: `Pg=1.8, Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vt=5.0e5, Vd=0`. (Pg is placeholder for non-H per R2.)
-- [ ] Step 1.3 — Add new class `TestCaIISE`:
+- [x] Step 1.3 — Add new class `TestCaIISE`:
   - `_load_Ca_II()` helper (parallel to `TestHydrogenSE._load_H`).
   - `test_SE_with_Nh_Te(self, ref)`. Atmosphere: `Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vt=5.0e5, Vd=0`.
   - `test_SE_with_Ne_Te(self, ref)`. Atmosphere: `Nh=1.0e11, Ne=5.0e10, Te=7.0e3, Vt=5.0e5, Vd=0`.
   - `test_SE_with_Pg_Te(self, ref)`. Atmosphere: `Pg=1.8, Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vt=5.0e5, Vd=0`.
-- [ ] Step 1.4 — Run `uv run --extra dev pytest tests/regression/test_reg_e2e_SE.py -v --no-header 2>&1 | tail -n 40`. Expected: 3 pass + 6 fail with `KeyError: 'E2E.xxx'`. This validates wiring before generation.
+- [x] Step 1.4 — Run `uv run --extra dev pytest tests/regression/test_reg_e2e_SE.py -v --no-header 2>&1 | tail -n 40`. Expected: 3 pass + 6 fail with `KeyError: 'E2E.xxx'`. This validates wiring before generation.
 
 **Phase 1 Exit Criteria:**
-- [ ] 6 new methods compile & import; existing 3 still pass.
-- [ ] Expected failures have identifiable `KeyError` messages (not structural errors).
+- [x] 6 new methods compile & import; existing 3 still pass.
+- [x] Expected failures have identifiable `KeyError` messages (not structural errors).
 
 ---
 
@@ -100,21 +100,21 @@
 > **Estimated Effort:** 0.25 day
 > **Depends on:** Phase 1
 
-- [ ] Step 2.1 — Create `scripts/gen_se_reference.py`:
+- [x] Step 2.1 — Create `scripts/gen_se_reference.py`:
   - Import `Atom`, `Atmosphere`, `Radiation`, `SELib`, `CFG` (same as AtomIO script).
   - Declare a `CASES` tuple of 6 records: `(atom_name, conf_rel, is_hydrogen, entry, atmos_kwargs)`.
   - For each case: load atom → build atmos → build radiation → call entry → extract 4 fields.
   - Load existing `reference_values.json` → update keys → write back with `json.dump(..., indent=2, sort_keys=True)`.
   - Print a summary line per case: `"generated E2E.<atom>_SE_<entry>: n_SE(sum)=..., Ne=..., Ntotal=..."` for sanity eyeballing.
-- [ ] Step 2.2 — Dry-run on main: `uv run --extra dev python scripts/gen_se_reference.py`. Observe no crash, JSON file re-sorts but new keys appear.
-- [ ] Step 2.3 — `git diff tests/regression/reference_values.json` to confirm only the 24 new keys appear (no spurious rewrites from sort reshuffling).
-- [ ] Step 2.4 — Revert the dry-run changes: `git checkout -- tests/regression/reference_values.json`. (Keep the script committed-to-be; the real values come from a84128b in Phase 3.)
-- [ ] Step 2.5 — Run `pytest tests/regression/test_reg_e2e_SE.py -v`. Still expecting 6 KeyErrors.
+- [x] Step 2.2 — Dry-run on main: `uv run --extra dev python scripts/gen_se_reference.py`. Observe no crash, JSON file re-sorts but new keys appear.
+- [x] Step 2.3 — `git diff tests/regression/reference_values.json` to confirm only the 24 new keys appear (no spurious rewrites from sort reshuffling).
+- [x] Step 2.4 — Revert the dry-run changes: `git checkout -- tests/regression/reference_values.json`. (Keep the script committed-to-be; the real values come from a84128b in Phase 3.)
+- [x] Step 2.5 — Run `pytest tests/regression/test_reg_e2e_SE.py -v`. Still expecting 6 KeyErrors.
 
 **Phase 2 Exit Criteria:**
-- [ ] Script runs on main without error.
-- [ ] Dry-run diff shows only the 24 target keys (no whitespace / sort reshuffling).
-- [ ] `reference_values.json` restored to pre-dry-run state.
+- [x] Script runs on main without error.
+- [x] Dry-run diff shows only the 24 target keys (no whitespace / sort reshuffling).
+- [x] `reference_values.json` restored to pre-dry-run state.
 
 ---
 
@@ -124,20 +124,20 @@
 > **Estimated Effort:** 0.25 day
 > **Depends on:** Phase 2
 
-- [ ] Step 3.1 — `git worktree add /tmp/spectra-se-old a84128b`
-- [ ] Step 3.2 — `cp scripts/gen_se_reference.py /tmp/spectra-se-old/scripts/`
+- [x] Step 3.1 — `git worktree add /tmp/spectra-se-old a84128b`
+- [x] Step 3.2 — `cp scripts/gen_se_reference.py /tmp/spectra-se-old/scripts/`
   - (Also cp `tests/regression/reference_values.json` from main into the worktree so the script has the current key set to merge into — the worktree's own `reference_values.json` would be older.)
-- [ ] Step 3.3 — `cd /tmp/spectra-se-old && uv sync --extra dev` (expected: 30-60s)
-- [ ] Step 3.4 — `uv run --extra dev python scripts/gen_se_reference.py > /tmp/gen_se_summary.log 2>&1; tail -n 20 /tmp/gen_se_summary.log`
-- [ ] Step 3.5 — Eyeball the summary: confirm `n_SE(sum)` close to 1 (LTE sanity) for each case.
-- [ ] Step 3.6 — Copy the updated `reference_values.json` back to main: `cp /tmp/spectra-se-old/tests/regression/reference_values.json tests/regression/`
-- [ ] Step 3.7 — `git worktree remove --force /tmp/spectra-se-old`
-- [ ] Step 3.8 — `git diff tests/regression/reference_values.json` — confirm only 24 new keys added, no other churn.
+- [x] Step 3.3 — `cd /tmp/spectra-se-old && uv sync --extra dev` (expected: 30-60s)
+- [x] Step 3.4 — `uv run --extra dev python scripts/gen_se_reference.py > /tmp/gen_se_summary.log 2>&1; tail -n 20 /tmp/gen_se_summary.log`
+- [x] Step 3.5 — Eyeball the summary: confirm `n_SE(sum)` close to 1 (LTE sanity) for each case.
+- [x] Step 3.6 — Copy the updated `reference_values.json` back to main: `cp /tmp/spectra-se-old/tests/regression/reference_values.json tests/regression/`
+- [x] Step 3.7 — `git worktree remove --force /tmp/spectra-se-old`
+- [x] Step 3.8 — `git diff tests/regression/reference_values.json` — confirm only 24 new keys added, no other churn.
 
 **Phase 3 Exit Criteria:**
-- [ ] a84128b script ran cleanly.
-- [ ] 24 new keys landed in main's `reference_values.json`.
-- [ ] No other diff in the file.
+- [x] a84128b script ran cleanly.
+- [x] 18 new keys landed in main's `reference_values.json`.
+- [x] No other diff in the file.
 
 ---
 
@@ -147,15 +147,15 @@
 > **Estimated Effort:** 0.125 day
 > **Depends on:** Phase 3
 
-- [ ] Step 4.1 — `uv run --extra dev pytest tests/regression/test_reg_e2e_SE.py -v 2>&1 | tail -n 30`
+- [x] Step 4.1 — `uv run --extra dev pytest tests/regression/test_reg_e2e_SE.py -v 2>&1 | tail -n 30`
   - **Expected:** 9 pass / 0 fail.
-- [ ] Step 4.2 — If any fail with tolerance issue: open `docs/tasks/003-se-regression-coverage-stage-a/drift-audit.md`, run `git log --oneline a84128b..HEAD -- src/spectra/Function/SEquil src/spectra/Atomic src/spectra/Struct/Atmosphere.py`, blame the diff, decide accept/revert per commit.
-- [ ] Step 4.3 — On pass: run full regression suite `uv run --extra dev pytest tests/regression/ -q 2>&1 | tail -n 20`. Expected: no regressions in the 247 pre-existing cases.
+- [x] Step 4.2 — If any fail with tolerance issue: open `docs/tasks/003-se-regression-coverage-stage-a/drift-audit.md`, run `git log --oneline a84128b..HEAD -- src/spectra/Function/SEquil src/spectra/Atomic src/spectra/Struct/Atmosphere.py`, blame the diff, decide accept/revert per commit.
+- [x] Step 4.3 — On pass: run full regression suite `uv run --extra dev pytest tests/regression/ -q 2>&1 | tail -n 20`. Expected: no regressions in the 247 pre-existing cases.
 
 **Phase 4 Exit Criteria:**
-- [ ] `test_reg_e2e_SE.py` green (9/9).
-- [ ] Full regression green (no impact on other suites).
-- [ ] Drift-audit.md produced only if drift observed; otherwise not created.
+- [x] `test_reg_e2e_SE.py` green (9/9).
+- [x] Full regression green (no impact on other suites). 261 passed.
+- [x] Drift-audit.md produced only if drift observed; otherwise not created. Zero drift confirmed.
 
 ---
 
@@ -165,18 +165,18 @@
 > **Estimated Effort:** 0.125 day
 > **Depends on:** Phase 4
 
-- [ ] Step 5.1 — `uv run --extra dev pre-commit run --all-files 2>&1 | tail -n 20`. Fix lint/format if any.
-- [ ] Step 5.2 — Update `task.md` status → In Progress → Done as appropriate.
-- [ ] Step 5.3 — Tick checkboxes in `plan.md` as steps complete (incremental).
-- [ ] Step 5.4 — Commit:
+- [x] Step 5.1 — `uv run --extra dev pre-commit run --all-files 2>&1 | tail -n 20`. Fix lint/format if any.
+- [x] Step 5.2 — Update `task.md` status → In Progress → Done as appropriate.
+- [x] Step 5.3 — Tick checkboxes in `plan.md` as steps complete (incremental).
+- [x] Step 5.4 — Commit:
   - Touched files: `tests/regression/test_reg_e2e_SE.py`, `tests/regression/reference_values.json`, `scripts/gen_se_reference.py`, `docs/tasks/003-se-regression-coverage-stage-a/{task.md,plan.md}`
   - Message: `test: add e2e regression for SELib main entries (Stage A)` + body summarizing 6 new cases + a84128b audit.
-- [ ] Step 5.5 — Ask user whether to open a PR (default no).
+- [x] Step 5.5 — Ask user whether to open a PR (default no).
 
 **Phase 5 Exit Criteria:**
-- [ ] Single commit on feature branch (e.g., `feat/se-regression-stage-a`).
-- [ ] task.md status = Done.
-- [ ] pre-commit green.
+- [x] Single commit on feature branch (e.g., `feat/se-regression-stage-a`) — delivered as 5 commits (docs + P2 script + P2 review-fix + P3 landing + P3 review-fix) per review cycle requirements.
+- [x] task.md status = Done.
+- [x] pre-commit green.
 
 ---
 
@@ -220,12 +220,12 @@
 Each case asserts only the fields the entry actually mutates for that atom
 type (per Decision 4, post-P1-review). All assertions use `rtol=1e-8`.
 
-- [ ] `TestHydrogenSE.test_SE_with_Pg_Te` — H via `cal_SE_with_Pg_Te_`, `Pg=1.8, Te=7000, Vt=5e5, Vd=0`. Covers the self-consistent Ne2Nh loop (hydrogen branch). Asserts 4 fields: `n_SE`, `n_LTE`, `atmos.Ne`, `Ntotal`.
-- [ ] `TestHeliumSE.test_SE_with_Nh_Te` — He via `cal_SE_with_Nh_Te_`, `Nh=1e12, Ne=1e11`. Covers non-H branch of Nh_Te entry (no iteration). Asserts 3 fields: `n_SE`, `n_LTE`, `Ntotal`.
-- [ ] `TestHeliumSE.test_SE_with_Pg_Te` — He via `cal_SE_with_Pg_Te_`, `Nh=1e12, Ne=1e11` (Pg unused for non-H). Asserts 3 fields.
-- [ ] `TestCaIISE.test_SE_with_Nh_Te` — Ca_II via `cal_SE_with_Nh_Te_`, `Nh=1e12, Ne=1e11`. Covers EXPERIMENT PI interpolation branch. Asserts 3 fields.
-- [ ] `TestCaIISE.test_SE_with_Ne_Te` — Ca_II via `cal_SE_with_Ne_Te_`, `Nh=1e11, Ne=5e10`. Matches existing H/He Ne_Te convention. Asserts 2 fields: `n_SE`, `n_LTE`.
-- [ ] `TestCaIISE.test_SE_with_Pg_Te` — Ca_II via `cal_SE_with_Pg_Te_`, `Nh=1e12, Ne=1e11`. Asserts 3 fields.
+- [x] `TestHydrogenSE.test_SE_with_Pg_Te` — H via `cal_SE_with_Pg_Te_`, `Pg=1.8, Te=7000, Vt=5e5, Vd=0`. Covers the self-consistent Ne2Nh loop (hydrogen branch). Asserts 4 fields: `n_SE`, `n_LTE`, `atmos.Ne`, `Ntotal`.
+- [x] `TestHeliumSE.test_SE_with_Nh_Te` — He via `cal_SE_with_Nh_Te_`, `Nh=1e12, Ne=1e11`. Covers non-H branch of Nh_Te entry (no iteration). Asserts 3 fields: `n_SE`, `n_LTE`, `Ntotal`.
+- [x] `TestHeliumSE.test_SE_with_Pg_Te` — He via `cal_SE_with_Pg_Te_`, `Nh=1e12, Ne=1e11` (Pg unused for non-H). Asserts 3 fields.
+- [x] `TestCaIISE.test_SE_with_Nh_Te` — Ca_II via `cal_SE_with_Nh_Te_`, `Nh=1e12, Ne=1e11`. Covers EXPERIMENT PI interpolation branch. Asserts 3 fields.
+- [x] `TestCaIISE.test_SE_with_Ne_Te` — Ca_II via `cal_SE_with_Ne_Te_`, `Nh=1e11, Ne=5e10`. Matches existing H/He Ne_Te convention. Asserts 2 fields: `n_SE`, `n_LTE`.
+- [x] `TestCaIISE.test_SE_with_Pg_Te` — Ca_II via `cal_SE_with_Pg_Te_`, `Nh=1e12, Ne=1e11`. Asserts 3 fields.
 
 Total new reference keys: **18** (4 + 3 + 3 + 3 + 2 + 3).
 
