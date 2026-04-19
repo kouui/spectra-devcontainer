@@ -1,6 +1,6 @@
 # Task: AtomIO load regression coverage + pyright `reportPossiblyUnbound*` cleanup
 
-> **Status:** Draft
+> **Status:** Done
 > **Owner:** kouui
 > **Created:** 2026-04-19
 > **Last Updated:** 2026-04-19
@@ -79,17 +79,18 @@
 ## Acceptance Criteria
 
 **Stage 1**
-- [ ] `scripts/gen_atom_reference.py` 可独立运行，产出 `atom_reference_values.json`
-- [ ] `tests/regression/test_reg_e2e_AtomLoad.py` 至少 8 个 test case（每 config 一个）全绿
-- [ ] `uv run --extra dev python -m pytest tests/regression/ -q` 全部 passed（新 8 + 原 247）
-- [ ] `atom_reference_values.json` 存 relative path（不含任何机器绝对路径）
+- [x] `scripts/gen_atom_reference.py` 可独立运行，产出 `atom_reference_values.json`
+- [x] `tests/regression/test_reg_e2e_AtomLoad.py` 至少 8 个 test case（每 config 一个）全绿
+- [x] `uv run --extra dev python -m pytest tests/regression/ -q` 全部 passed（新 8 + 原 247）
+- [x] `atom_reference_values.json` 存 relative path（不含任何机器绝对路径）
+- [x] **Bonus**：reference 从 `a84128b` 的 worktree 生成，diff 显示自 `a84128b` 起 11 个 AtomIO commit 行为 bit-exact preserving
 
 **Stage 2**
-- [ ] `pyproject.toml` 不再有 `reportPossiblyUnboundVariable = false` 和 `reportOperatorIssue = false`
-- [ ] `uv run --extra dev pyright` = `0 errors, 0 warnings`
-- [ ] 122 处 possibly-unbound / operator 全部从根源修（或通过 file-level pragma 明示例外）
-- [ ] `uv run --extra dev python -m pytest tests/regression/ -q` 仍全绿
-- [ ] `uv run --extra dev pre-commit run --all-files` 通过
+- [x] `pyproject.toml` 不再有 `reportPossiblyUnboundVariable = false` 和 `reportOperatorIssue = false`
+- [x] `uv run --extra dev pyright` = `0 errors, 0 warnings`
+- [x] 122 处 possibly-unbound / operator 全部从根源修（2 个例外：`ExFAL.py` 23 处 + `01makeAtom.py` 9 处用 file-level pragma，决策见 Q4）
+- [x] `uv run --extra dev python -m pytest tests/regression/ -q` 仍全绿（255 passed）
+- [x] `uv run --extra dev pre-commit run --all-files` 通过
 
 ## Dependencies
 
