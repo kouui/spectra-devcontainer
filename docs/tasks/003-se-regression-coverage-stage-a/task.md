@@ -101,11 +101,11 @@ Stage B (Te parameter sweep) and Stage C (private helper unit tests) from the or
 
 ## Risks & Open Questions
 
-- [ ] **R1 — Pg_Te H path drift between `a84128b` and `main`.** The loop uses `< 0.01` convergence, but the algorithm is deterministic. Expected zero drift. If drift appears, blame via `git log a84128b..main -- src/spectra/Function/SEquil src/spectra/Atomic` and decide accept/revert.
-- [ ] **R2 — Pg_Te for non-H atoms ignores `Pg`.** The function only computes `Nh` from `Pg` when `is_hydrogen=True` (line 138-140). For He / Ca_II, `atmos.Nh` and `atmos.Ne` must be provided externally; `Pg` is effectively unused. Tests will reflect this: we set sensible `Nh`/`Ne` pre-call and assign `Pg` a placeholder. Not a bug — just a documented quirk of the entry.
-- [ ] **R3 — Reference fragment merge.** Manually merging `scripts/gen_se_reference.py`'s JSON fragment into `reference_values.json` risks ordering/whitespace churn. Mitigation: load the existing JSON in the script, update in place, re-dump with same `indent=2 sort_keys=True` settings to match the existing file's style.
-- [ ] **R4 — Ca_II atmosphere params.** No prior Ca_II SE case to copy from. Decision: `Te=7000 K, Nh=1e12, Ne=1e11` for Nh_Te / Ne_Te entries; `Pg ≈ 1.8 dyn/cm²` for Pg_Te (though Pg is ignored for non-H, so irrelevant). Sanity-check by running once and confirming `n_SE` sum ≈ 1.
-- [ ] **R5 — No open question on methodology.** Same flow as task 002 Stage 1.
+- [x] **R1 — Pg_Te H path drift between `a84128b` and `main` (resolved).** Zero drift confirmed by bit-identical re-generation on both commits; all 9 tests pass at `rtol=1e-8`.
+- [x] **R2 — Pg_Te for non-H atoms ignores `Pg` (accepted).** `cal_SE_with_Pg_Te_` only computes `Nh` from `Pg` when `is_hydrogen=True`. For He / Ca_II, `atmos.Nh` and `atmos.Ne` must be provided externally. Tests reflect this; `Pg` is a placeholder. Not a bug — a documented quirk.
+- [x] **R3 — Reference fragment merge (resolved).** The existing file was not sort-ordered, so the script uses `indent=2 sort_keys=False` and appends new keys at the tail, producing a surgical 18-key diff (verified in P3).
+- [x] **R4 — Ca_II atmosphere params (resolved).** `Te=7000 K, Nh=1e12, Ne=1e11` for Nh_Te / Ne_Te entries; `Pg ≈ 1.8 dyn/cm²` for Pg_Te (Pg ignored for non-H). All 6 cases pass the `n_SE.sum() ≈ 1.0` sanity gate in the generation script.
+- [x] **R5 — No open question on methodology (resolved).** Flow mirrored task 002 Stage 1 successfully.
 
 ## Audit Evidence (zero drift)
 
@@ -136,7 +136,7 @@ is behavior-preserving between `a84128b` and current `main`.
 
 ## References
 
-- Handoff: `tmp/handoff.md`
+- Handoff: `tmp/handoff.md` (user-provided input, `tmp/` is gitignored — not tracked)
 - Predecessor task: `docs/tasks/002-atom-io-regression-and-unbound-cleanup/`
 - PR #10 (AtomIO regression): `f10482c`
 - PR #9 (pyright cleanup): `250cc36`

@@ -25,7 +25,7 @@
            │
            │  run on a84128b worktree
            ▼
- JSON fragment with 24 E2E.* keys
+ JSON fragment with 18 E2E.* keys
            │
            │  merge into main
            ▼
@@ -45,9 +45,9 @@
 
 | Component | Responsibility | New / Modified |
 |-----------|---------------|----------------|
-| `scripts/gen_se_reference.py` | One-shot: run 6 new cases, extract 4 fields each, update `reference_values.json` in place | New |
+| `scripts/gen_se_reference.py` | One-shot: run 6 new cases, extract the asserted fields per case (2-4), update `reference_values.json` in place | New |
 | `tests/regression/test_reg_e2e_SE.py` | Add 6 test methods across `TestHydrogenSE`, `TestHeliumSE`, `TestCaIISE` | Modified |
-| `tests/regression/reference_values.json` | Add 24 new keys under `E2E.*` namespace | Modified |
+| `tests/regression/reference_values.json` | Add 18 new keys under `E2E.*` namespace | Modified |
 | (worktree only) `/tmp/spectra-se-old/` | Throwaway checkout of `a84128b` for generation | Transient |
 
 ### Data Flow
@@ -58,7 +58,7 @@
 3. Copy a staging copy of `reference_values.json` (so script has existing keys to preserve)
 4. `cd /tmp/spectra-se-old && uv sync --extra dev`
 5. `uv run --extra dev python scripts/gen_se_reference.py`
-6. Script reads `reference_values.json`, adds 24 new keys, writes back (in-place, same format).
+6. Script reads `reference_values.json`, adds 18 new keys, writes back (in-place, preserving the existing ad-hoc key order via `sort_keys=False`).
 7. `cp /tmp/spectra-se-old/tests/regression/reference_values.json ./tests/regression/`
 8. `git worktree remove --force /tmp/spectra-se-old`
 
@@ -104,16 +104,16 @@
   - Import `Atom`, `Atmosphere`, `Radiation`, `SELib`, `CFG` (same as AtomIO script).
   - Declare a `CASES` tuple of 6 records: `(atom_name, conf_rel, is_hydrogen, entry, atmos_kwargs)`.
   - For each case: load atom → build atmos → build radiation → call entry → extract 4 fields.
-  - Load existing `reference_values.json` → update keys → write back with `json.dump(..., indent=2, sort_keys=True)`.
+  - Load existing `reference_values.json` → update keys → write back with `json.dump(..., indent=2, sort_keys=False)` to preserve the file's existing ad-hoc key order.
   - Print a summary line per case: `"generated E2E.<atom>_SE_<entry>: n_SE(sum)=..., Ne=..., Ntotal=..."` for sanity eyeballing.
 - [x] Step 2.2 — Dry-run on main: `uv run --extra dev python scripts/gen_se_reference.py`. Observe no crash, JSON file re-sorts but new keys appear.
-- [x] Step 2.3 — `git diff tests/regression/reference_values.json` to confirm only the 24 new keys appear (no spurious rewrites from sort reshuffling).
+- [x] Step 2.3 — `git diff tests/regression/reference_values.json` to confirm only the 18 new keys appear (no spurious rewrites from sort reshuffling).
 - [x] Step 2.4 — Revert the dry-run changes: `git checkout -- tests/regression/reference_values.json`. (Keep the script committed-to-be; the real values come from a84128b in Phase 3.)
 - [x] Step 2.5 — Run `pytest tests/regression/test_reg_e2e_SE.py -v`. Still expecting 6 KeyErrors.
 
 **Phase 2 Exit Criteria:**
 - [x] Script runs on main without error.
-- [x] Dry-run diff shows only the 24 target keys (no whitespace / sort reshuffling).
+- [x] Dry-run diff shows only the 18 target keys (no whitespace / sort reshuffling).
 - [x] `reference_values.json` restored to pre-dry-run state.
 
 ---
@@ -132,7 +132,7 @@
 - [x] Step 3.5 — Eyeball the summary: confirm `n_SE(sum)` close to 1 (LTE sanity) for each case.
 - [x] Step 3.6 — Copy the updated `reference_values.json` back to main: `cp /tmp/spectra-se-old/tests/regression/reference_values.json tests/regression/`
 - [x] Step 3.7 — `git worktree remove --force /tmp/spectra-se-old`
-- [x] Step 3.8 — `git diff tests/regression/reference_values.json` — confirm only 24 new keys added, no other churn.
+- [x] Step 3.8 — `git diff tests/regression/reference_values.json` — confirm only 18 new keys added, no other churn.
 
 **Phase 3 Exit Criteria:**
 - [x] a84128b script ran cleanly.
@@ -231,9 +231,9 @@ Total new reference keys: **18** (4 + 3 + 3 + 3 + 2 + 3).
 
 #### Edge Cases & Error Handling
 
-- [ ] `n_SE.sum()` approximately 1 (LTE sanity) — verified in script summary, not asserted in tests (redundant with full n_SE array match).
-- [ ] Pg_Te non-H path: `Pg` is effectively ignored; `atmos.Nh`/`Ne` provided pre-call. Documented as R2 in task.md.
-- [ ] No mutation leak between tests: each test creates fresh `Atmosphere0D`; atom/wMesh are re-loaded per class method.
+- [x] `n_SE.sum()` approximately 1 (LTE sanity) — enforced by a hard gate in the generation script (P2-review fix, commit 8dce1c7); all 6 cases produced 1.000000.
+- [x] Pg_Te non-H path: `Pg` is effectively ignored; `atmos.Nh`/`Ne` provided pre-call. Documented as R2 in task.md.
+- [x] No mutation leak between tests: each test creates fresh `Atmosphere0D`; atom/wMesh are re-loaded per class method. Verified during P1 review.
 
 ### Coverage Target
 
@@ -266,7 +266,7 @@ Total new reference keys: **18** (4 + 3 + 3 + 3 + 2 + 3).
 
 ### Decision 3: New reference keys go into `reference_values.json`, not a new file
 
-- **Context:** 24 new float/array values, ~tens of KB total.
+- **Context:** 18 new float/array values, ~tens of KB total.
 - **Options Considered:**
   1. Merge into `reference_values.json`.
   2. New `se_reference_values.json` + new `ref_se` fixture.
@@ -318,7 +318,7 @@ Total new reference keys: **18** (4 + 3 + 3 + 3 + 2 + 3).
 | Risk | Likelihood | Impact | Mitigation |
 |------|-----------|--------|------------|
 | Numeric drift between a84128b and main on SE path | Low | High (blocks task) | `git log --oneline a84128b..HEAD -- src/spectra/Function/SEquil src/spectra/Atomic src/spectra/Struct/Atmosphere.py src/spectra/Struct/Radiation.py`; blame per commit; open drift-audit.md |
-| `reference_values.json` whitespace churn from re-sort | Med | Low (review noise) | Generation script uses same `indent=2 sort_keys=True`; verify via `git diff` that only 24 keys change |
+| `reference_values.json` whitespace churn from re-sort | Med | Low (review noise) | Generation script uses `indent=2 sort_keys=False` to preserve the file's historic ad-hoc key order; verify via `git diff` that only 18 keys change (resolved during P2). |
 | `uv sync` fails on a84128b worktree | Low | Med (blocks P3) | Task 002 verified it works; if fails, fall back to generating on main and note it as "a84128b parity not audited" in task.md — but this weakens the guarantee |
 | Pg_Te H path produces different values than expected due to SELib.py:117 bug-like structure | Med | Low | Test reflects current behavior; a84128b audit catches regression; bug fix (if any) is a separate task |
 | Ca_II EXPERIMENT PI interpolation produces NaN | Low | High | Script summary prints `n_SE(sum)`; NaN shows as `nan` → investigate before landing |
@@ -344,9 +344,9 @@ If something goes wrong post-commit:
 
 ### Security Considerations
 
-- [ ] No secrets. JSON file is plain numerics.
-- [ ] Script paths use `CFG._ROOT_DIR` (pathlib-safe).
-- [ ] No shell injection surface.
+- [x] No secrets. JSON file is plain numerics.
+- [x] Script paths use `CFG._ROOT_DIR` (pathlib-safe).
+- [x] No shell injection surface.
 
 ---
 
@@ -355,3 +355,5 @@ If something goes wrong post-commit:
 | Date | Author | Change |
 |------|--------|--------|
 | 2026-04-19 | kouui | Initial draft |
+| 2026-04-19 | kouui | Post-P1-review Decision 4 revision: per-case assertion depth (18 total reference keys, not 24); `sort_keys=False` adopted after discovering existing JSON was not sort-ordered. |
+| 2026-04-19 | kouui | Stage A delivered. Task status: Done. |
