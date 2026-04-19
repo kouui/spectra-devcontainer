@@ -33,12 +33,12 @@ repos:
         pass_filenames: true
         types: [python]
 
-      # - id: pyright
-      #   name: pyright (type checking)
-      #   entry: uv run pyright
-      #   language: system
-      #   pass_filenames: false
-      #   always_run: true
+      - id: pyright
+        name: pyright (type checking)
+        entry: uv run pyright
+        language: system
+        pass_filenames: false
+        always_run: true
 
       # - id: import-linter
       #   name: import-linter (api module encapsulation)
