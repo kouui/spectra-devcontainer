@@ -107,6 +107,33 @@ Stage B (Te parameter sweep) and Stage C (private helper unit tests) from the or
 - [ ] **R4 — Ca_II atmosphere params.** No prior Ca_II SE case to copy from. Decision: `Te=7000 K, Nh=1e12, Ne=1e11` for Nh_Te / Ne_Te entries; `Pg ≈ 1.8 dyn/cm²` for Pg_Te (though Pg is ignored for non-H, so irrelevant). Sanity-check by running once and confirming `n_SE` sum ≈ 1.
 - [ ] **R5 — No open question on methodology.** Same flow as task 002 Stage 1.
 
+## Audit Evidence (zero drift)
+
+Generation on `a84128b` worktree (`uv run python scripts/gen_se_reference.py`):
+
+```
+generated E2E.H_SE_Pg_Te            n_SE.sum()=1.000000  (+4 keys)
+generated E2E.He_SE_Nh_Te           n_SE.sum()=1.000000  (+3 keys)
+generated E2E.He_SE_Pg_Te           n_SE.sum()=1.000000  (+3 keys)
+generated E2E.Ca_II_SE_Nh_Te        n_SE.sum()=1.000000  (+3 keys)
+generated E2E.Ca_II_SE_Ne_Te        n_SE.sum()=1.000000  (+2 keys)
+generated E2E.Ca_II_SE_Pg_Te        n_SE.sum()=1.000000  (+3 keys)
+wrote .../tests/regression/reference_values.json  (281 keys total, +18 new)
+```
+
+Independent re-generation on `main` (HEAD `df5ceef` minus this audit append)
+produced a byte-identical JSON:
+
+```
+$ diff /tmp/ref-from-a84128b.json tests/regression/reference_values.json
+(no output — 0 differing lines)
+```
+
+All 9 tests in `test_reg_e2e_SE.py` pass on `main` with `rtol=1e-8` against
+the `a84128b`-generated reference. This confirms the SE path
+(`Function/SEquil/SELib.py`, `Atomic/{SEsolver,LTELib,Collision,PhotoIonize,BasicP}.py`)
+is behavior-preserving between `a84128b` and current `main`.
+
 ## References
 
 - Handoff: `tmp/handoff.md`

@@ -217,14 +217,17 @@
 
 #### New Regression Cases (6 total)
 
-Each asserts 4 fields with `rtol=1e-8`: `SE_con.n_SE`, `SE_con.n_LTE`, `atmos.Ne`, `SE_con.Ntotal`.
+Each case asserts only the fields the entry actually mutates for that atom
+type (per Decision 4, post-P1-review). All assertions use `rtol=1e-8`.
 
-- [ ] `TestHydrogenSE.test_SE_with_Pg_Te` — H via `cal_SE_with_Pg_Te_`, `Pg=1.8, Te=7000, Vt=5e5, Vd=0`. Covers self-consistent Ne2Nh loop (hydrogen branch).
-- [ ] `TestHeliumSE.test_SE_with_Nh_Te` — He via `cal_SE_with_Nh_Te_`, `Nh=1e12, Ne=1e11`. Covers non-H branch of Nh_Te entry (no iteration).
-- [ ] `TestHeliumSE.test_SE_with_Pg_Te` — He via `cal_SE_with_Pg_Te_`, `Nh=1e12, Ne=1e11` (Pg unused for non-H).
-- [ ] `TestCaIISE.test_SE_with_Nh_Te` — Ca_II via `cal_SE_with_Nh_Te_`, `Nh=1e12, Ne=1e11`. Covers EXPERIMENT PI interpolation branch.
-- [ ] `TestCaIISE.test_SE_with_Ne_Te` — Ca_II via `cal_SE_with_Ne_Te_`, `Nh=1e11, Ne=5e10`.
-- [ ] `TestCaIISE.test_SE_with_Pg_Te` — Ca_II via `cal_SE_with_Pg_Te_`, `Nh=1e12, Ne=1e11`.
+- [ ] `TestHydrogenSE.test_SE_with_Pg_Te` — H via `cal_SE_with_Pg_Te_`, `Pg=1.8, Te=7000, Vt=5e5, Vd=0`. Covers the self-consistent Ne2Nh loop (hydrogen branch). Asserts 4 fields: `n_SE`, `n_LTE`, `atmos.Ne`, `Ntotal`.
+- [ ] `TestHeliumSE.test_SE_with_Nh_Te` — He via `cal_SE_with_Nh_Te_`, `Nh=1e12, Ne=1e11`. Covers non-H branch of Nh_Te entry (no iteration). Asserts 3 fields: `n_SE`, `n_LTE`, `Ntotal`.
+- [ ] `TestHeliumSE.test_SE_with_Pg_Te` — He via `cal_SE_with_Pg_Te_`, `Nh=1e12, Ne=1e11` (Pg unused for non-H). Asserts 3 fields.
+- [ ] `TestCaIISE.test_SE_with_Nh_Te` — Ca_II via `cal_SE_with_Nh_Te_`, `Nh=1e12, Ne=1e11`. Covers EXPERIMENT PI interpolation branch. Asserts 3 fields.
+- [ ] `TestCaIISE.test_SE_with_Ne_Te` — Ca_II via `cal_SE_with_Ne_Te_`, `Nh=1e11, Ne=5e10`. Matches existing H/He Ne_Te convention. Asserts 2 fields: `n_SE`, `n_LTE`.
+- [ ] `TestCaIISE.test_SE_with_Pg_Te` — Ca_II via `cal_SE_with_Pg_Te_`, `Nh=1e12, Ne=1e11`. Asserts 3 fields.
+
+Total new reference keys: **18** (4 + 3 + 3 + 3 + 2 + 3).
 
 #### Edge Cases & Error Handling
 
