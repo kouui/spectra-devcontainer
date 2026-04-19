@@ -66,7 +66,9 @@ def set_imshow_ticks_(axe, arr, axis, points=None, fmt="%1.3f", rot=0, fontsize=
             points = axe.get_xticks()[:-1].astype(np.int64)
         elif axis in ("y",):
             points = axe.get_yticks()[:-1].astype(np.int64)
-        points = points[points >= 0]  # type: ignore
+        else:
+            raise ValueError(f"invalid axis: {axis!r}")
+        points = points[points >= 0]
 
     # -- format ticklabels
     ticklabels = [("{:" + f"{fmt[1:]}" + "}").format(arr_[i]) for i in points]
@@ -123,17 +125,20 @@ def remove_spline_(*args, pos=("left", "right", "top", "bottom")):
             ax.spines[p].set_visible(False)
 
 
-def axes_no_padding_(fig_kw=None, axe_kw=None):
+def axes_no_padding_(
+    fig_kw: dict | None = None,
+    axe_kw: dict[str, tuple[float, float, float, float]] | None = None,
+):
     r""" """
     if fig_kw is None:
         fig_kw = {"figsize": (8, 4), "dpi": 100}
     if axe_kw is None:
-        axe_kw = {"ax1": [0, 0, 1, 1]}
+        axe_kw = {"ax1": (0.0, 0.0, 1.0, 1.0)}
     fig = plt.figure(figsize=fig_kw["figsize"], dpi=fig_kw["dpi"])
 
     axe_dict = {}
     for key, val in axe_kw.items():
-        ax_ = fig.add_axes(tuple(val))  # type: ignore[arg-type]
+        ax_ = fig.add_axes(val)
         axe_dict[key] = ax_
         remove_tick_ticklabel_(ax_, kind="xy")
         remove_spline_(ax_, pos=("left", "right", "top", "bottom"))
