@@ -3,6 +3,12 @@
 # $ cd /path/to/spectra/data/atom/Ca_I-II-III
 # $ python ../../../spectra/Util/AtomicDataUtils/RH2Spectra/01makeAtom.py CaI+II_45.atom.RH.20220802.txt CaI+II_45.RH.configuration-table.txt ./ -file-prefix rh.
 
+# pyright: reportPossiblyUnboundVariable=false
+#   Standalone RH-to-Spectra conversion script (file-name starts with a digit,
+#   cannot be imported). Out of scope for the Stage 2 root-cause cleanup —
+#   the parser re-uses `rhalpha`, `count`, `ntemp`, `rhtemp` across branches
+#   in a way that would require a rewrite to make pyright happy.
+
 
 # from glob import glob
 import argparse

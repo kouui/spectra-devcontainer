@@ -47,14 +47,16 @@ def format_type_dict_(vtype_name: T_STR, value: T_DICT) -> T_STR:
     if len(value) == 0:
         return f"{vtype_name} of empty"
 
+    # Peel the first pair so the reference types are plain ``type`` (not
+    # ``type | None``) for the isinstance checks below. (Previously the code
+    # tried `for i, (key, val) in value.items()` which never iterated.)
+    items_iter = iter(value.items())
+    key0, val0 = next(items_iter)
+    kt0 = type(key0)
+    vt0 = type(val0)
+
     is_single_type = True
-
-    for i, (key, val) in value.items():
-        if i == 0:
-            kt0 = type(key)
-            vt0 = type(val)
-            continue
-
+    for key, val in items_iter:
         if not isinstance(key, kt0):
             is_single_type = False
             break

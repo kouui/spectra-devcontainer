@@ -569,9 +569,8 @@ _UFUNC_COEFFICIENT_TABLE: T_DICT[T_STR, T_TUPLE[T_FLOAT, ...]] = {
 
 _UFUNC_SYMBOL: T_TUPLE[T_STR, ...] = tuple((key for key, val in _UFUNC_COEFFICIENT_TABLE.items()))
 _UFUNC_COEFFICIENT_ARRAY: T_ARRAY = _numpy.empty((len(_UFUNC_SYMBOL), 5), dtype=DT_NB_FLOAT)
-for _k in range(_UFUNC_COEFFICIENT_ARRAY.shape[0]):
-    _UFUNC_COEFFICIENT_ARRAY[_k, :] = _UFUNC_COEFFICIENT_TABLE[_UFUNC_SYMBOL[_k]]
-del _k
+for _k, _sym in enumerate(_UFUNC_SYMBOL):
+    _UFUNC_COEFFICIENT_ARRAY[_k, :] = _UFUNC_COEFFICIENT_TABLE[_sym]
 
 
 @OVERLOAD

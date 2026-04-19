@@ -284,10 +284,11 @@ def read_Grotrian_(_lns):  # noqa: C901
     _line_plot = {}
     _position = {}
     _exclude = {}
-    # _prefix = ''
+    _prefix: str = ""
+    _group_str: str = ""
     _isPosition, _isLineplot = False, False
     _isGroup = False
-    for _i, _ln in enumerate(_lns[:]):
+    for _ln in _lns[:]:
         if AtomIO.skip_line_(_ln):
             continue
         elif AtomIO.check_end_(_ln):
@@ -542,6 +543,10 @@ class Grotrian:
         # ---------------------------------------------------------------------
         # singlet
         # ---------------------------------------------------------------------
+        # Default `_ctj_` forces a KeyError in the multiplet loop below when the
+        # singlet block is empty, so the `except KeyError` there falls back to
+        # `v1[1]` instead of hitting an UnboundLocalError.
+        _ctj_: tuple = ("", "", "")
         for k0, v0 in singlet.items():
             for k1, v1 in v0.items():
                 _ctj_ = (v1[2], k0[1], k1)
@@ -582,11 +587,15 @@ class Grotrian:
             # compute mean term energy
             y_count = 0.0
             y_mean = 0
-            for _k1, v1 in v0.items():
+            for v1 in v0.values():
                 y_mean += v1[0]
                 y_count += 1
             y_mean /= y_count
 
+            # `xs_level` is used after the inner loop for the term label; default
+            # to an empty span if the term has no J components (should not happen
+            # in practice but keeps pyright happy).
+            xs_level: tuple[float, float] = (0.0, 0.0)
             for k1, v1 in v0.items():
                 # plot level
                 y_pos = y_mean + _f * (v1[0] - y_mean)  # enlarge space
@@ -934,7 +943,6 @@ class Grotrian:
             except KeyError:
                 ctj_rate_dict[_ctj_ij_plot] = _rate[k]
 
-        del _ctj_i, _ctj_j, _ctj_ij
         # ---------------------------------------------------------------------
         # loop over ctj_rate_dict and plot arrow
         # ---------------------------------------------------------------------

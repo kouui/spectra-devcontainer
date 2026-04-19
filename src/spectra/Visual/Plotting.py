@@ -170,6 +170,7 @@ def transition_heatmap0(
 
     fig, axs = plt.subplots(1, 2, figsize=figsize, dpi=100, sharey=True)
 
+    im = None
     for ax, name in zip(axs, ("Radiative", "Collision"), strict=False):
         im = ax.imshow(tran_mat[name] + numeric_error, origin="lower", cmap=cmap, norm=norm)
         if name == "Radiative" and title_prefix != "":
@@ -181,7 +182,8 @@ def transition_heatmap0(
         ax.set_yticks(list(range(klevel_max)))
         ax.set_yticklabels(ctjs, rotation=0, fontsize=8)
 
-    # colorbar
+    # colorbar — `im` is always set because the zip above yields 2 items.
+    assert im is not None, "no axes to draw colorbar for"
     cax = fig.add_axes((0.48, 0.15, 0.02, 0.7))
     fig.colorbar(im, cax=cax, orientation="vertical")
 
@@ -212,6 +214,7 @@ def transition_heatmap(fig, axes0, n_SE, mat_dict, ctj_table_level, vmin=None, v
 
     # fig, axs = plt.subplots(1,1, figsize=figsize, dpi=100)
 
+    im = None
     for i, (ax, name) in enumerate(zip(axes, tran_dict.keys(), strict=False)):
         im = ax.imshow(tran_dict[name], origin="lower", cmap=cmap, norm=norm)
         if i == 0 and title_prefix != "":
@@ -224,7 +227,7 @@ def transition_heatmap(fig, axes0, n_SE, mat_dict, ctj_table_level, vmin=None, v
         ax.set_yticklabels(ctjs, rotation=0, fontsize=8)
 
     # colorbar
-    # cax = fig.add_axes([0.48, 0.15, 0.02, 0.7])
+    assert im is not None, "no axes to draw colorbar for"
     cax = fig.add_axes([0.93, 0.2, 0.02, 0.6])
     fig.colorbar(im, cax=cax, orientation="vertical")
 
