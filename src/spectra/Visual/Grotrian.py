@@ -284,8 +284,8 @@ def read_Grotrian_(_lns):  # noqa: C901
     _line_plot = {}
     _position = {}
     _exclude = {}
-    _prefix: str = ""
-    _group_str: str = ""
+    _prefix: T_STR = ""
+    _group_str: T_STR = ""
     _isPosition, _isLineplot = False, False
     _isGroup = False
     for _ln in _lns[:]:

@@ -30,72 +30,9 @@ import json
 from pathlib import Path
 from typing import Any
 
-import numpy as _np
+import numpy as _numpy
 
 from spectra import Configurations as CFG
-
-# ---------------------------------------------------------------------------
-# dtype field listings — mirror the dtypes declared in
-# src/spectra/Util/AtomUtils/AtomIO.py and src/spectra/Struct/WavelengthMesh.py
-# ---------------------------------------------------------------------------
-
-_LEVEL_FIELDS: tuple[str, ...] = ("erg", "g", "stage", "gamma", "isGround", "n")
-_LINE_FIELDS: tuple[str, ...] = (
-    "idxI",
-    "idxJ",
-    "AJI",
-    "f0",
-    "w0",
-    "w0_AA",
-    "Gamma",
-    "gi",
-    "gj",
-    "ni",
-    "nj",
-    "BJI",
-    "BIJ",
-)
-_CONT_FIELDS: tuple[str, ...] = (
-    "idxI",
-    "idxJ",
-    "f0",
-    "w0",
-    "w0_AA",
-    "gi",
-    "gj",
-    "ni",
-    "nj",
-)
-_CE_COE_FIELDS: tuple[str, ...] = ("idxI", "idxJ", "f1", "f2", "gi", "gj", "dEij")
-_CI_COE_FIELDS: tuple[str, ...] = _CE_COE_FIELDS  # identical dtype
-_PI_COE_FIELDS: tuple[str, ...] = (
-    "idxI",
-    "idxJ",
-    "nLambda",
-    "alpha0",
-    "gi",
-    "gj",
-    "dEij",
-)
-_RL_COE_FIELDS: tuple[str, ...] = (
-    "idxI",
-    "idxJ",
-    "lineIndex",
-    "ProfileType",
-    "qcore",
-    "qwing",
-    "nLambda",
-)
-_WAVE_CONT_COE_FIELDS: tuple[str, ...] = ("idxI", "idxJ", "w0", "nLambda")
-_WAVE_LINE_COE_FIELDS: tuple[str, ...] = (
-    "idxI",
-    "idxJ",
-    "w0",
-    "ProfileType",
-    "qcore",
-    "qwing",
-    "nLambda",
-)
 
 # PI.Coe fields that are left uninitialised when data_source_PI == CALCULATE
 _PI_COE_UNDEF_ON_CALCULATE: frozenset[str] = frozenset(("alpha0", "gi", "gj", "dEij"))
@@ -122,13 +59,15 @@ def _path_to_rel(p: str | None) -> str | None:
         return str(abs_path)
 
 
-def _shape_only(arr: _np.ndarray) -> dict[str, list[int]]:
+def _shape_only(arr: _numpy.ndarray) -> dict[str, list[int]]:
     return {"_shape_only": list(arr.shape)}
 
 
-def _struct_array_as_flat(arr: _np.ndarray, fields: tuple[str, ...], prefix: str) -> dict[str, list]:
-    """Return {f"{prefix}.{field}": arr[field].tolist()} for each field."""
-    return {f"{prefix}.{f}": arr[f].tolist() for f in fields}
+def _struct_array_as_flat(arr: _numpy.ndarray, prefix: str) -> dict[str, list]:
+    """Return {f"{prefix}.{field}": arr[field].tolist()} for each dtype field."""
+    names = arr.dtype.names
+    assert names is not None, f"{prefix}: not a structured array"
+    return {f"{prefix}.{f}": arr[f].tolist() for f in names}
 
 
 def _enum_name(e: Any) -> str:
@@ -168,9 +107,9 @@ def dump_atom(atom: Any, wave_mesh: Any, path_dict: dict[str, str | None], name:
         out[f"{name}.path_dict.{k}"] = _path_to_rel(v)
 
     # --- Level / Line / Cont (struct arrays) ---
-    out.update(_struct_array_as_flat(atom.Level, _LEVEL_FIELDS, f"{name}.Level"))
-    out.update(_struct_array_as_flat(atom.Line, _LINE_FIELDS, f"{name}.Line"))
-    out.update(_struct_array_as_flat(atom.Cont, _CONT_FIELDS, f"{name}.Cont"))
+    out.update(_struct_array_as_flat(atom.Level, f"{name}.Level"))
+    out.update(_struct_array_as_flat(atom.Line, f"{name}.Line"))
+    out.update(_struct_array_as_flat(atom.Cont, f"{name}.Cont"))
 
     # --- CE ---
     out[f"{name}.CE._transition_type"] = _enum_name(atom.CE._transition_type)
@@ -178,7 +117,7 @@ def dump_atom(atom: Any, wave_mesh: Any, path_dict: dict[str, str | None], name:
     out[f"{name}.CE._transition_formula"] = _enum_name(atom.CE._transition_formula)
     out[f"{name}.CE.Te_table"] = atom.CE.Te_table.tolist()
     out[f"{name}.CE.Omega_table"] = atom.CE.Omega_table.tolist()
-    out.update(_struct_array_as_flat(atom.CE.Coe, _CE_COE_FIELDS, f"{name}.CE.Coe"))
+    out.update(_struct_array_as_flat(atom.CE.Coe, f"{name}.CE.Coe"))
 
     # --- CI ---
     out[f"{name}.CI._transition_type"] = _enum_name(atom.CI._transition_type)
@@ -186,7 +125,7 @@ def dump_atom(atom: Any, wave_mesh: Any, path_dict: dict[str, str | None], name:
     out[f"{name}.CI._transition_formula"] = _enum_name(atom.CI._transition_formula)
     out[f"{name}.CI.Te_table"] = atom.CI.Te_table.tolist()
     out[f"{name}.CI.Omega_table"] = atom.CI.Omega_table.tolist()
-    out.update(_struct_array_as_flat(atom.CI.Coe, _CI_COE_FIELDS, f"{name}.CI.Coe"))
+    out.update(_struct_array_as_flat(atom.CI.Coe, f"{name}.CI.Coe"))
 
     # --- PI ---
     # When data_source_PI == CALCULATE and nCont > 0, several arrays are
@@ -199,7 +138,9 @@ def dump_atom(atom: Any, wave_mesh: Any, path_dict: dict[str, str | None], name:
     out[f"{name}.PI.alpha_table_idxs"] = (
         _shape_only(atom.PI.alpha_table_idxs) if pi_has_uninit else atom.PI.alpha_table_idxs.tolist()
     )
-    for f in _PI_COE_FIELDS:
+    pi_coe_names = atom.PI.Coe.dtype.names
+    assert pi_coe_names is not None, f"{name}.PI.Coe: not a structured array"
+    for f in pi_coe_names:
         key = f"{name}.PI.Coe.{f}"
         if pi_has_uninit and f in _PI_COE_UNDEF_ON_CALCULATE:
             out[key] = _shape_only(atom.PI.Coe[f])
@@ -208,7 +149,7 @@ def dump_atom(atom: Any, wave_mesh: Any, path_dict: dict[str, str | None], name:
 
     # --- RL ---
     out[f"{name}.RL.nRadiativeLine"] = int(atom.RL.nRadiativeLine)
-    out.update(_struct_array_as_flat(atom.RL.Coe, _RL_COE_FIELDS, f"{name}.RL.Coe"))
+    out.update(_struct_array_as_flat(atom.RL.Coe, f"{name}.RL.Coe"))
 
     # --- ctj / idx tables (nested tuples → nested lists) ---
     out[f"{name}._ctj_table.Level"] = [list(row) for row in atom._ctj_table.Level]
@@ -219,10 +160,10 @@ def dump_atom(atom: Any, wave_mesh: Any, path_dict: dict[str, str | None], name:
 
     # --- Wavelength_Mesh ---
     out[f"{name}.waveMesh.Cont_mesh"] = wave_mesh.Cont_mesh.tolist()
-    out.update(_struct_array_as_flat(wave_mesh.Cont_Coe, _WAVE_CONT_COE_FIELDS, f"{name}.waveMesh.Cont_Coe"))
+    out.update(_struct_array_as_flat(wave_mesh.Cont_Coe, f"{name}.waveMesh.Cont_Coe"))
     out[f"{name}.waveMesh.Line_mesh"] = wave_mesh.Line_mesh.tolist()
     out[f"{name}.waveMesh.Line_mesh_idxs"] = wave_mesh.Line_mesh_idxs.tolist()
-    out.update(_struct_array_as_flat(wave_mesh.Line_Coe, _WAVE_LINE_COE_FIELDS, f"{name}.waveMesh.Line_Coe"))
+    out.update(_struct_array_as_flat(wave_mesh.Line_Coe, f"{name}.waveMesh.Line_Coe"))
     out[f"{name}.waveMesh.Line_mesh_share"] = wave_mesh.Line_mesh_share.tolist()
     # Uninitialised memory — shape-only comparison.
     out[f"{name}.waveMesh.Line_absorb_prof"] = _shape_only(wave_mesh.Line_absorb_prof)
@@ -262,7 +203,9 @@ def _compare_value(key: str, actual: Any, expected: Any) -> None:
         return
 
     if isinstance(expected, float):
-        assert _np.isclose(actual, expected, rtol=1e-12, atol=0.0, equal_nan=True), f"{key}: {actual!r} != {expected!r}"
+        assert _numpy.isclose(actual, expected, rtol=1e-12, atol=0.0, equal_nan=True), (
+            f"{key}: {actual!r} != {expected!r}"
+        )
         return
 
     if isinstance(expected, str):
@@ -293,21 +236,21 @@ def _compare_list(key: str, actual: Any, expected: list) -> None:
     (ctj tables), (c) numeric (nested) list.
     """
     if not expected:
-        actual_np = _np.asarray(actual)
-        assert actual_np.size == 0, f"{key}: expected empty, got {actual!r}"
+        actual_arr = _numpy.asarray(actual)
+        assert actual_arr.size == 0, f"{key}: expected empty, got {actual!r}"
         return
 
     if _leaf_is_str(expected):
         assert actual == expected, f"{key}: value mismatch (string leaves)"
         return
 
-    actual_np = _np.asarray(actual)
-    expected_np = _np.asarray(expected)
-    assert actual_np.shape == expected_np.shape, f"{key}: shape {actual_np.shape} != {expected_np.shape}"
-    if expected_np.dtype.kind in ("i", "u", "b"):
-        assert _np.array_equal(actual_np, expected_np), f"{key}: int/bool array differs"
+    actual_arr = _numpy.asarray(actual)
+    expected_arr = _numpy.asarray(expected)
+    assert actual_arr.shape == expected_arr.shape, f"{key}: shape {actual_arr.shape} != {expected_arr.shape}"
+    if expected_arr.dtype.kind in ("i", "u", "b"):
+        assert _numpy.array_equal(actual_arr, expected_arr), f"{key}: int/bool array differs"
     else:
-        _np.testing.assert_allclose(actual_np, expected_np, rtol=1e-12, atol=0.0, err_msg=key)
+        _numpy.testing.assert_allclose(actual_arr, expected_arr, rtol=1e-12, atol=0.0, err_msg=key)
 
 
 def assert_atom_matches(

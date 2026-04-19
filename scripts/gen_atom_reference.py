@@ -9,10 +9,10 @@ Regenerate whenever ``AtomIO`` business logic changes intentionally.
 
 from __future__ import annotations
 
-import argparse
 import json
 from pathlib import Path
 import sys
+from typing import Any
 
 _THIS = Path(__file__).resolve()
 _REPO_ROOT = _THIS.parent.parent
@@ -41,26 +41,19 @@ DEFAULT_OUT = CFG._ROOT_DIR / "tests" / "regression" / "atom_reference_values.js
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument(
-        "--out",
-        type=Path,
-        default=DEFAULT_OUT,
-        help=f"output JSON path (default: {DEFAULT_OUT})",
-    )
-    args = ap.parse_args()
+    out = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_OUT
 
-    merged: dict = {}
+    merged: dict[str, Any] = {}
     for rel, name, is_H in CONFIGS:
         conf_path = str(CFG._ROOT_DIR / rel)
         print(f"loading {name}  <- {rel}", flush=True)
         atom, wave_mesh, path_dict = Atom.init_Atom_(conf_path, is_hydrogen=is_H)
         merged.update(dump_atom(atom, wave_mesh, path_dict, name))
 
-    args.out.parent.mkdir(parents=True, exist_ok=True)
-    with args.out.open("w") as f:
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with out.open("w") as f:
         json.dump(merged, f, indent=2, sort_keys=True)
-    print(f"wrote {args.out}  ({len(merged)} keys, {args.out.stat().st_size} bytes)")
+    print(f"wrote {out}  ({len(merged)} keys, {out.stat().st_size} bytes)")
 
 
 if __name__ == "__main__":

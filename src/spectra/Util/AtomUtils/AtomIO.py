@@ -85,7 +85,7 @@ def read_general_info_(rs: T_INT, lns: T_LIST[T_STR]) -> T_TUPLE[T_INT, T_STR, T
             nLevel = int(ln.split()[-1].strip())
 
     if Z < 0 or nLevel < 0 or Element == "":
-        raise ValueError("missing Title/Z/Element/nLevel in Level config header")
+        raise ValueError("missing Z, Element, or nLevel in Level config header")
     re = rs + i + 1
 
     return re, Title, Z, Element, nLevel

@@ -60,7 +60,7 @@ def format_type_dict_(vtype_name: T_STR, value: T_DICT) -> T_STR:
         if not isinstance(key, kt0):
             is_single_type = False
             break
-        if not isinstance(val, kt0):
+        if not isinstance(val, vt0):
             is_single_type = False
             break
 
