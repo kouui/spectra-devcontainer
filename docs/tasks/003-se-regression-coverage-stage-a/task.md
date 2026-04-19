@@ -134,6 +134,16 @@ the `a84128b`-generated reference. This confirms the SE path
 (`Function/SEquil/SELib.py`, `Atomic/{SEsolver,LTELib,Collision,PhotoIonize,BasicP}.py`)
 is behavior-preserving between `a84128b` and current `main`.
 
+## Known gaps (Stage B / C candidates, surfaced by final review)
+
+These branches of `cal_SE_with_Ne_Te_` are not exercised by Stage A; each would be cheap to add but constitutes parameter-variation coverage (Stage B territory), not a new (entry, atom) cell:
+
+- **`rate_only=True`** — early-return path at `SELib.py:258-259`; a one-line test with `n_SE = zeros` assertion would lock the sentinel.
+- **`is_single_element=True`** — alternative `SE_con.Ntotal` formula at `SELib.py:268-271` for non-H atoms.
+- **`Nh_SE != None`** — the `atmos.Nh = atmos.Ne / (1e-4 + Nh_SE[-1])` branch at `SELib.py:250`.
+
+Track these in a follow-up Stage B task ("`003-se-regression-coverage-stage-b`: parameter sweeps and entry-variation coverage").
+
 ## References
 
 - Handoff: `tmp/handoff.md` (user-provided input, `tmp/` is gitignored — not tracked)
