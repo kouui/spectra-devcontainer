@@ -474,7 +474,12 @@ def cal_SE_(
         rate_only,
     )
 
-    SE_con = _Container.SE_Container(  # type: ignore[call-arg]
+    # Note for Icp callers: `Ntotal` is left as a 0.0 placeholder here.
+    # The non-Icp `Function/SEquil/SELib` wrappers overwrite `SE_con.Ntotal`
+    # after the SE loop converges (see `cal_SE_with_{Pg,Nh,Ne}_Te_`), but the
+    # Icp wrappers (`cal_SE_with_Pg_Te_{,Ne_}single_Atom_`) currently do not.
+    # If you read `SE_con.Ntotal` from an Icp code path you will see 0.0.
+    SE_con = _Container.SE_Container(
         n_SE=n_SE,
         n_LTE=n_LTE,
         nj_by_ni=nj_by_ni,
@@ -482,6 +487,10 @@ def cal_SE_(
         absorb_prof_1d=absorb_prof_cm_all,
         Line_mesh_idxs=Line_mesh_idxs,
         Jbar=Jbar_all,
+        Ntotal=0.0,
+        Nh=atmos.Nh,
+        Ne=Ne,
+        Te=Te,
     )
 
     tran_rate_con = _Container.TranRates_Container(

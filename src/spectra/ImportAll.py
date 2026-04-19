@@ -9,11 +9,11 @@
 # from .ImportExternalModule import *
 
 
-from numba.typed import List  # type: ignore
+from numba.typed import List
 import numpy as _numpy
 
-from numba import njit as nb_njit  # type: ignore
-from numba import vectorize as nb_vec  # type: ignore
+from numba import njit as nb_njit
+from numba import vectorize as nb_vec
 
 from . import Configurations as CFG
 from . import Constants as CST
@@ -24,12 +24,7 @@ from .Warnings import WARN_
 
 np_vec = _numpy.vectorize
 
-nb_List: T_TYPE[List | T_LIST]  # type: ignore[reportGeneralTypeIssues]
-if CFG._IS_JIT:
-    # from numba.typed import List # type: ignore
-    nb_List = List  # type: ignore[assignment]
-else:
-    nb_List = list  # type: ignore[assignment]
+nb_List = List if CFG._IS_JIT else list
 del List
 
 ## : numba TypedDict much slower than numpy struct array

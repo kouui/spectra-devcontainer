@@ -9,9 +9,9 @@
 
 from pathlib import Path
 
-from numba.core import config as nb_config  # type: ignore
+from numba.core import config as nb_config
 
-from numba import set_num_threads as nb_set_num_threads  # type: ignore
+from numba import set_num_threads as nb_set_num_threads
 
 from .Types import T_BOOL, T_INT, T_STR
 
@@ -46,13 +46,11 @@ set to
     False : before generating documentation using sphinx
 """
 
-# mypy: ignore-errors
-
 
 def _SET_NUMBA_THREAD_(threading_layer: T_STR = "threadsafe", n_thread: T_INT = 2) -> None:
     r""" """
 
-    nb_config.THREADING_LAYER = threading_layer  # type: ignore[attr-defined]
+    nb_config.THREADING_LAYER = threading_layer
     """ set to thread safe library : tbb, omp, workqueue, default : workqueue. tbb if possible """
 
     nb_set_num_threads(n_thread)

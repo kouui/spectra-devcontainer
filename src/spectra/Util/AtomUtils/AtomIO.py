@@ -1031,10 +1031,10 @@ def make_Atom_PI_(  # noqa: C901
                 arr2d[0, :] = Cont_mesh[i, :]
                 from ...Function.Hydrogen import DegenerateN as _DegenerateN
 
-                Eionize = Level["erg"][Coe["idxJ"][i]] - Level["erg"][Coe["idxI"][i]]
-                z = Level["stage"][Coe["idxI"][i]]  # type: ignore[assignment]
-                ni = Level["n"][Coe["idxI"][i]]
-                arr2d[1, :] = _DegenerateN.compute_Hydrogenic_PI_cross_section_(z, ni, Eionize, Cont_mesh[i, :])  # type: ignore[arg-type]
+                Eionize = T_FLOAT(Level["erg"][Coe["idxJ"][i]] - Level["erg"][Coe["idxI"][i]])
+                z = T_INT(Level["stage"][Coe["idxI"][i]])
+                ni = T_INT(Level["n"][Coe["idxI"][i]])
+                arr2d[1, :] = _DegenerateN.compute_Hydrogenic_PI_cross_section_(z, ni, Eionize, Cont_mesh[i, :])
             else:
                 arr2d = alpha_table_dict[key]
                 alpha_table_idxs[i, 1] = alpha_table_idxs[i, 0] + arr2d.shape[1]

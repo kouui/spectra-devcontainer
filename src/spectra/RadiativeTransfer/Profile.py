@@ -245,8 +245,8 @@ def hf_(a: T_FLOAT, x: T_ARRAY) -> T_TUPLE[T_ARRAY, T_ARRAY]:
         w4_1d[i] = val
 
     w4 = w4_1d.reshape(x.shape)
-    h = w4.real / CST.sqrtPi_  # type: ignore[attr-defined]
-    f = w4.imag / CST.sqrtPi_  # type: ignore[attr-defined]
+    h = _numpy.real(w4) / CST.sqrtPi_
+    f = _numpy.imag(w4) / CST.sqrtPi_
 
     return h, f
 

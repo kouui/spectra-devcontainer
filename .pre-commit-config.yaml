@@ -4,12 +4,12 @@
 repos:
   - repo: local
     hooks:
-      # - id: protect-main-branch
-      #   name: protect main branch (no direct commits)
-      #   entry: bash -c 'branch=$(git rev-parse --abbrev-ref HEAD); if [ "$branch" = "main" ] || [ "$branch" = "master" ]; then echo "❌ 禁止直接在 $branch 分支上提交，请使用 feature 分支并通过 PR 合并"; exit 1; fi'
-      #   language: system
-      #   pass_filenames: false
-      #   always_run: true
+      - id: protect-main-branch
+        name: protect main branch (no direct commits)
+        entry: bash -c 'branch=$(git rev-parse --abbrev-ref HEAD); if [ "$branch" = "main" ] || [ "$branch" = "master" ]; then echo "❌ 禁止直接在 $branch 分支上提交，请使用 feature 分支并通过 PR 合并"; exit 1; fi'
+        language: system
+        pass_filenames: false
+        always_run: true
 
       - id: protect-main-push
         name: protect main branch (no direct push)
@@ -33,12 +33,12 @@ repos:
         pass_filenames: true
         types: [python]
 
-      # - id: pyright
-      #   name: pyright (type checking)
-      #   entry: uv run pyright
-      #   language: system
-      #   pass_filenames: false
-      #   always_run: true
+      - id: pyright
+        name: pyright (type checking)
+        entry: uv run pyright
+        language: system
+        pass_filenames: false
+        always_run: true
 
       # - id: import-linter
       #   name: import-linter (api module encapsulation)

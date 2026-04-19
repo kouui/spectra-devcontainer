@@ -10,6 +10,7 @@ from collections import Counter
 import math
 from pathlib import Path
 
+from matplotlib.figure import Figure as _Figure
 import matplotlib.pyplot as plt
 
 from ..ImportAll import *
@@ -362,6 +363,8 @@ def _filter_term(_term):
 
 
 class Grotrian:
+    fig: _Figure
+
     def __init__(self, _atom, _path=None, _conf_prefix=None, _scaleFunc=None, _scaleFunc_inv=None):
         r"""
 
@@ -428,7 +431,31 @@ class Grotrian:
         self.member_to_head = self._init_group_member2head()
         self.line_plot_defined = line_plot
 
-        self.fig = None
+        self._ensure_fig_()
+
+    def _ensure_fig_(self, _fig=None, _figsize=(6, 8), _dpi=120, _resetFig=True):
+        r"""
+        Figure-lifecycle helper, extracted from ``make_fig`` so that ``self.fig``
+        can be declared non-Optional at the class level (callers on lines
+        ~664/832/838/862/961/965/966 assume it is populated).
+
+        Why split this out of ``make_fig``:
+          - ``make_fig`` is a full renderer (~500-650). Calling it eagerly in
+            ``set_atom`` to guarantee non-Optional would force a complete Grotrian
+            render at construction time, which notebook users don't want.
+          - ``plt.close`` on the previous figure is required: notebook usage is
+            ``Grotrian(...); make_fig(_figsize=..., _dpi=...)`` — without a close,
+            the default figure created here would leak on every explicit call.
+        """
+        if _fig is not None:
+            if getattr(self, "fig", None) is not None and self.fig is not _fig:
+                plt.close(self.fig)
+            self.fig = _fig
+        elif _resetFig or getattr(self, "fig", None) is None:
+            if getattr(self, "fig", None) is not None:
+                plt.close(self.fig)
+            self.fig = plt.figure(figsize=_figsize, dpi=_dpi)
+        # else: reuse existing self.fig
 
     def make_fig(self, _fig=None, _axe=None, _figsize=(6, 8), _dpi=120, _f=200, _removeSpline=None, _resetFig=True):  # noqa: C901
         r"""
@@ -469,15 +496,7 @@ class Grotrian:
         # set figure and axe
         # ---------------------------------------------------------------------
 
-        if _fig is not None:
-            fig = _fig
-            self.fig = fig
-        else:
-            if _resetFig or self.fig is None:
-                fig = plt.figure(figsize=_figsize, dpi=_dpi)
-                self.fig = fig
-            else:
-                fig = self.fig
+        self._ensure_fig_(_fig=_fig, _figsize=_figsize, _dpi=_dpi, _resetFig=_resetFig)
 
         if _axe is not None:
             plt.sca(_axe)
@@ -661,7 +680,7 @@ class Grotrian:
             "dot per inch" (resolution) to save figure, default : 120s
         """
 
-        self.fig.savefig(_filename, dpi=_dpi)  # type: ignore[union-attr]
+        self.fig.savefig(_filename, dpi=_dpi)
 
     def show_fig(self):
         pass
@@ -829,13 +848,13 @@ class Grotrian:
             _lp, _rp = _rp, _lp
 
         # compute the angle to rotate text
-        _w, _h = self.fig.get_size_inches()  # type: ignore[union-attr]
+        _w, _h = self.fig.get_size_inches()
         _dx = (_rp[0] - _lp[0]) / self.xr * _w
         _dy = (_rp[1] - _lp[1]) / self.yr * _h
         _tangle = math.atan2(_dy, _dx)
         _tangle = int(math.degrees(_tangle))
         # plot line and text
-        _ax = self.fig.gca()  # type: ignore[union-attr]
+        _ax = self.fig.gca()
         _line_obj, _text_obj = line_with_text_(
             _ax=_ax,
             _lp=_lp,
@@ -859,7 +878,7 @@ class Grotrian:
         _pi = pos_lvl_i["xs"][0] + (pos_lvl_i["xs"][1] - pos_lvl_i["xs"][0]) * _ri, pos_lvl_i["ys"][0]
         _pj = pos_lvl_j["xs"][0] + (pos_lvl_j["xs"][1] - pos_lvl_j["xs"][0]) * _rj, pos_lvl_j["ys"][0]
 
-        _ax = self.fig.gca()  # type: ignore[union-attr]
+        _ax = self.fig.gca()
         _annotation_obj = arrow_without_text_(
             _ax=_ax,
             _pi=_pi,
@@ -958,12 +977,12 @@ class Grotrian:
 
         # colorbar ax
         _temp = [[1, 1]]
-        _temp_ax = self.fig.add_axes((0.9, 9, 0.001, 0.001))  # type: ignore[union-attr]
+        _temp_ax = self.fig.add_axes((0.9, 9, 0.001, 0.001))
         _img = _temp_ax.imshow(_temp, cmap=_cmap, norm=_norm)
         _temp_ax.set_visible(False)
         if _cax is None:
-            _cax = self.fig.add_axes((0.84, 0.15, 0.02, 0.7))  # type: ignore[union-attr]
-        self.fig.colorbar(_img, cax=_cax, orientation="vertical")  # type: ignore[union-attr]
+            _cax = self.fig.add_axes((0.84, 0.15, 0.02, 0.7))
+        self.fig.colorbar(_img, cax=_cax, orientation="vertical")
 
 
 def init_vertical_r1r2_(xs_lower, xs_upper):

@@ -48,5 +48,5 @@ def compute_Hydrogenic_PI_cross_section_(z: T_INT, ni: T_INT, Eionize: T_FLOAT, 
     assert meshCont.ndim == 1
     E_tran = CST.h_ * CST.c_ / meshCont[:]
     Eratio = E_tran / Eionize
-    PI_alpha = _Hydrogen.PI_cross_section_(ni, Eratio, z)  # type: ignore[arg-type]
+    PI_alpha = _Hydrogen.PI_cross_section_(ni, Eratio, z)
     return PI_alpha

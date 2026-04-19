@@ -25,9 +25,9 @@ def HI_bf_cross_sec_(ns: T_VEC_IA, nHI_pop: T_VEC_FA, Te: T_FLOAT):
 # def func_(ns : T_VEC_IA, nH_pop : T_VEC_FA, nH : T_FLOAT, ne : T_FLOAT, Te : T_FLOAT):
 
 
-def HI_bf_emissivity_LTE_(wave: T_FLOAT, nHI_pop_LTE: T_VEC_FA, Te: T_FLOAT):
+def HI_bf_emissivity_LTE_(wave: T_FLOAT, nHI_pop_LTE: T_ARRAY, Te: T_FLOAT):
 
-    n_HI_Level = nHI_pop_LTE.size  # type: ignore
+    n_HI_Level = nHI_pop_LTE.size
 
     eta = 0.0
     kT = CST.k_ * Te
@@ -35,7 +35,7 @@ def HI_bf_emissivity_LTE_(wave: T_FLOAT, nHI_pop_LTE: T_VEC_FA, Te: T_FLOAT):
     for k in range(n_HI_Level):
         ni = k
         alpha = _Hydrogen.PI_cross_section_cm_(ni, wave, 1)
-        eta += nHI_pop_LTE[k] * alpha * factor * _LTELib.planck_cm_(wave, Te)  # type: ignore
+        eta += nHI_pop_LTE[k] * alpha * factor * _LTELib.planck_cm_(wave, Te)
 
     return eta
 
