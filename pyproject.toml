@@ -101,5 +101,4 @@ venvPath = "."
 venv = ".venv"
 include = ["src", "tests"]
 reportPossiblyUnboundVariable = false
-reportInvalidTypeForm = false
 reportOperatorIssue = false
