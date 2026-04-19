@@ -271,15 +271,20 @@ Each asserts 4 fields with `rtol=1e-8`: `SE_con.n_SE`, `SE_con.n_LTE`, `atmos.Ne
 - **Rationale:** Consistent with existing `E2E.*` keys (already in `reference_values.json`). Size negligible.
 - **Consequences:** `ref` fixture keeps serving SE + CloudModel + unit test refs. No fixture churn.
 
-### Decision 4: Existing 3 cases keep 3-field assertions; only new 6 cases assert 4 fields
+### Decision 4: Assert only fields actually mutated by the SE entry (revised post-review)
 
-- **Context:** Handoff specifies 4 fields `(n_SE, n_LTE, Ne, Ntotal)` for new cases. Existing H_Nh_Te has 3 (no Ntotal); H_Ne_Te, He_Ne_Te have 2 (no Ne, no Ntotal).
+- **Context:** Initial draft committed to 4 fields for all new cases. P1 bug review (subagent + codex) flagged that `atmos.Ne` is an identity assertion for non-H Nh_Te and Pg_Te entries (the function does not mutate it for non-hydrogen), so the assertion carries no regression signal.
 - **Options Considered:**
-  1. Retro-add `Ntotal` to existing 3 → touches existing JSON, risks whitespace churn and untied drift.
-  2. Leave existing 3 alone → minimal diff.
-- **Decision:** Option 2.
-- **Rationale:** Keep this PR surgical. If we later want full-4-field on old cases, do it in a separate cleanup task after drift-audit confirms stability.
-- **Consequences:** Asymmetric assertion depth across cases; acceptable for a regression net.
+  1. Keep 4 fields uniformly — cosmetic symmetry but weak identity checks bloat reference JSON and mislead readers.
+  2. Swap `atmos.Ne` for `atmos.Nh` on non-H Ne_Te (where `atmos.Nh` IS mutated to `2*atmos.Ne`) — still requires crafting non-coincidental inputs.
+  3. Assert only fields the entry actually mutates for that atom type.
+- **Decision:** Option 3.
+- **Rationale:** A regression test's value is its ability to catch behavioral change. Identity assertions don't. Keep surface minimal and honest.
+- **Consequences:** Per-case assertion depth varies (2, 3, or 4 fields). 18 new reference keys instead of 24. Existing 3 cases unchanged (minimal diff per the original intent).
+- **Per-case breakdown:**
+  - H × Pg_Te: 4 fields (n_SE, n_LTE, Ne, Ntotal) — Ne is iterated
+  - He × {Nh_Te, Pg_Te}, Ca_II × {Nh_Te, Pg_Te}: 3 fields (n_SE, n_LTE, Ntotal) — Ne is input
+  - Ca_II × Ne_Te: 2 fields (n_SE, n_LTE) — matches existing H/He Ne_Te convention
 
 ### Decision 5: `rtol=1e-8` — match existing style
 

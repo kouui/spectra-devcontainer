@@ -34,7 +34,10 @@ Stage B (Te parameter sweep) and Stage C (private helper unit tests) from the or
    | `cal_SE_with_Nh_Te_` | existing | **new** | **new** |
    | `cal_SE_with_Ne_Te_` | existing | existing | **new** |
    | `cal_SE_with_Pg_Te_` | **new** | **new** | **new** |
-2. Each new test asserts 4 fields: `SE_con.n_SE`, `SE_con.n_LTE`, `atmos.Ne`, `SE_con.Ntotal` (with `rtol=1e-8`).
+2. Each new test asserts **fields that the entry actually mutates for that atom type** (`rtol=1e-8`). Per review findings (subagent + codex), asserting `atmos.Ne` for non-H non-Pg_Te entries is an identity check and provides no regression signal. Final breakdown:
+   - H × Pg_Te: 4 fields (`n_SE`, `n_LTE`, `Ne`, `Ntotal`) — `Ne` is iterated by the self-consistent loop
+   - He/Ca_II × {Nh_Te, Pg_Te}: 3 fields (`n_SE`, `n_LTE`, `Ntotal`) — `Ne` is the input, unchanged
+   - Ca_II × Ne_Te: 2 fields (`n_SE`, `n_LTE`) — matches existing H/He Ne_Te convention
 3. Reference values for all 6 new cases are generated on commit `a84128b` via a one-shot script `scripts/gen_se_reference.py`, then merged into `tests/regression/reference_values.json` under keys `E2E.<atom>_SE_<entry>.<field>`.
 4. Running `pytest tests/regression/test_reg_e2e_SE.py -v` on current `main` passes all 9 cases (3 existing + 6 new) with **zero diff** against the `a84128b`-generated references.
 
@@ -75,7 +78,14 @@ Stage B (Te parameter sweep) and Stage C (private helper unit tests) from the or
 - [ ] 6 new test methods added under `TestHydrogenSE`, `TestHeliumSE`, `TestCaIISE` in `test_reg_e2e_SE.py`
 - [ ] All 9 tests in `test_reg_e2e_SE.py` pass (3 existing + 6 new) with `rtol=1e-8`
 - [ ] `scripts/gen_se_reference.py` committed and runnable via `uv run --extra dev python scripts/gen_se_reference.py`
-- [ ] `tests/regression/reference_values.json` contains exactly 24 new keys: `E2E.{H,He,Ca_II}_SE_{Nh,Ne,Pg}_Te.{n_SE,n_LTE,Ne,Ntotal}` — minus 3 already-existing cases × 3-or-4 fields (H_Nh_Te: n_SE/n_LTE/Ne → +1 Ntotal; H_Ne_Te: n_SE/n_LTE → +2 Ne+Ntotal; He_Ne_Te: n_SE/n_LTE → +2 Ne+Ntotal). **Decision — do not retroactively add these to existing cases**; only new cases get 4 fields. So 6 cases × 4 fields = **24 new keys**.
+- [ ] `tests/regression/reference_values.json` contains exactly 18 new keys, sized per per-case mutation:
+  - `E2E.H_SE_Pg_Te.{n_SE, n_LTE, Ne, Ntotal}` → 4 keys
+  - `E2E.He_SE_Nh_Te.{n_SE, n_LTE, Ntotal}` → 3 keys
+  - `E2E.He_SE_Pg_Te.{n_SE, n_LTE, Ntotal}` → 3 keys
+  - `E2E.Ca_II_SE_Nh_Te.{n_SE, n_LTE, Ntotal}` → 3 keys
+  - `E2E.Ca_II_SE_Ne_Te.{n_SE, n_LTE}` → 2 keys
+  - `E2E.Ca_II_SE_Pg_Te.{n_SE, n_LTE, Ntotal}` → 3 keys
+  Existing 3 cases untouched.
 - [ ] Full regression suite passes: `uv run --extra dev pytest tests/regression/ -q`
 - [ ] `pre-commit run --all-files` green
 - [ ] Zero diff between `a84128b` and `main` on the new reference (or drift-audit.md exists with blame + decision)
