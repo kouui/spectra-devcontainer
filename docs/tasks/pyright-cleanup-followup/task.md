@@ -7,9 +7,13 @@
 
 ## Objective
 
-收拾上一轮 pyright 大清洗（`239 → 0`，commit `a4ed0d9`）遗留的两项技术债：
+收拾上一轮 pyright 大清洗（`239 → 0`，commit `a4ed0d9`）遗留的两项技术债，遵循**能从根源修就不 ignore**的原则：
+
 1. 用 Python 3.13 原生 `type` 语句重写 `Types.py` 中的 Union / Generic 类型别名，消除 `reportInvalidTypeForm` 的 34 处误报，并从 `pyproject.toml` 移除该规则的全局抑制。
-2. 复审本次 pyright 修复新增的 27 处 `# type: ignore`：可替换的换成更干净的写法（`assert` / 显式转换 / 签名修正），掩盖真 bug 的就地修掉，库/stub 限制的保留。
+2. 把本次 pyright 修复新增的 27 处 `# type: ignore` **全部**从根源消除：
+   - C 类（9 处）修签名 / 显式转换 / 防御 None（改错误代码）
+   - B 类（11 处）用构造器保证 / 结构重构 / numpy 函数式 API（改写法）
+   - A 类（5 处）为 numba / scipy 写项目内 `.pyi` stub 文件（pyright `stubPath`）——不再保留 ignore + 注释的妥协方案
 
 ## Background & Context
 
@@ -25,9 +29,10 @@
 ### Functional Requirements
 
 1. `pyproject.toml` 中 `reportInvalidTypeForm = false` 被移除后，`uv run --extra dev pyright` 仍为 0 错误。
-2. 本次 pyright 修复新增的 27 处 `# type: ignore` 中，至少 20 处被替换为更干净的写法或彻底修掉真 bug；剩余保留条目必须附一行注释说明原因。
-3. 回归测试 `tests/regression/` 247 passed（含 JIT 路径 `CFG._IS_JIT=True`）。
-4. `pre-commit run --all-files` 全绿（ruff + pyright）。
+2. 本次 pyright 修复新增的 27 处 `# type: ignore` **全部消除**（27/27）。若某处确实无法根源修，必须停下来开 follow-up issue 讨论，**不得就地保留 ignore 了事**。
+3. 为 numba（`numba.typed.List`、`numba.njit`、`numba.vectorize`、`numba.core.config.THREADING_LAYER`、`numba.set_num_threads`、`numba.objmode`）和 scipy（`scipy.interpolate.interp1d` 的 `fill_value` 参数）提供项目内 `.pyi` stub 文件，`pyproject.toml [tool.pyright]` 增加 `stubPath = "typings"`。
+4. 回归测试 `tests/regression/` 247 passed（含 JIT 路径 `CFG._IS_JIT=True`）。
+5. `pre-commit run --all-files` 全绿（ruff + pyright）。
 
 ### Non-Functional Requirements
 
@@ -39,34 +44,47 @@
 
 ### In Scope
 
+**Types 重写**
 - [ ] `src/spectra/Types.py` — `T_VEC_*`、`T_CTJ_*`、`T_IDX_PAIR_TABLE`、`T_E_*` 用 `type` 语句重写
-- [ ] `pyproject.toml` — 移除 `reportInvalidTypeForm = false`
-- [ ] `src/spectra/Visual/Grotrian.py` — 用构造器层面保证 `self.fig` 非 None，消除 7 处 `union-attr` ignore
-- [ ] `src/spectra/Visual/Plotting.py` — 修复 `:69`（收窄 None）和 `:136`（`add_axes` 签名）
-- [ ] `src/spectra/RadiativeTransfer/Profile.py` — `.real`/`.imag` 改 `numpy.real()`/`numpy.imag()`
-- [ ] `src/spectra/Experimental/ExScatter.py` — 修 `nHI_pop_LTE` 签名（真 bug: `T_FLOAT` → `T_VEC_FA`）
-- [ ] `src/spectra/Function/Icp/SELib.py:477` — 检查 `SE_Container` 构造器缺参
-- [ ] `src/spectra/Util/HelpUtil.py:81` — `dtype.names is None` 防御
-- [ ] `src/spectra/Util/AtomUtils/AtomIO.py:1035-1037` — 显式 `int()` 转换
+- [ ] `pyproject.toml` — 移除 `reportInvalidTypeForm = false`，添加 `stubPath = "typings"`
+
+**C 类真 bug（9 处，全消）**
+- [ ] `src/spectra/Experimental/ExScatter.py` — 修 `nHI_pop_LTE` 签名（真 bug: `T_FLOAT` → `T_VEC_FA`）—— 2 处
 - [ ] `src/spectra/Util/AtomicDataUtils/MakePhotoioniz.py:115` — 修 `_v1_fit_func_` 签名
-- [ ] `src/spectra/Function/Hydrogen/DegenerateN.py:51` — 确认 `PI_cross_section_` overload 覆盖
-- [ ] `src/spectra/ImportAll.py:27-32` — 若 `nb_List` 定义可简化则一起改
-- [ ] `src/spectra/Atomic/PhotoIonize.py:100` — `fill_value` tuple 传 scipy，保留 ignore（stub 限制）并加注释
-- [ ] `src/spectra/Configurations.py:55` — `THREADING_LAYER` 属性访问，保留 ignore 并加注释
+- [ ] `src/spectra/Util/AtomUtils/AtomIO.py:1035-1037` — 显式 `int()` 转换 —— 2 处
+- [ ] `src/spectra/Util/HelpUtil.py:81` — `dtype.names is None` 防御
+- [ ] `src/spectra/Function/Icp/SELib.py:477` — 读 `_Container.py` 确认并补全 `SE_Container` 构造器参数
+- [ ] `src/spectra/Function/Hydrogen/DegenerateN.py:51` — 补 `PI_cross_section_` overload 或显式类型转换
+
+**B 类样式（11 处，全消，无 assert 退路）**
+- [ ] `src/spectra/Visual/Grotrian.py` — **类型层面**让 `self.fig: Figure` 非 Optional（修改 `__init__` 结构）；若做不到，停下来开 follow-up —— 7 处
+- [ ] `src/spectra/Visual/Plotting.py:69` — 重构 elif 结构，确保 `points` 在所有分支被赋值
+- [ ] `src/spectra/Visual/Plotting.py:136` — 调用方改用元组字面量 `(0.0, 0.0, 1.0, 1.0)`，函数签名声明 `tuple[float, float, float, float]`
+- [ ] `src/spectra/RadiativeTransfer/Profile.py:248-249` — `.real`/`.imag` 改 `numpy.real()`/`numpy.imag()` —— 2 处
+
+**A 类库 stub 限制（5 处，全消，通过写 `.pyi`）**
+- [ ] `typings/numba/__init__.pyi` — 新增，覆盖 `njit`、`vectorize`、`set_num_threads`、`objmode`
+- [ ] `typings/numba/typed/__init__.pyi` — 新增，覆盖 `List`（供 `ImportAll.py:12, 27, 30, 32`）
+- [ ] `typings/numba/core/config.pyi` — 新增，覆盖 `THREADING_LAYER` 属性（供 `Configurations.py:55`）
+- [ ] `typings/scipy/interpolate/__init__.pyi` — 新增，覆盖 `interp1d` 的 `fill_value` 接受 `float | tuple[float, float]`（供 `PhotoIonize.py:100`）
+
+**连带清理**
+- [ ] `src/spectra/ImportAll.py:27-32` — stub 生效后，`nb_List` 的 `# type: ignore` 全部删除，类型注解可能也能简化
 
 ### Out of Scope (Boundaries)
 
-- **`src/spectra/Util/AtomicDataUtils/RH2Spectra/01makeAtom.py`**: 协作者维护的 RH → Spectra 转换脚本，文件名以数字开头不可 import；使用独立 dataclass（`CollisionRH`/`AlphaRH`/`LevelRH`）和原生类型标注。该文件内 3 处 `# type: ignore` 本次保留。
-- **`src/spectra/Atomic/ContinuumOpacity.py`、`src/spectra/Atomic/Hydrogen.py`、`src/spectra/Warnings.py` 等先前已有的 `# type: ignore`**：属于 `commit a4ed0d9` 之前的历史债，不在本次 27 处范围内，不处理。
+- **`src/spectra/Util/AtomicDataUtils/RH2Spectra/01makeAtom.py`**: 协作者维护的 RH → Spectra 转换脚本，文件名以数字开头不可 import；使用独立 dataclass（`CollisionRH`/`AlphaRH`/`LevelRH`）和原生类型标注。该文件内 3 处 `# type: ignore` 本次保留（不属于 27 处）。
+- **`src/spectra/Atomic/ContinuumOpacity.py`、`src/spectra/Atomic/Hydrogen.py`、`src/spectra/Warnings.py` 等先前已有的 `# type: ignore`**：属于 `commit a4ed0d9` 之前的历史债，不在本次 27 处范围内。未来可独立任务处理（届时 `typings/` 已有 numba stubs 可复用）。
+- **完整 numba / scipy stubs**：本次只写**用到的**符号（最小化原则），不追求完整覆盖。
 - **numba 类型表达式** (`nb_types.float64[:]` 等注释掉的历史代码)：`Types.py` 末尾的注释块保留原样。
 - **新增功能或重构**：本次只做类型清理，不动任何业务逻辑。
 
 ## Acceptance Criteria
 
-- [ ] `pyproject.toml` 不再有 `reportInvalidTypeForm = false`
+- [ ] `pyproject.toml` 不再有 `reportInvalidTypeForm = false`，并新增 `stubPath = "typings"`
 - [ ] `uv run --extra dev pyright` 输出 `0 errors, 0 warnings`
-- [ ] 新增的 27 处 ignore 中被消除的数量 ≥ 20
-- [ ] 保留的 ignore 每处都有一行说明注释
+- [ ] 新增的 27 处 ignore **全部消除**（27/27）；若某处无法根源修，必须在 follow-up issue 中记录，不得保留
+- [ ] `typings/` 下至少包含 `numba/__init__.pyi`、`numba/typed/__init__.pyi`、`numba/core/config.pyi`、`scipy/interpolate/__init__.pyi`
 - [ ] `uv run --extra dev python -m pytest tests/regression/ -q` 247 passed
 - [ ] `uv run --extra dev pre-commit run --all-files` 通过
 - [ ] JIT 路径 smoke test：`tests/regression/test_reg_e2e_SE.py` 在默认配置下通过（覆盖 `@nb_njit` / `@nb_vec` 装饰）
