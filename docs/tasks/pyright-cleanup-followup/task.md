@@ -1,6 +1,6 @@
 # Task: pyright cleanup follow-up
 
-> **Status:** Draft
+> **Status:** Review
 > **Owner:** kouui
 > **Created:** 2026-04-19
 > **Last Updated:** 2026-04-19
@@ -81,13 +81,14 @@
 
 ## Acceptance Criteria
 
-- [ ] `pyproject.toml` 不再有 `reportInvalidTypeForm = false`，并新增 `stubPath = "typings"`
-- [ ] `uv run --extra dev pyright` 输出 `0 errors, 0 warnings`
-- [ ] 新增的 27 处 ignore **全部消除**（27/27）；若某处无法根源修，必须在 follow-up issue 中记录，不得保留
-- [ ] `typings/` 下至少包含 `numba/__init__.pyi`、`numba/typed/__init__.pyi`、`numba/core/config.pyi`、`scipy/interpolate/__init__.pyi`
-- [ ] `uv run --extra dev python -m pytest tests/regression/ -q` 247 passed
-- [ ] `uv run --extra dev pre-commit run --all-files` 通过
-- [ ] JIT 路径 smoke test：`tests/regression/test_reg_e2e_SE.py` 在默认配置下通过（覆盖 `@nb_njit` / `@nb_vec` 装饰）
+- [x] `pyproject.toml` 不再有 `reportInvalidTypeForm = false`，并新增 `stubPath = "typings"`
+- [x] `uv run --extra dev pyright` 输出 `0 errors, 0 warnings`
+- [x] 新增的 27 处 ignore **全部消除**（27/27）—— C 9/9, B 11/11（含 Grotrian 7 处通过 Path E 根源修），A 5/5
+- [x] `typings/` 下至少包含 `numba/__init__.pyi`、`numba/typed/__init__.pyi`、`numba/core/config.pyi`、`scipy/interpolate/__init__.pyi`
+- [x] `uv run --extra dev python -m pytest tests/regression/ -q` 247 passed
+- [x] `uv run --extra dev pre-commit run --all-files` 通过
+- [x] JIT 路径 smoke test：`tests/regression/test_reg_e2e_SE.py` 在默认配置下通过（覆盖 `@nb_njit` / `@nb_vec` 装饰）
+- [x] Grotrian smoke test：构造 + `make_fig` + `save_fig` 无错，且 `plt.get_fignums()` 不积压（Path E 的 `_ensure_fig_` 在创建新 figure 前 `plt.close()` 旧 figure）
 
 ## Dependencies
 
