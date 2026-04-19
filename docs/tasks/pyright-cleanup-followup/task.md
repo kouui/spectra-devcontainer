@@ -1,6 +1,6 @@
 # Task: pyright cleanup follow-up
 
-> **Status:** Review
+> **Status:** Done
 > **Owner:** kouui
 > **Created:** 2026-04-19
 > **Last Updated:** 2026-04-19
