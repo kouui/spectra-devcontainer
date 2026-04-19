@@ -474,6 +474,11 @@ def cal_SE_(
         rate_only,
     )
 
+    # Note for Icp callers: `Ntotal` is left as a 0.0 placeholder here.
+    # The non-Icp `Function/SEquil/SELib` wrappers overwrite `SE_con.Ntotal`
+    # after the SE loop converges (see `cal_SE_with_{Pg,Nh,Ne}_Te_`), but the
+    # Icp wrappers (`cal_SE_with_Pg_Te_{,Ne_}single_Atom_`) currently do not.
+    # If you read `SE_con.Ntotal` from an Icp code path you will see 0.0.
     SE_con = _Container.SE_Container(
         n_SE=n_SE,
         n_LTE=n_LTE,

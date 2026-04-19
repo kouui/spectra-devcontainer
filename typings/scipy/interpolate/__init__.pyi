@@ -1,5 +1,5 @@
-from typing import Any
-
+# Minimal hand-written stub: only the scipy.interpolate.interp1d params this project passes.
+# Extend fill_value's union or add kwargs here when new usage patterns appear.
 import numpy as np
 
 class interp1d:
@@ -8,10 +8,7 @@ class interp1d:
         x: np.ndarray,
         y: np.ndarray,
         kind: str = ...,
-        axis: int = ...,
-        copy: bool = ...,
         bounds_error: bool = ...,
-        fill_value: float | tuple[float, float] | str = ...,
-        assume_sorted: bool = ...,
+        fill_value: float | tuple[float, float] = ...,
     ) -> None: ...
     def __call__(self, x: np.ndarray) -> np.ndarray: ...

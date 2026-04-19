@@ -24,11 +24,7 @@ from .Warnings import WARN_
 
 np_vec = _numpy.vectorize
 
-nb_List: T_TYPE[List | T_LIST]
-if CFG._IS_JIT:
-    nb_List = List
-else:
-    nb_List = list
+nb_List = List if CFG._IS_JIT else list
 del List
 
 ## : numba TypedDict much slower than numpy struct array

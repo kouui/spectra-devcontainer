@@ -1,6 +1,8 @@
+# Minimal hand-written stub: only symbols this project imports.
+# Extend here when a new numba top-level API is adopted; do not aim for completeness.
 from collections.abc import Callable
 from contextlib import contextmanager
-from typing import Any, overload
+from typing import Any
 
 def njit(*args: Any, **kwargs: Any) -> Callable[..., Any]: ...
 def vectorize(*args: Any, **kwargs: Any) -> Callable[..., Any]: ...

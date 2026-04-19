@@ -435,13 +435,17 @@ class Grotrian:
 
     def _ensure_fig_(self, _fig=None, _figsize=(6, 8), _dpi=120, _resetFig=True):
         r"""
-        Ensure ``self.fig`` is a valid ``Figure`` (never ``None``).
+        Figure-lifecycle helper, extracted from ``make_fig`` so that ``self.fig``
+        can be declared non-Optional at the class level (callers on lines
+        ~664/832/838/862/961/965/966 assume it is populated).
 
-        Splits figure creation out of ``make_fig`` so that ``self.fig`` is
-        non-Optional right after construction, without forcing the full Grotrian
-        render at construction time. Closes the existing figure before creating
-        a new one to prevent matplotlib figure leaks in notebook environments
-        where users call ``make_fig`` repeatedly with different params.
+        Why split this out of ``make_fig``:
+          - ``make_fig`` is a full renderer (~500-650). Calling it eagerly in
+            ``set_atom`` to guarantee non-Optional would force a complete Grotrian
+            render at construction time, which notebook users don't want.
+          - ``plt.close`` on the previous figure is required: notebook usage is
+            ``Grotrian(...); make_fig(_figsize=..., _dpi=...)`` — without a close,
+            the default figure created here would leak on every explicit call.
         """
         if _fig is not None:
             if getattr(self, "fig", None) is not None and self.fig is not _fig:

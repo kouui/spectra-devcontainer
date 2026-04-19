@@ -46,8 +46,6 @@ set to
     False : before generating documentation using sphinx
 """
 
-# mypy: ignore-errors
-
 
 def _SET_NUMBA_THREAD_(threading_layer: T_STR = "threadsafe", n_thread: T_INT = 2) -> None:
     r""" """
