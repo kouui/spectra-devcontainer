@@ -14,7 +14,7 @@ class TestHydrogenCloudModel:
         atom, wMesh, _ = Atom.init_Atom_(conf_path, is_hydrogen=True)
 
         atmos = Atmosphere.Atmosphere0D(Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vd=0.0, Vt=5.0e5)
-        radiation = Radiation.init_Radiation_(atmos, wMesh)
+        radiation = Radiation.init_Radiation_()
         SE_con, _ = SELib.cal_SE_with_Nh_Te_(atom, atmos, wMesh, radiation, None)
 
         Cloud_con = SlabModel.SE_to_slab_0D_(atom, atmos, SE_con, depth=1.0e3 * 1.0e5)

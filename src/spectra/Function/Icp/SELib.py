@@ -1,5 +1,6 @@
+# ruff: noqa: E402
 # -------------------------------------------------------------------------------
-# definition of functions to perform statistical equilibrium
+# definition of functions to perform statistical equilibrium for ICP
 # -------------------------------------------------------------------------------
 # VERSION
 # 0.1.2
@@ -43,6 +44,12 @@
 #        - allow neutral atom calculation. added cal_SE_with_Pg_Te_Ne_single_Atom_ for
 #          calculation of icp neutral atom with specific Ne
 # -------------------------------------------------------------------------------
+
+raise ImportError(
+    "spectra.Function.Icp.SELib is not maintained. "
+    "It was left out of the Radiation PI_I refactor (no active consumers). "
+    "Restore from git history if needed."
+)
 
 import numpy as _numpy
 from scipy.optimize import least_squares as _sp_least_squares

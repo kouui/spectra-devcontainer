@@ -8,6 +8,9 @@
 #    2021/05/18   u.k.   spectra-re
 # 0.1.1
 #    2024/02/09   u.k.   added Ntotal,Nh,Ne,Te to SE_Container
+# 0.2.0
+#    2026/05/03   u.k.   added cont_intensity, cont_wave_mesh_shifted
+#                        (parallel to bound-bound wave_mesh_shifted_1d / absorb_prof_1d)
 # -------------------------------------------------------------------------------
 
 from dataclasses import dataclass as _dataclass
@@ -43,6 +46,16 @@ class SE_Container:
     Ne: T_FLOAT  # 0d, [/cm^3]
     ## electron temperature
     Te: T_FLOAT  # 0d, [K]
+
+    ## continuum wavelength mesh actually used in this SE call.
+    ## currently aliases `wMesh.Cont_mesh` (no doppler shift implemented yet);
+    ## the field exists as a forward-ready hook so future doppler-shifted continuum
+    ## arrays land here, parallel to bound-bound `wave_mesh_shifted_1d`.
+    ## Mutating it also mutates wMesh.Cont_mesh — copy if you need to modify.
+    cont_wave_mesh_shifted: T_ARRAY  # 2d (nCont, _N_CONT_MESH), [cm]
+    ## continuum intensity used to drive bound-free rates.
+    ## planck(Tr) when atmos.use_Tr, else interp(radiation.solar, cont_wave_mesh_shifted).
+    cont_intensity: T_ARRAY  # 2d (nCont, _N_CONT_MESH), [erg/cm^2/Sr/cm/s]
 
 
 @_dataclass(**STRUCT_KWGS_UNFROZEN)

@@ -107,7 +107,7 @@ def _run_case_(case: dict[str, Any]) -> dict[str, Any]:
     conf_path = str(CFG._ROOT_DIR / case["conf"])
     atom, wMesh, _ = Atom.init_Atom_(conf_path, is_hydrogen=case["is_hydrogen"])
     atmos = Atmosphere.Atmosphere0D(**case["atmos_kwargs"])
-    radiation = Radiation.init_Radiation_(atmos, wMesh)
+    radiation = Radiation.init_Radiation_()
 
     entry = getattr(SELib, case["entry"])
     SE_con, _ = entry(atom, atmos, wMesh, radiation, None)
