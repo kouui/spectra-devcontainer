@@ -8,6 +8,9 @@
 # 0.1.2
 #    2023/07/04   u.k.   when Aji equals to 0, set Src to 0 to avoid the zero division warning
 #    2025/07/07   j.n.   add line_emissivity and line_absorption
+# 0.1.3
+#    2026/05/09   u.k.   take abs(tau).max() so tau_max is meaningful under
+#                        population inversion (negative tau)
 # -------------------------------------------------------------------------------
 
 import numpy as _numpy
@@ -79,7 +82,10 @@ def SE_to_slab_0D_(
 
         # store value
         arr_w0[k] = Line["w0"][k]
-        arr_tau_max[k] = tau[:].max()
+        # abs() handles population inversion: alp0 < 0 when Bji*nj > Bij*ni,
+        # which makes tau negative; .max() on a negative array returns the
+        # least-negative value, masking the strongest |tau|.
+        arr_tau_max[k] = _numpy.abs(tau[:]).max()
         arr_Ibar[k] = Ibar
         arr_prof_1D[i1:i2] = prof[:]
         arr_tau_1D[i1:i2] = tau[:]
