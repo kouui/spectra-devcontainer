@@ -94,11 +94,11 @@ def cal_SE_with_Pg_Te_single_Atom_(
 
     atmos.Nh = Ng if is_hydrogen else 0.0
 
-    cont_intensity: T_ARRAY | None = None
+    PI_intensity: T_ARRAY | None = None
     while True:
         print(f"Ne2Ng={Ne2Ng:.3E}  Ng={Ng:.3E}  Ne={atmos.Ne:.3E}")
-        SE_con, tran_rate_con = cal_SE_(atom, atmos, wMesh, radiation, Nh_SE, cont_intensity=cont_intensity)
-        cont_intensity = SE_con.cont_intensity
+        SE_con, tran_rate_con = cal_SE_(atom, atmos, wMesh, radiation, Nh_SE, PI_intensity=PI_intensity)
+        PI_intensity = SE_con.PI_intensity
         n_SE = SE_con.n_SE
         Ne2Ng = 2 * n_SE[-1] + n_SE[-7:-1].sum()  ##: for He
         Ne_SE = Ng * Ne2Ng
@@ -141,11 +141,11 @@ def cal_SE_with_Pg_Te_(
         atmos.Nh = Pg / (0.5 * _WEIGHTED_TOTAL_MASS * CST.mH_ * Vt * Vt + (_TOTAL_ABUN + Ne2Nh) * kT)
         atmos.Ne = atmos.Nh * Ne2Nh
 
-    cont_intensity: T_ARRAY | None = None
+    PI_intensity: T_ARRAY | None = None
     while True:
         # print(f"Ne2Nh={Ne2Nh}, Ne={atmos.Ne:.2E}")
-        SE_con, tran_rate_con = cal_SE_(atom, atmos, wMesh, radiation, Nh_SE, cont_intensity=cont_intensity)
-        cont_intensity = SE_con.cont_intensity
+        SE_con, tran_rate_con = cal_SE_(atom, atmos, wMesh, radiation, Nh_SE, PI_intensity=PI_intensity)
+        PI_intensity = SE_con.PI_intensity
         n_SE = SE_con.n_SE
 
         if is_hydrogen:
@@ -191,11 +191,11 @@ def cal_SE_with_Nh_Te_(
 
     is_hydrogen = atom._atom_type == E_ATOM.HYDROGEN
 
-    cont_intensity: T_ARRAY | None = None
+    PI_intensity: T_ARRAY | None = None
     while True:
         # print(f"Ne={atmos.Ne:.2E}")
-        SE_con, tran_rate_con = cal_SE_(atom, atmos, wMesh, radiation, Nh_SE, cont_intensity=cont_intensity)
-        cont_intensity = SE_con.cont_intensity
+        SE_con, tran_rate_con = cal_SE_(atom, atmos, wMesh, radiation, Nh_SE, PI_intensity=PI_intensity)
+        PI_intensity = SE_con.PI_intensity
 
         n_SE = SE_con.n_SE
 
@@ -289,10 +289,10 @@ def cal_SE_(
     radiation: _Radiation.Radiation,
     Nh_SE: T_ARRAY | None,
     rate_only: T_BOOL = False,
-    cont_intensity: T_ARRAY | None = None,
+    PI_intensity: T_ARRAY | None = None,
 ) -> T_TUPLE[_Container.SE_Container, _Container.TranRates_Container]:
     ##: TODO: instead of using background radiation in radiation struct
-    ##        use an updatable MeanIntensity struct for lines and cont_intensity
+    ##        use an updatable MeanIntensity struct for lines and PI_intensity
 
     ## : extract variable from structs
 
@@ -343,11 +343,11 @@ def cal_SE_(
     # alias for now; future doppler-shift implementation produces a new array here
     cont_wave_mesh_shifted = Cont_mesh
 
-    if cont_intensity is None:
+    if PI_intensity is None:
         if use_Tr:
-            cont_intensity = _LTELib.planck_cm_(cont_wave_mesh_shifted[:, :], Tr)
+            PI_intensity = _LTELib.planck_cm_(cont_wave_mesh_shifted[:, :], Tr)
         else:
-            cont_intensity = _PhotoIonize.interpolate_PI_intensity_(solar[:, :], cont_wave_mesh_shifted[:, :])
+            PI_intensity = _PhotoIonize.interpolate_PI_intensity_(solar[:, :], cont_wave_mesh_shifted[:, :])
 
     Nh_I_ground: T_FLOAT
     if Nh_SE is None:
@@ -377,7 +377,7 @@ def cal_SE_(
         Te,
         nj_by_ni_Cont[:],
         alpha_interp[:, :],
-        cont_intensity[:, :],
+        PI_intensity[:, :],
     )
 
     Bij_Jbar, Bji_Jbar, wave_mesh_cm_shifted_all, absorb_prof_cm_all, Jbar_all = _B_Jbar_(
@@ -427,7 +427,7 @@ def cal_SE_(
         Line_mesh_idxs=Line_mesh_idxs,
         Jbar=Jbar_all,
         cont_wave_mesh_shifted=cont_wave_mesh_shifted,
-        cont_intensity=cont_intensity,
+        PI_intensity=PI_intensity,
         Ntotal=0.0,
         Nh=0.0,
         Ne=Ne,
@@ -523,7 +523,7 @@ def _bf_R_rate_(
     Te: T_FLOAT,
     nj_by_ni_Cont: T_ARRAY,
     alpha_interp: T_ARRAY,
-    cont_intensity: T_ARRAY,
+    PI_intensity: T_ARRAY,
 ) -> T_TUPLE[T_ARRAY, T_ARRAY, T_ARRAY]:
     # -------------------------------------------------------------------------
     # we compute/interpolate photoionizatoin cross section only once
@@ -541,7 +541,7 @@ def _bf_R_rate_(
     for kL in range(nCont):
         res = _PhotoIonize.bound_free_radiative_transition_coefficient_(
             wave=Cont_mesh[kL, ::-1],
-            J=cont_intensity[kL, ::-1],
+            J=PI_intensity[kL, ::-1],
             alpha=alpha_interp[kL, ::-1],
             Te=Te,
             nk_by_ni_LTE=nj_by_ni_Cont[kL],
