@@ -8,46 +8,32 @@
 #    2022/01/07   u.k.   modified atlas(backRad)
 # 0.1.2
 #    2022/08/01   u.k.   modified atlas(added 10000-11000A absorption lines into backRad)
+# 0.2.0
+#    2026/05/03   u.k.   drop cached PI_intensity; rename backRad -> solar;
+#                        init no longer takes atmos/wMesh
 # -------------------------------------------------------------------------------
 
 
 from dataclasses import dataclass as _dataclass
+from pathlib import Path as _Path
 
 import numpy as _numpy
 
-from ..Atomic import LTELib as _LTELib
-from ..Atomic import PhotoIonize as _PhotoIonize
 from ..ImportAll import *
-from . import Atmosphere as _Atmosphere
-from . import WavelengthMesh as _WavelengthMesh
 
 
 @_dataclass(**STRUCT_KWGS_UNFROZEN)
 class Radiation:
-    backRad: T_ARRAY  # 2d, (2, n_wavelength)
-
-    PI_intensity: T_ARRAY  # 2d, (nCont, _N_CONT_MESH )
+    solar: T_ARRAY  # 2d, (2, n_wavelength); row 0 wavelength [cm], row 1 intensity [erg/cm^2/Sr/cm/s]
 
 
-def init_Radiation_(
-    atmos: _Atmosphere.Atmosphere0D | _Atmosphere.AtmosphereC1D, wMesh: _WavelengthMesh.Wavelength_Mesh
-) -> Radiation:
+def init_Radiation_(path: _Path | None = None) -> Radiation:
+    """Load the solar atlas spectrum into a Radiation struct.
 
-    backRad = _numpy.load(CFG._ROOT_DIR / "data" / "intensity" / "atlas" / "QS" / "atlas_QS.20221118.npy")
-    # backRad[0,:] *= 1E-8
-    # backRad[1,:] *= 2.5*intensity_fac
-
-    Cont_mesh = wMesh.Cont_mesh
-    if atmos.use_Tr:
-        Tr = atmos.Tr
-        PI_intensity = _LTELib.planck_cm_(Cont_mesh[:, :], Tr)
-    else:
-        #  TODO : average backRad for PI_intensity ?
-        PI_intensity = _PhotoIonize.interpolate_PI_intensity_(backRad[:, :], Cont_mesh[:, :])
-
-    radiation = Radiation(
-        backRad=backRad,
-        PI_intensity=PI_intensity,
-    )
-
-    return radiation
+    Continuum PI intensity is built on demand by `cal_SE_` from `radiation.solar`
+    and `wMesh.Cont_mesh` (or from `planck(Tr)` when `atmos.use_Tr=True`); it
+    is not cached here.
+    """
+    if path is None:
+        path = CFG._ROOT_DIR / "data" / "intensity" / "atlas" / "QS" / "atlas_QS.20221118.npy"
+    return Radiation(solar=_numpy.load(path))

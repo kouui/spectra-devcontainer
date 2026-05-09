@@ -19,7 +19,7 @@ class Test_SE_With_H_I(unittest.TestCase):
         atom, wMesh, _path_dict = Atom.init_Atom_(str(conf_path), is_hydrogen=True)
 
         atmos = Atmosphere.Atmosphere0D(Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vd=0.0, Vt=5.0e5)
-        radiation = Radiation.init_Radiation_(atmos, wMesh)
+        radiation = Radiation.init_Radiation_()
         SE_con, Rate_con = SELib.cal_SE_with_Nh_Te_(atom, atmos, wMesh, radiation, None)
 
         self.atmos = atmos
@@ -31,15 +31,17 @@ class Test_SE_With_H_I(unittest.TestCase):
         n_LTE = self.SE_con.n_LTE
         n_LTE_correct = _array(
             [
-                3.70187280e-01,
-                6.72414805e-08,
-                6.60749362e-09,
-                3.92638972e-09,
-                3.69429734e-09,
-                4.03864392e-09,
-                4.65558107e-09,
-                5.45922548e-09,
-                6.29812624e-01,
+                5.39021329e-01,
+                9.79087996e-08,
+                9.62102208e-09,
+                5.71712731e-09,
+                5.37918284e-09,
+                5.88057811e-09,
+                6.77888634e-09,
+                7.94905479e-09,
+                9.34360041e-09,
+                1.09411860e-08,
+                4.60978511e-01,
             ],
             dtype=DT_NB_FLOAT,
         )
@@ -50,15 +52,17 @@ class Test_SE_With_H_I(unittest.TestCase):
         n_SE = self.SE_con.n_SE
         n_SE_correct = _array(
             [
-                8.66282973e-01,
-                3.38419084e-07,
-                3.09782647e-09,
-                1.12989862e-09,
-                8.75871458e-10,
-                8.37963993e-10,
-                8.98266198e-10,
-                1.03867939e-09,
-                1.33716680e-01,
+                7.35056964e-01,
+                5.74037856e-07,
+                6.88963678e-09,
+                3.24425198e-09,
+                2.97126798e-09,
+                3.14435863e-09,
+                3.59807095e-09,
+                4.27101377e-09,
+                5.06465646e-09,
+                5.94507968e-09,
+                2.64942427e-01,
             ],
             dtype=DT_NB_FLOAT,
         )
@@ -67,7 +71,7 @@ class Test_SE_With_H_I(unittest.TestCase):
     def test_Ne(self):
 
         Ne = self.atmos.Ne
-        Ne_correct = 134_244_009_880.22995
+        Ne_correct = 266_476_643_284.7473
         self.assertTrue(_ISCLOSE(Ne, Ne_correct))
 
 
