@@ -6,11 +6,7 @@
 #    2021/07/04   u.k.
 #        - tran_rate_con now has Rmat, Cmat
 # 0.1.5
-#    2026/05/15   u.k.   se_params: SE_Params_Container threaded through
-#                        cal_SE_* wrappers; Tr / use_Tr / doppler_shift_continuum
-#                        no longer read from atmos. `Tr=None` ⇒ radiation.solar
-#                        path; `Tr=0.0` (non-None) remains the coronal-equilibrium
-#                        request that shuts down radiation.
+#    2026/05/15   u.k.   se_params: SE_Params_Container threaded through cal_SE_* wrappers
 # 0.1.1
 #    2021/06/15   u.k.
 #        - func _bf_R_rate_ : move radiation-source switch outside the continuum

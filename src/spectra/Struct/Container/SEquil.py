@@ -65,24 +65,16 @@ class SE_Container:
 
 @_dataclass(**STRUCT_KWGS_UNFROZEN)
 class SE_Params_Container:
-    """SE-solver parameter container.
-
-    Hosts switches that control how `cal_SE_*` reads the radiation field and
-    treats the continuum wavelength mesh. These are solver behaviors, not
-    properties of the atmosphere — kept separate from `Atmosphere0D` /
-    `AtmosphereC1D` so the same atmosphere can be reused under different
-    SE choices.
+    """Statistical Equilibrium (parameter) container for
+    - single spatial point
     """
 
     ## Radiation temperature for the photoionization driver.
-    ## - None: use `radiation.solar` interpolated onto the continuum mesh.
-    ## - not-None: use `planck(Tr)` at the continuum mesh.
-    ## Note: `Tr=0.0` is a valid (non-None) request — coronal-equilibrium
-    ## case "shut down radiation" — and is distinct from `Tr=None`.
+    ## None ⇒ use `radiation.solar`; not-None ⇒ use `planck(Tr)`.
+    ## `Tr=0.0` is a distinct, valid (non-None) request — coronal-equilibrium
+    ## "shut down radiation".
     Tr: T_FLOAT | None = None
-    ## Apply doppler shift to the continuum wavelength mesh before computing
-    ## the photoionization intensity. Currently unimplemented; `cal_SE_`
-    ## raises `NotImplementedError` when True.
+    ## Currently unimplemented; `cal_SE_` raises `NotImplementedError` when True.
     doppler_shift_continuum: T_BOOL = False
 
 
