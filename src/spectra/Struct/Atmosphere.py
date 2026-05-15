@@ -10,6 +10,9 @@
 # 0.1.2
 #    2022/07/29   u.k
 #        - added Pg to Atmosphere0D
+# 0.1.3
+#    2026/05/15   u.k.
+#        - removed Tr / use_Tr / doppler_shift_continuum (moved to SE_Params_Container)
 # -------------------------------------------------------------------------------
 
 
@@ -39,12 +42,7 @@ class Atmosphere0D:
     ndim: T_INT = 0
     is_uniform: T_BOOL = True
 
-    Tr: T_FLOAT = 6.0e3
-    use_Tr: T_BOOL = False
-
     Pg: T_FLOAT = 0.05  ##: [Ba] = 0.1 [Pa]
-
-    doppler_shift_continuum: T_BOOL = False
 
     _coord_type: T_E_ATMOSPHERE_COORDINATE_TYPE = E_ATMOSPHERE_COORDINATE_TYPE.POINT
 
@@ -65,11 +63,6 @@ class AtmosphereC1D:
 
     is_uniform: T_BOOL
     ndim: T_INT = 1
-
-    Tr: T_FLOAT = 6.0e3
-    use_Tr: T_BOOL = False
-
-    doppler_shift_continuum: T_BOOL = False
 
     _coord_type: T_E_ATMOSPHERE_COORDINATE_TYPE = E_ATMOSPHERE_COORDINATE_TYPE.CARTESIAN
 

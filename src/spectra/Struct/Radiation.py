@@ -31,8 +31,8 @@ def init_Radiation_(path: _Path | None = None) -> Radiation:
     """Load the solar atlas spectrum into a Radiation struct.
 
     Continuum PI intensity is built on demand by `cal_SE_` from `radiation.solar`
-    and `wMesh.Cont_mesh` (or from `planck(Tr)` when `atmos.use_Tr=True`); it
-    is not cached here.
+    and `wMesh.Cont_mesh` (or from `planck(Tr)` when `se_params.Tr is not None`);
+    it is not cached here.
     """
     if path is None:
         path = CFG._ROOT_DIR / "data" / "intensity" / "atlas" / "QS" / "atlas_QS.20221118.npy"

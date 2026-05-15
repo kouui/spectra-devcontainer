@@ -5,7 +5,7 @@ import numpy as _numpy
 from spectra.Function import SlabModel
 from spectra.Function.SEquil import SELib
 from spectra.ImportAll import *
-from spectra.Struct import Atmosphere, Atom, Radiation
+from spectra.Struct import Atmosphere, Atom, Container, Radiation
 
 from .conftest import assert_close
 
@@ -17,7 +17,7 @@ class TestHydrogenCloudModel:
 
         atmos = Atmosphere.Atmosphere0D(Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vd=0.0, Vt=5.0e5)
         radiation = Radiation.init_Radiation_()
-        SE_con, _ = SELib.cal_SE_with_Nh_Te_(atom, atmos, wMesh, radiation, None)
+        SE_con, _ = SELib.cal_SE_with_Nh_Te_(atom, atmos, wMesh, radiation, None, Container.SE_Params_Container())
 
         Cloud_con = SlabModel.SE_to_slab_0D_(atom, atmos, SE_con, depth=1.0e3 * 1.0e5)
 
@@ -41,7 +41,7 @@ class TestHydrogenCloudModel:
 
         atmos = Atmosphere.Atmosphere0D(Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vd=0.0, Vt=5.0e5)
         radiation = Radiation.init_Radiation_()
-        SE_con, _ = SELib.cal_SE_with_Nh_Te_(atom, atmos, wMesh, radiation, None)
+        SE_con, _ = SELib.cal_SE_with_Nh_Te_(atom, atmos, wMesh, radiation, None, Container.SE_Params_Container())
 
         # Force inversion on line 0 by swapping J/I populations. After the swap
         # n_upper >> n_lower (in thermal H I the lower level dominates), giving

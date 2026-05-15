@@ -5,10 +5,17 @@
 # 0.1.2
 #    2021/07/04   u.k.
 #        - tran_rate_con now has Rmat, Cmat
+# 0.1.5
+#    2026/05/15   u.k.   se_params: SE_Params_Container threaded through
+#                        cal_SE_* wrappers; Tr / use_Tr / doppler_shift_continuum
+#                        no longer read from atmos. `Tr=None` ⇒ radiation.solar
+#                        path; `Tr=0.0` (non-None) remains the coronal-equilibrium
+#                        request that shuts down radiation.
 # 0.1.1
 #    2021/06/15   u.k.
-#        - func _bf_R_rate_ : move if of use_Tr outside of doppler_shift_continuum
-#          to enable `Tr=0., use_Tr=True` of Coronal Equil.
+#        - func _bf_R_rate_ : move radiation-source switch outside the continuum
+#          doppler-shift branch to enable the coronal-equilibrium "no radiation"
+#          mode (Tr at 0 K with Planck-source selected).
 #        - func _bf_R_rate_ : add local variable `PI_I0` to prevent the update of
 #          `PI_I` udring simulation
 # 0.1.0
@@ -77,6 +84,7 @@ def cal_SE_with_Pg_Te_single_Atom_(
     atmos: _Atmosphere.Atmosphere0D,
     wMesh: _WavelengthMesh.Wavelength_Mesh,
     radiation: _Radiation.Radiation,
+    se_params: _Container.SE_Params_Container,
 ):
     Pg = atmos.Pg
     Te = atmos.Te
@@ -97,7 +105,7 @@ def cal_SE_with_Pg_Te_single_Atom_(
     PI_intensity: T_ARRAY | None = None
     while True:
         print(f"Ne2Ng={Ne2Ng:.3E}  Ng={Ng:.3E}  Ne={atmos.Ne:.3E}")
-        SE_con, tran_rate_con = cal_SE_(atom, atmos, wMesh, radiation, Nh_SE, PI_intensity=PI_intensity)
+        SE_con, tran_rate_con = cal_SE_(atom, atmos, wMesh, radiation, Nh_SE, se_params, PI_intensity=PI_intensity)
         PI_intensity = SE_con.PI_intensity
         n_SE = SE_con.n_SE
         Ne2Ng = 2 * n_SE[-1] + n_SE[-7:-1].sum()  ##: for He
@@ -127,6 +135,7 @@ def cal_SE_with_Pg_Te_(
     wMesh: _WavelengthMesh.Wavelength_Mesh,
     radiation: _Radiation.Radiation,
     Nh_SE: T_ARRAY | None,
+    se_params: _Container.SE_Params_Container,
 ) -> T_TUPLE[_Container.SE_Container, _Container.TranRates_Container]:
     Pg = atmos.Pg
     Te = atmos.Te
@@ -144,7 +153,7 @@ def cal_SE_with_Pg_Te_(
     PI_intensity: T_ARRAY | None = None
     while True:
         # print(f"Ne2Nh={Ne2Nh}, Ne={atmos.Ne:.2E}")
-        SE_con, tran_rate_con = cal_SE_(atom, atmos, wMesh, radiation, Nh_SE, PI_intensity=PI_intensity)
+        SE_con, tran_rate_con = cal_SE_(atom, atmos, wMesh, radiation, Nh_SE, se_params, PI_intensity=PI_intensity)
         PI_intensity = SE_con.PI_intensity
         n_SE = SE_con.n_SE
 
@@ -180,6 +189,7 @@ def cal_SE_with_Nh_Te_(
     wMesh: _WavelengthMesh.Wavelength_Mesh,
     radiation: _Radiation.Radiation,
     Nh_SE: T_ARRAY | None,
+    se_params: _Container.SE_Params_Container,
 ) -> T_TUPLE[_Container.SE_Container, _Container.TranRates_Container]:
 
     Nh = atmos.Nh  # [/cm^{3}]
@@ -194,7 +204,7 @@ def cal_SE_with_Nh_Te_(
     PI_intensity: T_ARRAY | None = None
     while True:
         # print(f"Ne={atmos.Ne:.2E}")
-        SE_con, tran_rate_con = cal_SE_(atom, atmos, wMesh, radiation, Nh_SE, PI_intensity=PI_intensity)
+        SE_con, tran_rate_con = cal_SE_(atom, atmos, wMesh, radiation, Nh_SE, se_params, PI_intensity=PI_intensity)
         PI_intensity = SE_con.PI_intensity
 
         n_SE = SE_con.n_SE
@@ -227,6 +237,7 @@ def cal_SE_with_Ne_Te_(
     wMesh: _WavelengthMesh.Wavelength_Mesh,
     radiation: _Radiation.Radiation,
     Nh_SE: T_ARRAY | None,
+    se_params: _Container.SE_Params_Container,
     is_single_element: bool = False,
     rate_only: T_BOOL = False,
 ) -> T_TUPLE[_Container.SE_Container, _Container.TranRates_Container]:
@@ -260,7 +271,7 @@ def cal_SE_with_Ne_Te_(
         if (Nh_SE is not None) and (is_hydrogen):
             atmos.Nh = atmos.Ne / (Nh_SE[-1])
 
-    SE_con, tran_rate_con = cal_SE_(atom, atmos, wMesh, radiation, Nh_SE, rate_only=rate_only)
+    SE_con, tran_rate_con = cal_SE_(atom, atmos, wMesh, radiation, Nh_SE, se_params, rate_only=rate_only)
     if rate_only:
         return SE_con, tran_rate_con
 
@@ -288,6 +299,7 @@ def cal_SE_(
     wMesh: _WavelengthMesh.Wavelength_Mesh,
     radiation: _Radiation.Radiation,
     Nh_SE: T_ARRAY | None,
+    se_params: _Container.SE_Params_Container,
     rate_only: T_BOOL = False,
     PI_intensity: T_ARRAY | None = None,
 ) -> T_TUPLE[_Container.SE_Container, _Container.TranRates_Container]:
@@ -333,11 +345,14 @@ def cal_SE_(
     Ne = atmos.Ne
     Vt = atmos.Vt
     Vd = atmos.Vd
-    Tr = atmos.Tr
 
-    use_Tr = atmos.use_Tr
+    # Tr=None => use radiation.solar; not-None (including 0.0) => planck(Tr).
+    # Tr_val is unused in the radiation.solar branch but must hold a numeric
+    # type for the primitive _B_Jbar_ signature.
+    use_Tr: T_BOOL = se_params.Tr is not None
+    Tr: T_FLOAT = se_params.Tr if se_params.Tr is not None else 0.0
 
-    if atmos.doppler_shift_continuum:
+    if se_params.doppler_shift_continuum:
         raise NotImplementedError("Doppler shift of continuum wavelength mesh not yet implemented.")
 
     # alias for now; future doppler-shift implementation produces a new array here
