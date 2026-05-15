@@ -31,7 +31,7 @@ sys.path.insert(0, str(_REPO_ROOT / "src"))
 
 from spectra import Configurations as CFG  # noqa: E402
 from spectra.Function.SEquil import SELib  # noqa: E402
-from spectra.Struct import Atmosphere, Atom, Container, Radiation  # noqa: E402
+from spectra.Struct import Atmosphere, Atom, Radiation  # noqa: E402
 
 DEFAULT_OUT = CFG._ROOT_DIR / "tests" / "regression" / "reference_values.json"
 
@@ -110,7 +110,7 @@ def _run_case_(case: dict[str, Any]) -> dict[str, Any]:
     radiation = Radiation.init_Radiation_()
 
     entry = getattr(SELib, case["entry"])
-    SE_con, _ = entry(atom, atmos, wMesh, radiation, None, Container.SE_Params_Container())
+    SE_con, _ = entry(atom, atmos, wMesh, radiation, None)
 
     n_sum = float(SE_con.n_SE.sum())
     if not math.isfinite(n_sum) or abs(n_sum - 1.0) > _N_SE_SUM_TOL:

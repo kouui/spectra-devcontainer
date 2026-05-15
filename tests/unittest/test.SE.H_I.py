@@ -6,7 +6,7 @@ from numpy import isclose as _ISCLOSE
 
 from spectra.Function.SEquil import SELib
 from spectra.ImportAll import *
-from spectra.Struct import Atmosphere, Atom, Container, Radiation
+from spectra.Struct import Atmosphere, Atom, Radiation
 
 _KWGS_CLOSE = {"rtol": 1.0e-05, "atol": 1.0e-20}
 
@@ -20,9 +20,7 @@ class Test_SE_With_H_I(unittest.TestCase):
 
         atmos = Atmosphere.Atmosphere0D(Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vd=0.0, Vt=5.0e5)
         radiation = Radiation.init_Radiation_()
-        SE_con, Rate_con = SELib.cal_SE_with_Nh_Te_(
-            atom, atmos, wMesh, radiation, None, Container.SE_Params_Container()
-        )
+        SE_con, Rate_con = SELib.cal_SE_with_Nh_Te_(atom, atmos, wMesh, radiation, None)
 
         self.atmos = atmos
         self.SE_con = SE_con

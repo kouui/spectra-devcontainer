@@ -1,13 +1,13 @@
 from spectra.Function.SEquil import SELib
 from spectra.ImportAll import *
-from spectra.Struct import Atmosphere, Atom, Container, Radiation
+from spectra.Struct import Atmosphere, Atom, Radiation
 
 conf_path = CFG._ROOT_DIR / "data/conf/H.conf"
 atom, wMesh, path_dict = Atom.init_Atom_(str(conf_path), is_hydrogen=True)
 
 atmos = Atmosphere.Atmosphere0D(Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vd=0.0, Vt=5.0e5)
 radiation = Radiation.init_Radiation_()
-SE_con, Rate_con = SELib.cal_SE_with_Nh_Te_(atom, atmos, wMesh, radiation, None, Container.SE_Params_Container())
+SE_con, Rate_con = SELib.cal_SE_with_Nh_Te_(atom, atmos, wMesh, radiation, None)
 
 print(">>> calculate SE given Nh and Te <<<\n")
 print(f"Electron temperature  = {atmos.Te:.1E}")
@@ -34,7 +34,7 @@ LTE :
 
 atmos = Atmosphere.Atmosphere0D(Nh=1.0e11, Ne=5.0e10, Te=7.0e3, Vd=0.0, Vt=5.0e5)
 radiation = Radiation.init_Radiation_()
-SE_con, Rate_con = SELib.cal_SE_with_Ne_Te_(atom, atmos, wMesh, radiation, None, Container.SE_Params_Container())
+SE_con, Rate_con = SELib.cal_SE_with_Ne_Te_(atom, atmos, wMesh, radiation, None)
 
 print("\n>>> calculate SE given Ne and Te <<<\n")
 print(f"Electron temperature  = {atmos.Te:.1E}")

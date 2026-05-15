@@ -80,7 +80,7 @@ def cal_SE_with_Pg_Te_single_Atom_(
     atmos: _Atmosphere.Atmosphere0D,
     wMesh: _WavelengthMesh.Wavelength_Mesh,
     radiation: _Radiation.Radiation,
-    se_params: _Container.SE_Params_Container,
+    se_params: _Container.SE_Params_Container | None = None,
 ):
     Pg = atmos.Pg
     Te = atmos.Te
@@ -131,7 +131,7 @@ def cal_SE_with_Pg_Te_(
     wMesh: _WavelengthMesh.Wavelength_Mesh,
     radiation: _Radiation.Radiation,
     Nh_SE: T_ARRAY | None,
-    se_params: _Container.SE_Params_Container,
+    se_params: _Container.SE_Params_Container | None = None,
 ) -> T_TUPLE[_Container.SE_Container, _Container.TranRates_Container]:
     Pg = atmos.Pg
     Te = atmos.Te
@@ -185,7 +185,7 @@ def cal_SE_with_Nh_Te_(
     wMesh: _WavelengthMesh.Wavelength_Mesh,
     radiation: _Radiation.Radiation,
     Nh_SE: T_ARRAY | None,
-    se_params: _Container.SE_Params_Container,
+    se_params: _Container.SE_Params_Container | None = None,
 ) -> T_TUPLE[_Container.SE_Container, _Container.TranRates_Container]:
 
     Nh = atmos.Nh  # [/cm^{3}]
@@ -233,7 +233,7 @@ def cal_SE_with_Ne_Te_(
     wMesh: _WavelengthMesh.Wavelength_Mesh,
     radiation: _Radiation.Radiation,
     Nh_SE: T_ARRAY | None,
-    se_params: _Container.SE_Params_Container,
+    se_params: _Container.SE_Params_Container | None = None,
     is_single_element: bool = False,
     rate_only: T_BOOL = False,
 ) -> T_TUPLE[_Container.SE_Container, _Container.TranRates_Container]:
@@ -295,7 +295,7 @@ def cal_SE_(
     wMesh: _WavelengthMesh.Wavelength_Mesh,
     radiation: _Radiation.Radiation,
     Nh_SE: T_ARRAY | None,
-    se_params: _Container.SE_Params_Container,
+    se_params: _Container.SE_Params_Container | None = None,
     rate_only: T_BOOL = False,
     PI_intensity: T_ARRAY | None = None,
 ) -> T_TUPLE[_Container.SE_Container, _Container.TranRates_Container]:
@@ -341,6 +341,9 @@ def cal_SE_(
     Ne = atmos.Ne
     Vt = atmos.Vt
     Vd = atmos.Vd
+
+    if se_params is None:
+        se_params = _Container.SE_Params_Container()
 
     # Tr=None => use radiation.solar; not-None (including 0.0) => planck(Tr).
     # Tr_val is unused in the radiation.solar branch but must hold a numeric
