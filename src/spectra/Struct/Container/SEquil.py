@@ -12,6 +12,9 @@
 #    2026/05/03   u.k.   added PI_intensity (continuum-mesh-resolved bound-free
 #                        intensity), cont_wave_mesh_shifted
 #                        (parallel to bound-bound wave_mesh_shifted_1d / absorb_prof_1d)
+# 0.2.1
+#    2026/05/15   u.k.   added SE_Params_Container (Tr / doppler_shift_continuum
+#                        moved off Atmosphere; Tr is None ⇔ use radiation.solar)
 # -------------------------------------------------------------------------------
 
 from dataclasses import dataclass as _dataclass
@@ -55,9 +58,24 @@ class SE_Container:
     ## Mutating it also mutates wMesh.Cont_mesh — copy if you need to modify.
     cont_wave_mesh_shifted: T_ARRAY  # 2d (nCont, _N_CONT_MESH), [cm]
     ## PI (photoionization) intensity used to drive bound-free rates.
-    ## continuum-mesh-resolved: planck(Tr) when atmos.use_Tr,
+    ## continuum-mesh-resolved: planck(Tr) when se_params.Tr is not None,
     ## else interp(radiation.solar, cont_wave_mesh_shifted).
     PI_intensity: T_ARRAY  # 2d (nCont, _N_CONT_MESH), [erg/cm^2/Sr/cm/s]
+
+
+@_dataclass(**STRUCT_KWGS_UNFROZEN)
+class SE_Params_Container:
+    """Statistical Equilibrium (parameter) container for
+    - single spatial point
+    """
+
+    ## Radiation temperature for the photoionization driver.
+    ## None ⇒ use `radiation.solar`; not-None ⇒ use `planck(Tr)`.
+    ## `Tr=0.0` is a distinct, valid (non-None) request — coronal-equilibrium
+    ## "shut down radiation".
+    Tr: T_FLOAT | None = None
+    ## Currently unimplemented; `cal_SE_` raises `NotImplementedError` when True.
+    doppler_shift_continuum: T_BOOL = False
 
 
 @_dataclass(**STRUCT_KWGS_UNFROZEN)
