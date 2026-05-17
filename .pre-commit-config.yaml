@@ -53,3 +53,10 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+
+      - id: check-changelogs-size
+        name: changelog file size guard (<=300 lines)
+        entry: uv run python scripts/check_changelogs_size.py
+        language: system
+        pass_filenames: false
+        always_run: true
