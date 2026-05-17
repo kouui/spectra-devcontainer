@@ -1,17 +1,6 @@
 # -------------------------------------------------------------------------------
 # experimental function/struct for manipulating line
 # -------------------------------------------------------------------------------
-# VERSION
-# 0.1.1
-#    2021/05/29   k.i., u.k.
-#        - fixed log_saha_, population_to_H_ -->
-#          now we are able to reproduce ichimoto's LTE transfer result
-# 0.1.0
-#    2021/05/18   u.k.   spectra-re
-# 0.1.1
-#    2022/01/07   u.k.
-#        - added vectorization for `population_to_H_` when JIT applied
-# -------------------------------------------------------------------------------
 
 import numpy as _numpy
 

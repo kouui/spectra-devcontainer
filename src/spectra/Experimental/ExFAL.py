@@ -1,10 +1,6 @@
 # -------------------------------------------------------------------------------
 # initialization of FAL model by reading data file
 # -------------------------------------------------------------------------------
-# VERSION
-# 0.1.0
-#    2021/08/10   u.k.
-# -------------------------------------------------------------------------------
 
 # pyright: reportPossiblyUnboundVariable=false
 #   Experimental loader with a long chain of conditional-branch assignments

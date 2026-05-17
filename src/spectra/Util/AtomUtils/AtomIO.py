@@ -1,20 +1,6 @@
 # -------------------------------------------------------------------------------
 # definition of functions for creating Atom struct
 # -------------------------------------------------------------------------------
-# VERSION
-# 0.1.2
-#    2021/06/16   u.k.
-#        - `atom.Line` now is a ndarray instead of a recarray
-# 0.1.1
-#    2021/06/07   u.k.
-#        - `Abun : T_FLOAT = _ElementUtil.sym_to_abun_( element )``
-# 0.1.0
-#    2021/05/18   u.k.   spectra-re
-# 0.1.1
-#    2022/06/26   u.k.   data & Hydrogenic mixed photoionization cross section
-# 0.1.2
-#    2023/07/04   u.k.   when f0 equals 0, w0 Aji Bji Bij are set to 0
-# -------------------------------------------------------------------------------
 
 from collections import OrderedDict as _OrderedDict
 from pathlib import Path

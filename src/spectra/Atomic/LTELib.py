@@ -1,10 +1,6 @@
 # -------------------------------------------------------------------------------
 # function definition of LTE process
 # -------------------------------------------------------------------------------
-# VERSION
-# 0.1.0
-#    2021/05/18   u.k.   spectra-re
-# -------------------------------------------------------------------------------
 import numpy as _numpy
 
 from ..ImportAll import *
@@ -605,12 +601,6 @@ def Ufunc_(elm: T_STR, T: T_ARRAY | T_FLOAT | T_INT) -> T_ARRAY | T_FLOAT:
     .. math:: log(u) = c_0 + c_1 \cdot log(\theta) + c_2 \cdot log(\theta)^2 + c_3 \cdot log(\theta)^3 + c_4 \cdot log(\theta)^4
     .. math:: log = log_{10}
     .. math:: \theta = 5040 / T
-
-    modification history:
-    - 2006.5.23     k.i.
-    - 2015.7.5      k.i.	'h_ii'
-    - 2019.11.26    k.i.	'Ba' from Gary 2009 (use poly_ufunc.pro)
-    - 2020.2.13     k.i.	from IDL ufunc_gray.pro
 
     References
     ----------

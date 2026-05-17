@@ -1,14 +1,6 @@
 # -------------------------------------------------------------------------------
 # definition of struct for storing cloud model result
 # -------------------------------------------------------------------------------
-# VERSION
-# 0.1.0
-#    2021/05/18   u.k.   spectra-re
-#    2022/07/20   k.i.   add Src, tau_1D
-#    2025/07/07   j.n.   add line_emissivity, line_absorption
-# 0.1.1
-#    2026/05/09   u.k.   clarify tau_max docstring: max |tau| (handles population inversion)
-# -------------------------------------------------------------------------------
 
 from dataclasses import dataclass as _dataclass
 
