@@ -293,7 +293,7 @@ def cal_SE_(
     Te = atmos.Te
     Ne = atmos.Ne
     Vt = atmos.Vt
-    Vd = atmos.Vd
+    Vd_sun = atmos.Vd_sun
 
     if se_params is None:
         se_params = _Container.SE_Params_Container()
@@ -307,14 +307,16 @@ def cal_SE_(
     if se_params.doppler_shift_continuum:
         raise NotImplementedError("Doppler shift of continuum wavelength mesh not yet implemented.")
 
-    # alias for now; future doppler-shift implementation produces a new array here
-    cont_wave_mesh_shifted = Cont_mesh
+    # Local placeholder: future continuum-shift work replaces this with a shifted
+    # array. Today the continuum mesh is fixed (the flag above gates that path),
+    # so we use wMesh.Cont_mesh directly. Not exported via SE_Container.
+    cont_wave_mesh = Cont_mesh
 
     if PI_intensity is None:
         if use_Tr:
-            PI_intensity = _LTELib.planck_cm_(cont_wave_mesh_shifted[:, :], Tr)
+            PI_intensity = _LTELib.planck_cm_(cont_wave_mesh[:, :], Tr)
         else:
-            PI_intensity = _PhotoIonize.interpolate_PI_intensity_(solar[:, :], cont_wave_mesh_shifted[:, :])
+            PI_intensity = _PhotoIonize.interpolate_PI_intensity_(solar[:, :], cont_wave_mesh[:, :])
 
     Nh_I_ground: T_FLOAT
     if Nh_SE is None:
@@ -340,21 +342,21 @@ def cal_SE_(
 
     Rik, Rki_stim, Rki_spon = _bf_R_rate_(
         Cont,
-        cont_wave_mesh_shifted[:, :],
+        cont_wave_mesh[:, :],
         Te,
         nj_by_ni_Cont[:],
         alpha_interp[:, :],
         PI_intensity[:, :],
     )
 
-    Bij_Jbar, Bji_Jbar, wave_mesh_cm_shifted_all, absorb_prof_cm_all, Jbar_all = _B_Jbar_(
+    Bij_Jbar, Bji_Jbar, absorb_prof_cm_all, absorb_prof_shifted_cm_all, Jbar_all = _B_Jbar_(
         Line,
         Line_mesh_Coe,
         Line_mesh[:],
         Line_mesh_idxs[:, :],
         Te,
         Vt,
-        Vd,
+        Vd_sun,
         Ne,
         Nh_I_ground,
         Mass,
@@ -389,11 +391,10 @@ def cal_SE_(
         n_SE=n_SE,
         n_LTE=n_LTE,
         nj_by_ni=nj_by_ni,
-        wave_mesh_shifted_1d=wave_mesh_cm_shifted_all,
         absorb_prof_1d=absorb_prof_cm_all,
+        absorb_prof_shifted_1d=absorb_prof_shifted_cm_all,
         Line_mesh_idxs=Line_mesh_idxs,
         Jbar=Jbar_all,
-        cont_wave_mesh_shifted=cont_wave_mesh_shifted,
         PI_intensity=PI_intensity,
         Ntotal=0.0,
         Nh=0.0,
@@ -527,7 +528,7 @@ def _B_Jbar_(
     Line_mesh_idxs: T_ARRAY,
     Te: T_FLOAT,
     Vt: T_FLOAT,
-    Vd: T_FLOAT,
+    Vd_sun: T_FLOAT,
     Ne: T_FLOAT,
     Nh_I_ground: T_FLOAT,
     Mass: T_FLOAT,
@@ -539,16 +540,31 @@ def _B_Jbar_(
     ##: TODO: add input argument for PRD correlation matrix and PRD/CRD binary indicator for lines
     ##        this requires adding one more ProfileType called PRD
 
+    # Two profiles are returned, both sampled on the fixed mesh wm:
+    #   absorb_prof_cm_all     : sigma(wm) / dopWidth_cm              -- unshifted base
+    #                            profile (atom rest frame). Consumed by downstream
+    #                            forward models (slab/cloud), which apply their own
+    #                            Vd_obs shift via the output wavelength axis.
+    #   absorb_prof_shifted_cm_all : sigma(wm + dv_sun) / dopWidth_cm     -- Vd_sun-shifted
+    #                            profile used inside SE for the Jbar integral against
+    #                            the sun-frame backRad. Also exposed for debug.
+    # Sign convention: +Vd_sun points OUTWARDS from the sun, so the sun-frame
+    # absorption line center sits at w0 - w0*Vd_sun/c (blue of w0); sampling the
+    # profile on the unshifted sun-frame grid wm requires evaluating at (wm + dv_sun).
+    # wm_cm = wm * dopWidth_cm + w0 is the sun-frame wavelength grid; backRad is
+    # interpolated at this unshifted grid.
+
     nLine = Line.shape[0]
 
-    wave_mesh_cm_shifted_all: T_ARRAY = _numpy.empty_like(Line_mesh)
     absorb_prof_cm_all: T_ARRAY = _numpy.empty_like(Line_mesh)
+    absorb_prof_shifted_cm_all: T_ARRAY = _numpy.empty_like(Line_mesh)
     Jbar_all: T_ARRAY = _numpy.empty(nLine, dtype=DT_NB_FLOAT)
 
     Bji_Jbar = _numpy.empty(nLine, dtype=DT_NB_FLOAT)
     Bij_Jbar = _numpy.empty(nLine, dtype=DT_NB_FLOAT)
 
     absorb_prof_cm: T_ARRAY
+    absorb_prof_shifted_cm: T_ARRAY
     for k in range(nLine):
         if Line["f0"][k] <= 0:
             Jbar_all[k] = 0.0
@@ -583,49 +599,52 @@ def _B_Jbar_(
         wm = _MeshUtil.make_full_line_mesh_(nLambda, qcore, qwing)
         if Line["f0"][k] <= 0:
             absorb_prof_cm_all[i_start:i_end] = 0.0
-            wave_mesh_cm_shifted_all[i_start:i_end] = 0
+            absorb_prof_shifted_cm_all[i_start:i_end] = 0.0
             continue
 
-        ##: in SE we re-caculate the wavelength mesh based on (Te, Vt, Vd)
+        # dv_sun: profile shift in dop-width units; dv_sun=0 collapses sun-shifted
+        # to unshifted (regression baseline).
+        dv_sun = w0 * Vd_sun / (CST.c_ * dopWidth_cm)
+
         if proftype == E_ABSORPTION_PROFILE_TYPE.VOIGT:
             dopWidth_hz = dopWidth_cm * f0 / w0
             a = gamma / (4.0 * CST.pi_ * dopWidth_hz)
             absorb_prof_cm = _Profile.voigt_(a, wm[:])
+            absorb_prof_shifted_cm = _Profile.voigt_(a, wm[:] + dv_sun)
 
         elif proftype == E_ABSORPTION_PROFILE_TYPE.GAUSSIAN:
             absorb_prof_cm = _Profile.gaussian_(wm[:])
+            absorb_prof_shifted_cm = _Profile.gaussian_(wm[:] + dv_sun)
 
         else:
             raise ValueError("Only 'VOIGT' and 'GAUSSIAN' are valid E_ABSORPTION_PROFILE_TYPE")
 
-        absorb_prof_cm[:] = absorb_prof_cm[:] / dopWidth_cm  # normalization, now (absorb_prof_cm * wm_cm) sum to 1
-        ## -> could save to `absorb_prof_cm_all` here
+        # normalize both: now (prof_cm * wm_cm) sums to 1 over each line's mesh
+        absorb_prof_cm[:] = absorb_prof_cm[:] / dopWidth_cm
+        absorb_prof_shifted_cm[:] = absorb_prof_shifted_cm[:] / dopWidth_cm
         absorb_prof_cm_all[i_start:i_end] = absorb_prof_cm[:]
+        absorb_prof_shifted_cm_all[i_start:i_end] = absorb_prof_shifted_cm[:]
 
-        wm_cm = wm[:] * dopWidth_cm + w0  ##: in unit of [cm]
-        wm_cm_shifted = wm_cm[:] + (w0 * Vd / CST.c_)
-        ## -> could save to `wave_mesh_cm_shifted_all` here
-        wave_mesh_cm_shifted_all[i_start:i_end] = wm_cm_shifted[:]
+        # Sun-frame mesh in [cm] — interpolation grid for backRad / planck.
+        wm_cm = wm[:] * dopWidth_cm + w0
 
-        ## : interpolate background intensity
+        ## : Jbar uses the sun-shifted profile (it lives in the sun frame, where
+        ## the line center is at w0 - w0 * Vd_sun / c and backRad is defined).
         if use_Tr:
             # make sure this integral eqauls to 1.
-            Jbar0 = _Integrate.trapze_(absorb_prof_cm[:], wm_cm_shifted[:])
+            Jbar0 = _Integrate.trapze_(absorb_prof_shifted_cm[:], wm_cm[:])
             Jbar0 *= _LTELib.planck_cm_(w0, Tr)
         else:
-            I_cm_interp = _numpy.interp(wm_cm_shifted[:], backRad[0, :], backRad[1, :])
-            integrand = I_cm_interp[:] * absorb_prof_cm[:]
-            Jbar0 = _Integrate.trapze_(integrand[:], wm_cm_shifted[:])
+            I_cm_interp = _numpy.interp(wm_cm[:], backRad[0, :], backRad[1, :])
+            integrand = I_cm_interp[:] * absorb_prof_shifted_cm[:]
+            Jbar0 = _Integrate.trapze_(integrand[:], wm_cm[:])
 
         Jbar_all[k] = Jbar0
 
         Bij_Jbar[k] = Bij * Jbar0
         Bji_Jbar[k] = Bji * Jbar0
 
-        ##: wMesh.Line.Line_mesh : symmetric wavelength mesh in [dop_width_cm], global, fixed
-        ##  wave_mesh_cm_shifted_all  : shifted wavelength mesh in [cm], dependes on local Te, Vt, Vd,
-
-    return Bij_Jbar, Bji_Jbar, wave_mesh_cm_shifted_all, absorb_prof_cm_all, Jbar_all
+    return Bij_Jbar, Bji_Jbar, absorb_prof_cm_all, absorb_prof_shifted_cm_all, Jbar_all
 
 
 def _get_Cij_(  # noqa: C901

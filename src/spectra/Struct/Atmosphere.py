@@ -21,7 +21,18 @@ class Atmosphere0D:
     Nh: T_FLOAT
     Ne: T_FLOAT
     Te: T_FLOAT
-    Vd: T_FLOAT
+    # Vd_obs: atom line-of-sight velocity vs observer; used to shift the slab/cloud
+    # output wavelength mesh into the observer frame. [cm/s]
+    # Sign convention: +Vd_obs points TOWARDS the observer (atom approaching ->
+    # observer sees blue shift).
+    Vd_obs: T_FLOAT
+    # Vd_sun: atom velocity in the sun's rest frame; used inside SE to shift the
+    # absorption profile while keeping the wavelength mesh and solar spectrum fixed.
+    # [cm/s]
+    # Sign convention: +Vd_sun points OUTWARDS from the sun (atom receding from
+    # the sun -> sun-frame absorption line center is at w0 - w0*Vd_sun/c, blue
+    # side of w0).
+    Vd_sun: T_FLOAT
     Vt: T_FLOAT
 
     Ti: T_FLOAT = -1.0
@@ -41,7 +52,12 @@ class AtmosphereC1D:
     Nh: T_ARRAY
     Ne: T_ARRAY
     Te: T_ARRAY
-    Vd: T_ARRAY
+    # per-depth observer-frame velocity, [cm/s]
+    # Sign convention: +Vd_obs points TOWARDS the observer.
+    Vd_obs: T_ARRAY
+    # per-depth sun-rest-frame velocity, [cm/s]
+    # Sign convention: +Vd_sun points OUTWARDS from the sun.
+    Vd_sun: T_ARRAY
     Vt: T_ARRAY
     Z: T_ARRAY  # height of the atmosphere
 
@@ -957,7 +973,8 @@ def init_VAL_(val_type: T_STR = "C") -> AtmosphereC1D:
     Z[:] *= 1.0e5  # [km] --> [cm]
     Vt[:] *= 1.0e5  # [km] --> [cm]
 
-    Vd = _numpy.zeros_like(Vt)
+    Vd_obs = _numpy.zeros_like(Vt)
+    Vd_sun = _numpy.zeros_like(Vt)
     # -- continuum optical depth @500nm (LTE)
     wl0 = 5.0e-5  # [cm]
     xc: T_ARRAY = _ContinuumOpacity.H_LTE_continuum_opacity_(Te, Ne, Nh, wl0)
@@ -968,7 +985,8 @@ def init_VAL_(val_type: T_STR = "C") -> AtmosphereC1D:
         Nh=Nh,
         Ne=Ne,
         Te=Te,
-        Vd=Vd,
+        Vd_obs=Vd_obs,
+        Vd_sun=Vd_sun,
         Vt=Vt,
         Z=Z,
         tau5=tau5,

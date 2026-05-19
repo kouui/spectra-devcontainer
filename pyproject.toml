@@ -101,3 +101,9 @@ venvPath = "."
 venv = ".venv"
 include = ["src", "tests"]
 stubPath = "typings"
+
+[tool.pytest.ini_options]
+# Required so pytest can import test modules whose names contain dots
+# (e.g. tests/unittest/test.doppler_split.py). Without importlib mode,
+# pytest derives a module name from the path and fails on the first dot.
+addopts = "--import-mode=importlib"

@@ -18,12 +18,20 @@ class SE_Container:
 
     nj_by_ni: T_ARRAY  # 1d (nLine+nCont,), [-]
 
-    ## wavelength mesh of line transition
-    wave_mesh_shifted_1d: T_ARRAY  # 1d (sum_of_line_wavelength_mesh,), [cm]
-    ## absorption profile of line transition
+    ## Unshifted base absorption profile of line transitions: sigma(wm) / dopWidth_cm
+    ## evaluated on `wMesh.Line_mesh` (atom rest frame). This is the canonical
+    ## profile used by downstream forward-model consumers (e.g. slab/cloud), which
+    ## apply their own velocity shift via the output wavelength axis. Sliced per
+    ## line via Line_mesh_idxs.
     absorb_prof_1d: T_ARRAY  # 1d (sum_of_line_wavelength_mesh,), [/cm]
-    ## index array of line transition
-    Line_mesh_idxs: T_ARRAY  # 1d (sum_of_line_wavelength_mesh,), [-]
+    ## SE-internal Vd_sun-shifted profile: sigma(wm - dv_sun) / dopWidth_cm. This is
+    ## the profile SE actually integrated against the sun-frame background
+    ## radiation to compute Jbar. Exposed for diagnostics / debug (lets callers
+    ## inspect or plot the exact profile shape SE used); NOT for cloud-model use.
+    absorb_prof_shifted_1d: T_ARRAY  # 1d (sum_of_line_wavelength_mesh,), [/cm]
+    ## index array partitioning absorb_prof_1d / absorb_prof_shifted_1d into
+    ## per-line segments. Mirrors wMesh.Line_mesh_idxs.
+    Line_mesh_idxs: T_ARRAY  # 2d (nLine, 2), [-]
 
     Jbar: T_ARRAY  # 1d (nLine,), [erg/cm^2/Sr/s]
 
@@ -36,15 +44,10 @@ class SE_Container:
     ## electron temperature
     Te: T_FLOAT  # 0d, [K]
 
-    ## continuum wavelength mesh actually used in this SE call.
-    ## currently aliases `wMesh.Cont_mesh` (no doppler shift implemented yet);
-    ## the field exists as a forward-ready hook so future doppler-shifted continuum
-    ## arrays land here, parallel to bound-bound `wave_mesh_shifted_1d`.
-    ## Mutating it also mutates wMesh.Cont_mesh — copy if you need to modify.
-    cont_wave_mesh_shifted: T_ARRAY  # 2d (nCont, _N_CONT_MESH), [cm]
-    ## PI (photoionization) intensity used to drive bound-free rates.
-    ## continuum-mesh-resolved: planck(Tr) when se_params.Tr is not None,
-    ## else interp(radiation.solar, cont_wave_mesh_shifted).
+    ## PI (photoionization) intensity used to drive bound-free rates. Returned
+    ## here (not just consumed internally) so callers can inspect/analyse the
+    ## per-call radiation field. planck(Tr) when se_params.Tr is not None, else
+    ## interp(radiation.solar, wMesh.Cont_mesh). 2d (nCont, _N_CONT_MESH).
     PI_intensity: T_ARRAY  # 2d (nCont, _N_CONT_MESH), [erg/cm^2/Sr/cm/s]
 
 

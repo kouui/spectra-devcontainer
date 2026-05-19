@@ -248,7 +248,11 @@ def line_prof_lte_(
     Ne: T_ARRAY = atmos.Ne[:]
     Nh: T_ARRAY = atmos.Nh[:]
     Vt: T_ARRAY = atmos.Vt[:]
-    Vd: T_ARRAY = atmos.Vd[:]
+    # `line_prof_lte_` shifts the profile sample point by `v + vv`, i.e. the same
+    # profile-shift convention SE uses (+Vd_sun outward → sun-frame line at
+    # w0 - w0*Vd_sun/c, sampled on the unshifted grid as (v + vv)).
+    # Per-depth atom velocity in the sun frame.
+    Vd_sun: T_ARRAY = atmos.Vd_sun[:]
 
     wl0 = line.wl0
     ep = line.ep
@@ -271,14 +275,14 @@ def line_prof_lte_(
     # xl0 :  opacity at line center
     xl0: T_ARRAY = xl_lte_(ion, wl0, ep, gf, Te[:], Nh[:], Ne[:], dld[:])
     # vv : doppler shift in unit of doppler width
-    vv: T_ARRAY = _BasicP.dop_vel_to_shift_(wl0, Vd[:]) / dld[:]
+    vv: T_ARRAY = _BasicP.dop_vel_to_shift_(wl0, Vd_sun[:]) / dld[:]
 
     prof = _numpy.empty(nw, dtype=DT_NB_FLOAT)
     contrib = _numpy.empty((nw, nZ), dtype=DT_NB_FLOAT)
     contrib: T_ARRAY
     for j in range(nw):
         v = dw[j] / dld  # normalize
-        h, _f = _Profile.hf_(gamma, v - vv)
+        h, _f = _Profile.hf_(gamma, v + vv)
         # hf,l.a,v-vv,h,f
         # xl : line opacity at a specific wavelength along line-of-sight
         xl = xl0[:] * h

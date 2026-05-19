@@ -15,11 +15,11 @@ class TestHydrogenCloudModel:
         conf_path = str(CFG._ROOT_DIR / "data/conf/H.conf")
         atom, wMesh, _ = Atom.init_Atom_(conf_path, is_hydrogen=True)
 
-        atmos = Atmosphere.Atmosphere0D(Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vd=0.0, Vt=5.0e5)
+        atmos = Atmosphere.Atmosphere0D(Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vd_obs=0.0, Vd_sun=0.0, Vt=5.0e5)
         radiation = Radiation.init_Radiation_()
         SE_con, _ = SELib.cal_SE_with_Nh_Te_(atom, atmos, wMesh, radiation, None)
 
-        Cloud_con = SlabModel.SE_to_slab_0D_(atom, atmos, SE_con, depth=1.0e3 * 1.0e5)
+        Cloud_con = SlabModel.SE_to_slab_0D_(atom, atmos, wMesh, SE_con, depth=1.0e3 * 1.0e5)
 
         assert_close(Cloud_con.w0, ref["E2E.H_CloudModel.w0"], rtol=1e-8)
         assert_close(Cloud_con.tau_max, ref["E2E.H_CloudModel.tau_max"], rtol=1e-8)
@@ -39,7 +39,7 @@ class TestHydrogenCloudModel:
         conf_path = str(CFG._ROOT_DIR / "data/conf/H.conf")
         atom, wMesh, _ = Atom.init_Atom_(conf_path, is_hydrogen=True)
 
-        atmos = Atmosphere.Atmosphere0D(Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vd=0.0, Vt=5.0e5)
+        atmos = Atmosphere.Atmosphere0D(Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vd_obs=0.0, Vd_sun=0.0, Vt=5.0e5)
         radiation = Radiation.init_Radiation_()
         SE_con, _ = SELib.cal_SE_with_Nh_Te_(atom, atmos, wMesh, radiation, None)
 
@@ -53,7 +53,7 @@ class TestHydrogenCloudModel:
         # exp(-tau) overflows when |tau| is large negative (synthetic extreme,
         # not a real-world concern). prof_1D is irrelevant for this test.
         with _numpy.errstate(over="ignore"):
-            Cloud_con = SlabModel.SE_to_slab_0D_(atom, atmos, SE_con, depth=1.0e3 * 1.0e5)
+            Cloud_con = SlabModel.SE_to_slab_0D_(atom, atmos, wMesh, SE_con, depth=1.0e3 * 1.0e5)
 
         # Sanity: line 0 actually went negative.
         i1, i2 = int(Cloud_con.Line_mesh_idxs[0, 0]), int(Cloud_con.Line_mesh_idxs[0, 1])
