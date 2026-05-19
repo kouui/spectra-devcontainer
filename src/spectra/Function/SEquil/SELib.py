@@ -349,7 +349,7 @@ def cal_SE_(
         PI_intensity[:, :],
     )
 
-    Bij_Jbar, Bji_Jbar, absorb_prof_cm_all, absorb_prof_shifted_cm_all, Jbar_all = _B_Jbar_(
+    Bij_Jbar, Bji_Jbar, absorb_prof_cm_all, absorb_prof_shifted_cm_all, wm_cm_all, Jbar_all = _B_Jbar_(
         Line,
         Line_mesh_Coe,
         Line_mesh[:],
@@ -393,6 +393,7 @@ def cal_SE_(
         nj_by_ni=nj_by_ni,
         absorb_prof_1d=absorb_prof_cm_all,
         absorb_prof_shifted_1d=absorb_prof_shifted_cm_all,
+        wm_cm_1d=wm_cm_all,
         Line_mesh_idxs=Line_mesh_idxs,
         Jbar=Jbar_all,
         PI_intensity=PI_intensity,
@@ -536,7 +537,7 @@ def _B_Jbar_(
     backRad: T_ARRAY,
     Tr: T_FLOAT,
     use_Tr: T_BOOL,
-) -> T_TUPLE[T_ARRAY, T_ARRAY, T_ARRAY, T_ARRAY, T_ARRAY]:
+) -> T_TUPLE[T_ARRAY, T_ARRAY, T_ARRAY, T_ARRAY, T_ARRAY, T_ARRAY]:
     ##: TODO: add input argument for PRD correlation matrix and PRD/CRD binary indicator for lines
     ##        this requires adding one more ProfileType called PRD
 
@@ -558,6 +559,10 @@ def _B_Jbar_(
 
     absorb_prof_cm_all: T_ARRAY = _numpy.empty_like(Line_mesh)
     absorb_prof_shifted_cm_all: T_ARRAY = _numpy.empty_like(Line_mesh)
+    # Sun-frame wavelength labels in cm, parallel to absorb_prof_*_cm_all. Exposed
+    # so the cloud model can build its observer-frame mesh without recomputing
+    # dopWidth_cm (Te/Vt-dependent, identical to the value used here).
+    wm_cm_all: T_ARRAY = _numpy.empty_like(Line_mesh)
     Jbar_all: T_ARRAY = _numpy.empty(nLine, dtype=DT_NB_FLOAT)
 
     Bji_Jbar = _numpy.empty(nLine, dtype=DT_NB_FLOAT)
@@ -597,6 +602,9 @@ def _B_Jbar_(
         #         this line could be replaced by
         #         wm = Line_mesh[i_start:i_end]
         wm = _MeshUtil.make_full_line_mesh_(nLambda, qcore, qwing)
+        # Always export the sun-frame wavelength labels (even for f0<=0 lines)
+        # so the per-line slice is well-defined for any downstream consumer.
+        wm_cm_all[i_start:i_end] = wm[:] * dopWidth_cm + w0
         if Line["f0"][k] <= 0:
             absorb_prof_cm_all[i_start:i_end] = 0.0
             absorb_prof_shifted_cm_all[i_start:i_end] = 0.0
@@ -626,7 +634,8 @@ def _B_Jbar_(
         absorb_prof_shifted_cm_all[i_start:i_end] = absorb_prof_shifted_cm[:]
 
         # Sun-frame mesh in [cm] — interpolation grid for backRad / planck.
-        wm_cm = wm[:] * dopWidth_cm + w0
+        # Aliased to the already-stored wm_cm_all segment.
+        wm_cm = wm_cm_all[i_start:i_end]
 
         ## : Jbar uses the sun-shifted profile (it lives in the sun frame, where
         ## the line center is at w0 - w0 * Vd_sun / c and backRad is defined).
@@ -644,7 +653,7 @@ def _B_Jbar_(
         Bij_Jbar[k] = Bij * Jbar0
         Bji_Jbar[k] = Bji * Jbar0
 
-    return Bij_Jbar, Bji_Jbar, absorb_prof_cm_all, absorb_prof_shifted_cm_all, Jbar_all
+    return Bij_Jbar, Bji_Jbar, absorb_prof_cm_all, absorb_prof_shifted_cm_all, wm_cm_all, Jbar_all
 
 
 def _get_Cij_(  # noqa: C901

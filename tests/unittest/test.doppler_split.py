@@ -41,7 +41,7 @@ def test_slab_wl_1D_matches_Vd_obs_formula():
     Vd_obs = 3.0e5  # cm/s
     atom, wMesh, atmos, _, SE_con = _hydrogen_setup(Vd_obs=Vd_obs, Vd_sun=0.0)
 
-    Cloud_con = SlabModel.SE_to_slab_0D_(atom, atmos, wMesh, SE_con, depth=1.0e3 * 1.0e5)
+    Cloud_con = SlabModel.SE_to_slab_0D_(atom, atmos, SE_con, depth=1.0e3 * 1.0e5)
 
     nLine = atom.nLine
     checked = 0
@@ -115,10 +115,10 @@ def test_cloud_tau_peak_tracks_Vd_obs_only():
     # position whenever Vd_sun != Vd_obs.
     Vd_obs = 3.0e5
     atom_a, wMesh_a, atmos_a, _, SE_con_a = _hydrogen_setup(Vd_obs=Vd_obs, Vd_sun=0.0)
-    atom_b, wMesh_b, atmos_b, _, SE_con_b = _hydrogen_setup(Vd_obs=Vd_obs, Vd_sun=1.0e6)
+    _atom_b, _wMesh_b, atmos_b, _, SE_con_b = _hydrogen_setup(Vd_obs=Vd_obs, Vd_sun=1.0e6)
 
-    Cloud_a = SlabModel.SE_to_slab_0D_(atom_a, atmos_a, wMesh_a, SE_con_a, depth=1.0e3 * 1.0e5)
-    Cloud_b = SlabModel.SE_to_slab_0D_(atom_b, atmos_b, wMesh_b, SE_con_b, depth=1.0e3 * 1.0e5)
+    Cloud_a = SlabModel.SE_to_slab_0D_(atom_a, atmos_a, SE_con_a, depth=1.0e3 * 1.0e5)
+    Cloud_b = SlabModel.SE_to_slab_0D_(atom_a, atmos_b, SE_con_b, depth=1.0e3 * 1.0e5)
 
     # Pick the strongest line in either run to keep the test robust.
     k = int(np.argmax(np.abs(Cloud_a.tau_max)))

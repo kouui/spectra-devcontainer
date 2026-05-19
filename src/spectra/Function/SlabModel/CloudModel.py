@@ -4,31 +4,27 @@
 
 import numpy as _numpy
 
-from ...Atomic import BasicP as _BasicP
 from ...ImportAll import *
 from ...Math import Integrate as _Integrate
 from ...Struct import Atmosphere as _Atmosphere
-
-# from ..SEquil import SELib as _SELib
 from ...Struct import Atom as _Atom
 from ...Struct import Container as _Container
-from ...Struct import WavelengthMesh as _WavelengthMesh
 
 
 def SE_to_slab_0D_(
     atom: _Atom.Atom,
     atmos: _Atmosphere.Atmosphere0D,
-    wMesh: _WavelengthMesh.Wavelength_Mesh,
     SE_con: _Container.SE_Container,
     depth: T_FLOAT,
 ) -> _Container.CloudModel_Container:
     """calculate the optical depth and source function for a slab model.
 
-    The output `wl_1D` is the observer-frame wavelength mesh, built from
-    `wMesh.Line_mesh` (atom rest frame, doppler-width units) and shifted by
-    `atmos.Vd_obs`. The absorption profile in `SE_con` already encodes the
-    `Vd_sun` shift (applied inside SE), so the two velocities compose
-    naturally without further mixing here.
+    The output `wl_1D` is the observer-frame wavelength mesh, derived from the
+    sun-frame `SE_con.wm_cm_1d` (atom-rest-frame line centers in cm) by
+    subtracting the observer-frame Doppler shift `w0*Vd_obs/c`. The cloud
+    model reads only what it needs from `SE_con` (no `wMesh` dependency); SE
+    already computed both `dopWidth_cm` (baked into `wm_cm_1d`) and the
+    unshifted `absorb_prof_1d` (sampled at those same wavelengths).
     """
 
     nLine = atom.nLine
@@ -36,14 +32,11 @@ def SE_to_slab_0D_(
 
     N_ele = atmos.Nh * atom.Abun
 
-    Line_mesh_idxs = wMesh.Line_mesh_idxs
-    Line_mesh = wMesh.Line_mesh
+    Line_mesh_idxs = SE_con.Line_mesh_idxs
+    wm_cm_1d = SE_con.wm_cm_1d
     absorb_prof_1d = SE_con.absorb_prof_1d
 
-    Te = atmos.Te
-    Vt = atmos.Vt
     Vd_obs = atmos.Vd_obs
-    Mass = atom.Mass
 
     ## 1. obtain the upper/lower level population for line transitions
     nj: T_ARRAY = SE_con.n_SE[Line["idxJ"][:]]
@@ -81,11 +74,11 @@ def SE_to_slab_0D_(
         i2 = Line_mesh_idxs[k, 1]
 
         w0 = Line["w0"][k]
-        dopWidth_cm = _BasicP.doppler_width_(w0, Te, Vt, Mass)
-        # observer-frame wavelength mesh: atom-frame mesh shifted by Vd_obs.
-        # +Vd_obs = atom velocity TOWARDS observer (source approaching) → observer
-        # sees line center blue-shifted to w0 - w0*Vd_obs/c.
-        wl = Line_mesh[i1:i2] * dopWidth_cm + w0 - (w0 * Vd_obs / CST.c_)
+        # observer-frame wavelength mesh: sun-frame atom-rest-frame mesh
+        # shifted by -w0*Vd_obs/c. +Vd_obs = atom velocity TOWARDS observer
+        # (source approaching) → observer sees line center blue-shifted to
+        # w0 - w0*Vd_obs/c.
+        wl = wm_cm_1d[i1:i2] - (w0 * Vd_obs / CST.c_)
 
         tau = depth * alp0[k] * absorb_prof_1d[i1:i2]
 

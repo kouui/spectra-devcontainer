@@ -10,7 +10,7 @@ atmos = Atmosphere.Atmosphere0D(Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vd_obs=0.0, Vd_s
 radiation = Radiation.init_Radiation_()
 SE_con, Rate_con = SELib.cal_SE_with_Nh_Te_(atom, atmos, wMesh, radiation, Nh_SE=None)
 
-Cloud_con = SlabModel.SE_to_slab_0D_(atom, atmos, wMesh, SE_con, depth=1.0e3 * 1.0e5)  # 1_000 [km]
+Cloud_con = SlabModel.SE_to_slab_0D_(atom, atmos, SE_con, depth=1.0e3 * 1.0e5)  # 1_000 [km]
 
 # Cloud_con.w0[:]             central wavelength in [cm]
 # Cloud_con.tau_max[:]        maximum optical depth

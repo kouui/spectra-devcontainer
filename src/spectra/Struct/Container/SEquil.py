@@ -24,13 +24,20 @@ class SE_Container:
     ## apply their own velocity shift via the output wavelength axis. Sliced per
     ## line via Line_mesh_idxs.
     absorb_prof_1d: T_ARRAY  # 1d (sum_of_line_wavelength_mesh,), [/cm]
-    ## SE-internal Vd_sun-shifted profile: sigma(wm - dv_sun) / dopWidth_cm. This is
+    ## SE-internal Vd_sun-shifted profile: sigma(wm + dv_sun) / dopWidth_cm. This is
     ## the profile SE actually integrated against the sun-frame background
     ## radiation to compute Jbar. Exposed for diagnostics / debug (lets callers
     ## inspect or plot the exact profile shape SE used); NOT for cloud-model use.
     absorb_prof_shifted_1d: T_ARRAY  # 1d (sum_of_line_wavelength_mesh,), [/cm]
-    ## index array partitioning absorb_prof_1d / absorb_prof_shifted_1d into
-    ## per-line segments. Mirrors wMesh.Line_mesh_idxs.
+    ## Sun-frame, atom-rest-frame wavelength labels in cm: wm * dopWidth_cm + w0,
+    ## sliced per line via Line_mesh_idxs. These are the wavelength positions
+    ## absorb_prof_1d is sampled at; downstream forward models pair them with
+    ## their own Vd_obs shift (e.g. wl_obs = wm_cm_1d - w0*Vd_obs/c in the cloud
+    ## model). Depends on Te / Vt (via dopWidth_cm), so it belongs alongside the
+    ## SE result rather than the transition-only wMesh struct.
+    wm_cm_1d: T_ARRAY  # 1d (sum_of_line_wavelength_mesh,), [cm]
+    ## index array partitioning absorb_prof_1d / absorb_prof_shifted_1d /
+    ## wm_cm_1d into per-line segments. Mirrors wMesh.Line_mesh_idxs.
     Line_mesh_idxs: T_ARRAY  # 2d (nLine, 2), [-]
 
     Jbar: T_ARRAY  # 1d (nLine,), [erg/cm^2/Sr/s]
