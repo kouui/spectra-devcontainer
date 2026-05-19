@@ -1,17 +1,6 @@
 # -------------------------------------------------------------------------------
 # definition of struct for storing radiation
 # -------------------------------------------------------------------------------
-# VERSION
-# 0.1.0
-#    2021/05/18   u.k.   spectra-re
-# 0.1.1
-#    2022/01/07   u.k.   modified atlas(backRad)
-# 0.1.2
-#    2022/08/01   u.k.   modified atlas(added 10000-11000A absorption lines into backRad)
-# 0.2.0
-#    2026/05/03   u.k.   drop cached PI_intensity; rename backRad -> solar;
-#                        init no longer takes atmos/wMesh
-# -------------------------------------------------------------------------------
 
 
 from dataclasses import dataclass as _dataclass

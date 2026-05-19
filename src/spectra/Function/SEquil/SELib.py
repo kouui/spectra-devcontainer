@@ -1,53 +1,6 @@
 # -------------------------------------------------------------------------------
 # definition of functions to perform statistical equilibrium
 # -------------------------------------------------------------------------------
-# VERSION
-# 0.1.2
-#    2021/07/04   u.k.
-#        - tran_rate_con now has Rmat, Cmat
-# 0.1.5
-#    2026/05/15   u.k.   se_params: SE_Params_Container threaded through cal_SE_* wrappers
-# 0.1.1
-#    2021/06/15   u.k.
-#        - func _bf_R_rate_ : move radiation-source switch outside the continuum
-#          doppler-shift branch to enable the coronal-equilibrium "no radiation"
-#          mode (Tr at 0 K with Planck-source selected).
-#        - func _bf_R_rate_ : add local variable `PI_I0` to prevent the update of
-#          `PI_I` udring simulation
-# 0.1.0
-#    2021/05/18   u.k.   spectra-re
-# 0.0.3
-#    2021/05/08   u.k.
-#        - func B_Jbar : _meshInfo assigment
-#        - func B_Jbar : _Gamma = numpy.atleast_1d( _Gamma )
-# 0.0.2
-#    2020/11/16   u.k.
-#        - Te and Tr identification in bf_R_rate() and bf_R_rate_loop()
-#        - 0.5*intensity --> 1.0*intensity in the integration in B_Jbar_CRD()
-# 0.0.1
-#    2020/11/16   u.k.
-#        - by defalut the line absorption profile is Gaussian shape so
-#          no damping effect in line wings
-#          ```B_Jbar()
-#          _meshInfo[3] = 2
-#          ```
-#        - in LevelN.collisional_broadening(), ground hydrogen population is set(fixed) to 1E10
-# 0.0.2
-#    2022/07/29   u.k
-#        - added cal_SE_with_Pg_Te_
-# 0.0.3
-#    2022/09/04   u.k.
-#        - added cal_SE_with_Pg_Te_single_Atom_
-# 0.1.0
-#    2023/04/29   u.k.
-#        - is_single_element keyword in cal_SE_with_Ne_Te_
-# 0.1.2
-#    2023/07/06   u.k.   in _B_Jbar_, when f0 = 0, skip calculation and assign 0 to the result
-# 0.1.3
-#    2024/02/03   u.k.   add rate_only argument
-# 0.1.4
-#    2024/02/09   u.k.   Ntotal, Nh, Ne, Te in SE_con
-# -------------------------------------------------------------------------------
 
 import numpy as _numpy
 

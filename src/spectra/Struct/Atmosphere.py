@@ -1,19 +1,6 @@
 # -------------------------------------------------------------------------------
 # definition of struct for Atmosphere
 # -------------------------------------------------------------------------------
-# VERSION
-# 0.1.0
-#    2021/05/18   u.k.   spectra-re
-# 0.1.1
-#    2022/01/07   u.k.
-#        - in `init_VAL_`, added zero array of `column_mass` to initialize struct
-# 0.1.2
-#    2022/07/29   u.k
-#        - added Pg to Atmosphere0D
-# 0.1.3
-#    2026/05/15   u.k.
-#        - removed Tr / use_Tr / doppler_shift_continuum (moved to SE_Params_Container)
-# -------------------------------------------------------------------------------
 
 
 from dataclasses import dataclass as _dataclass

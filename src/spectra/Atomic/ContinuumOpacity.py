@@ -1,17 +1,6 @@
 # -------------------------------------------------------------------------------
 # function definition of continuum opacity calculation
 # -------------------------------------------------------------------------------
-# VERSION
-# 0.1.1
-#    2021/06/07   u.k.
-#        - modified HI_rayleigh_cross_sec_
-#        - in _avH2p_, cubic v.s. linear : 3x difference
-# 0.1.0
-#    2021/05/18   u.k.   spectra-re
-#        -  migrated from opacity.py
-# 0.1.1
-#    2022/01/07   u.k.
-#        -  removed warnings and added JIT for `HI_rayleigh_cross_sec_`
 # -------------------------------------------------------------------------------
 # WARNING
 # 1. wait to solve the mypy bug, Union type in to an overload function
@@ -122,12 +111,6 @@ def hydrogenic_bf_cross_sec_n_(ni: T_VEC_IA, w: T_VEC_IFA, Z: T_INT) -> T_VEC_FA
 
             kbf = nk * alpha * (1.-exp(-hv/kT)) (/cm)
 
-    Modification history:
-
-    - k.ichimoto 15 jun.1987,	6 Jan.1992
-    - k.ichimoto 19 Feb.1994
-    - 2019.9.15   k.ichimoto from IDL ahic.pro
-
     References
     ----------
     .. [1] varnazza et al. (1976) ap.j.suppl. vol.30,1.
@@ -207,11 +190,6 @@ def HI_bf_LTE_cross_sec_(Te: T_VEC_IFA, w: T_VEC_IFA) -> T_VEC_FA:
     - n_HI: hydrogen number density in cm^(-3)
     - stimulated emission is corrected
     - partition function of HI is assumed to be 2.0, which is valid for T < 2.e4 K
-
-    Modification history:
-
-    - 2019.9.15  K.Ichimoto  from IDL ahic.pro
-
 
     References
     ----------
@@ -335,10 +313,6 @@ def HI_ff_cross_sec_(Te: T_VEC_IFA, w: T_VEC_IFA) -> T_VEC_FA:
     - stimulated emission is corrected
     - partition function of HI is assumed to be 2.0, which is valid for T < 2.e4 K
 
-    Modification history:
-
-    - 2019.9.15  K.Ichimoto  from IDL ahic.pro
-
     Original doc-string
 
     ;  HI free-free absorption coefficient per 1 proton and unit pe (dyne/cm**2)
@@ -429,12 +403,6 @@ def Hminus_cross_sec_(Te: T_VEC_IFA, w: T_VEC_IFA, Ne: T_VEC_IFA) -> T_VEC_FA:
     - stimulated emission is corrected
     - partition function of HI is assumed to be 2.0, which is valid for T < 2.e4 K
 
-    Modification history:
-
-    - k.ichimoto 18 jun. 1987, 	6 Jan. 1992
-    - k.ichimoto  19 Feb.1994
-    - 2019.9.15  K.Ichimoto  from IDL ahic.pro
-
     References
     ----------
     .. [1] varnazza et al. (1976) ap.j.suppl. vol.30, 1.
@@ -506,12 +474,6 @@ def HI_rayleigh_cross_sec_(w: T_VEC_IFA) -> T_VEC_FA:
     - n_HI: hydrogen number density in cm^(-3)
     - stimulated emission is corrected
     - partition function of HI is assumed to be 2.0, which is valid for T < 2.e4 K
-
-    modification history:
-
-    - k.ichimoto 18 jun. 1987, 	6 Jan. 1992
-    - k.ichimoto  19 Feb.1994
-    - 2019.9.10  K.Ichimoto  from IDL avray.pro
 
     References
     ----------
@@ -782,13 +744,6 @@ def _avH2p_(Te: T_VEC_IFA, w: T_VEC_IFA) -> T_VEC_FA:
     absorption coeff,
         kh2 = nhi * np * _avh2p_, [:math:`cm^{-1}`]
 
-    Modification history:
-
-    - k.ichimoto 18 jun. 1987, 	6 Jan. 1992
-    - k.ichimoto  19 Feb.1994
-    - 2019.9.11  K.Ichimoto  from IDL avh2p.pro
-
-
     References
     ----------
     .. [1] Gingerich SAO special report 167,21,1964.
@@ -864,9 +819,6 @@ def H2p_cross_sec_(Te: T_VEC_FA, w: T_VEC_FA, Np: T_VEC_FA) -> T_VEC_FA:
 
     use `_avH2p_(T,wl)`
 
-    Modification history:
-
-    - 2019.9.15  K.Ichimoto
     """
     # what is this 1.38066E-16 ? ideal gas constant ?
     # Pe = 1.38066e-16 * Ne * Te
@@ -928,12 +880,6 @@ def H_LTE_continuum_opacity_(Te: T_VEC_FA, Ne: T_VEC_FA, Nh: T_VEC_FA, w: T_VEC_
     - n_HI: hydrogen number density in cm^(-3)
     - stimulated emission is corrected
     - partition function of HI is assumed to be 2.0, which is valid for T < 2.e4 K
-
-    Modification history:
-
-    - k.ichimoto 18 jun. 1987, 	6 Jan. 1992
-    - k.ichimoto  19 Feb.1994
-    - 2019.9.15  K.Ichimoto  from IDL avray.pro
 
     References
     ----------

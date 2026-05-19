@@ -1,17 +1,6 @@
 # -------------------------------------------------------------------------------
 # definition of functions to perform statistical equilibrium
 # -------------------------------------------------------------------------------
-# VERSION
-# 0.1.0
-#    2021/05/18   u.k.   spectra-re
-#    2022/07/20   k.i.   add Src, tau_1D
-# 0.1.2
-#    2023/07/04   u.k.   when Aji equals to 0, set Src to 0 to avoid the zero division warning
-#    2025/07/07   j.n.   add line_emissivity and line_absorption
-# 0.1.3
-#    2026/05/09   u.k.   take abs(tau).max() so tau_max is meaningful under
-#                        population inversion (negative tau)
-# -------------------------------------------------------------------------------
 
 import numpy as _numpy
 

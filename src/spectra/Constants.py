@@ -3,12 +3,6 @@
 # some other constants for the convenience of computation.
 #
 # -------------------------------------------------------------------------------
-# VERSION
-# 0.1.0
-#    2021/05/18   u.k.   spectra-re
-#       - added R_
-#    2020/05/08   k.i.   alp_
-# -------------------------------------------------------------------------------
 
 from .Types import T_DICT, T_FLOAT, T_INT, T_STR
 

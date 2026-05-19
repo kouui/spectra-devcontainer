@@ -1,18 +1,6 @@
 # -------------------------------------------------------------------------------
 # function definition of process of hydrogen atom
 # -------------------------------------------------------------------------------
-# VERSION
-# 0.1.1
-#    2-21/06/15   u.k.
-#        - `Gaunt_factor_Gingerich_cm_()`, `w_um = w * 1E4` -> `w_um = w * 1E5`
-#          [cm] -> [um] is *1E4, why *1E5?
-# 0.1.0
-#    2021/05/18   u.k.   spectra-re
-#        - `Gaunt_factor_Gingerich_cm_()`, `w_um = w * 1E5` -> `w_um = w * 1E4`
-# 0.0.1
-#    2020/11/10   u.k.
-#        - `PI_cross_section_cm()` and `PI_cross_section()`, if `x<1.0` then cross section `alpha=0.`
-# -------------------------------------------------------------------------------
 
 from debtcollector import removals as _removals  # type: ignore
 import numpy as _numpy

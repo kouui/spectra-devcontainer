@@ -1,21 +1,6 @@
 # -------------------------------------------------------------------------------
 # definition of struct for storing Statistical Equilibrium result
 # -------------------------------------------------------------------------------
-# VERSION
-# 0.1.1
-#    2021/07/04   u.k.   added Rmat, Cmat to TranRates_Container
-# 0.1.0
-#    2021/05/18   u.k.   spectra-re
-# 0.1.1
-#    2024/02/09   u.k.   added Ntotal,Nh,Ne,Te to SE_Container
-# 0.2.0
-#    2026/05/03   u.k.   added PI_intensity (continuum-mesh-resolved bound-free
-#                        intensity), cont_wave_mesh_shifted
-#                        (parallel to bound-bound wave_mesh_shifted_1d / absorb_prof_1d)
-# 0.2.1
-#    2026/05/15   u.k.   added SE_Params_Container (Tr / doppler_shift_continuum
-#                        moved off Atmosphere; Tr is None ⇔ use radiation.solar)
-# -------------------------------------------------------------------------------
 
 from dataclasses import dataclass as _dataclass
 

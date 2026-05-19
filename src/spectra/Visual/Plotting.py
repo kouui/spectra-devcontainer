@@ -1,10 +1,6 @@
 # -------------------------------------------------------------------------------
 # function definition of Plotting utilities
 # -------------------------------------------------------------------------------
-# VERSION
-# 0.1.0
-#    2021/05/18   u.k.   spectra-re
-# -------------------------------------------------------------------------------
 
 from matplotlib.axes import Axes as _MplAxes
 from matplotlib.colors import LogNorm
