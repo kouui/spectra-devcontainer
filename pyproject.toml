@@ -107,3 +107,8 @@ stubPath = "typings"
 # (e.g. tests/unittest/test.doppler_split.py). Without importlib mode,
 # pytest derives a module name from the path and fails on the first dot.
 addopts = "--import-mode=importlib"
+
+[dependency-groups]
+dev = [
+    "nbformat>=5.10.4",
+]

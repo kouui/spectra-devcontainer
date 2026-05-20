@@ -1876,6 +1876,11 @@ notebook = [
     { name = "jupyterlab" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "nbformat" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "debtcollector" },
@@ -1893,6 +1898,9 @@ requires-dist = [
     { name = "sympy" },
 ]
 provides-extras = ["dev", "notebook"]
+
+[package.metadata.requires-dev]
+dev = [{ name = "nbformat", specifier = ">=5.10.4" }]
 
 [[package]]
 name = "stack-data"
