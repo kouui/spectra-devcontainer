@@ -15,7 +15,7 @@ class TestHydrogenCloudModel:
         conf_path = str(CFG._ROOT_DIR / "data/conf/H.conf")
         atom, wMesh, _ = Atom.init_Atom_(conf_path, is_hydrogen=True)
 
-        atmos = Atmosphere.Atmosphere0D(Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vd_obs=0.0, Vd_sun=0.0, Vt=5.0e5)
+        atmos = Atmosphere.Atmosphere0D(Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vt=5.0e5)
         radiation = Radiation.init_Radiation_()
         SE_con, _ = SELib.cal_SE_with_Nh_Te_(atom, atmos, wMesh, radiation, None)
 
@@ -39,7 +39,7 @@ class TestHydrogenCloudModel:
         conf_path = str(CFG._ROOT_DIR / "data/conf/H.conf")
         atom, wMesh, _ = Atom.init_Atom_(conf_path, is_hydrogen=True)
 
-        atmos = Atmosphere.Atmosphere0D(Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vd_obs=0.0, Vd_sun=0.0, Vt=5.0e5)
+        atmos = Atmosphere.Atmosphere0D(Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vt=5.0e5)
         radiation = Radiation.init_Radiation_()
         SE_con, _ = SELib.cal_SE_with_Nh_Te_(atom, atmos, wMesh, radiation, None)
 

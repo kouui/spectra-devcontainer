@@ -10,6 +10,22 @@ recent date inside the file) and start a fresh entry below.
 
 ## 2026-05-23
 
+### `Struct/Atmosphere.py` — YW.Huang
+
+`Atmosphere0D.Vd_obs` and `Vd_sun` now default to `0.0` (and are reordered to follow `Vt` per the dataclass defaults-last rule). `AtmosphereC1D` array fields stay required (per-depth shape; both construction sites already build `zeros(nDep)`). See `docs/tasks/009-doppler-velocity-split/refactor_03.md`.
+
+### `tests/{regression/test_reg_e2e_{SE,CloudModel}.py, examples/example.{CM,He,SE}.py, unittest/test.SE.H_I.py}` — YW.Huang
+
+drop redundant literal `Vd_obs=0.0, Vd_sun=0.0` kwargs at 16 `Atmosphere0D` construction sites now that the dataclass defaults to zero. Helper-threaded sites (`_hydrogen_setup`, `make_atmos`) keep the kwargs (parametric forwarding).
+
+### `scripts/gen_se_reference.py` — YW.Huang
+
+drop `"Vd_obs": 0.0, "Vd_sun": 0.0` from the 6 `atmos_kwargs` dict literals in the `CASES` table; the constructor fills in defaults.
+
+### `tests/unittest/test.doppler_split.py` — YW.Huang
+
+add `test_atmos0d_default_doppler_zero`: construct `Atmosphere0D` without `Vd_obs` / `Vd_sun` kwargs; assert both default to `0.0` and that `Vt` / `Te` round-trip correctly (guards against silent field-reorder typos).
+
 ### `Function/SlabModel/CloudModel.py` — YW.Huang
 
 flip `Vd_obs` sign convention from TOWARDS to AWAY from observer (astronomy radial-velocity convention). Observer-frame wavelength axis now built as `wl_1D = wm_cm_1d + w0·Vd_obs/c` (was `−`); `+Vd_obs` produces a red shift. Docstring and inline comment updated.

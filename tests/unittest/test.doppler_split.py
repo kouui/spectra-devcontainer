@@ -178,6 +178,21 @@ def test_cloud_tau_peak_negative_Vd_obs_blue_shift():
     )
 
 
+def test_atmos0d_default_doppler_zero():
+    # Atmosphere0D.Vd_obs / Vd_sun default to 0.0 — a construction with
+    # only the non-Doppler kwargs must yield zero Doppler velocities.
+    # Also assert non-Doppler kwargs round-trip correctly (Vt, Te), so a
+    # silent field reorder that re-aliased Vt to a default would fail
+    # loudly rather than producing a confusing downstream physics result.
+    Vt_in = 4.2e5
+    Te_in = 7.5e3
+    atmos = Atmosphere.Atmosphere0D(Nh=1.0e12, Ne=1.0e11, Te=Te_in, Vt=Vt_in)
+    assert atmos.Vd_obs == 0.0
+    assert atmos.Vd_sun == 0.0
+    assert atmos.Vt == Vt_in
+    assert atmos.Te == Te_in
+
+
 def test_se_container_no_mesh_fields():
     # The wave_mesh_shifted_1d / cont_wave_mesh_shifted attributes were
     # removed when shift moved from mesh-shift to profile-shift; ensure they

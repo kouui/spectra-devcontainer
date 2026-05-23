@@ -21,20 +21,20 @@ class Atmosphere0D:
     Nh: T_FLOAT
     Ne: T_FLOAT
     Te: T_FLOAT
+    Vt: T_FLOAT
     # Vd_obs: atom line-of-sight velocity vs observer; used to shift the slab/cloud
     # output wavelength mesh into the observer frame. [cm/s]
     # Sign convention (astronomy radial-velocity): +Vd_obs points AWAY from the
     # observer (atom receding -> observer sees red shift). Observer-frame line
     # center sits at w0 + w0*Vd_obs/c.
-    Vd_obs: T_FLOAT
+    Vd_obs: T_FLOAT = 0.0
     # Vd_sun: atom velocity in the sun's rest frame; used inside SE to shift the
     # absorption profile while keeping the wavelength mesh and solar spectrum fixed.
     # [cm/s]
     # Sign convention: +Vd_sun points OUTWARDS from the sun (atom receding from
     # the sun -> sun-frame absorption line center is at w0 - w0*Vd_sun/c, blue
     # side of w0).
-    Vd_sun: T_FLOAT
-    Vt: T_FLOAT
+    Vd_sun: T_FLOAT = 0.0
 
     Ti: T_FLOAT = -1.0
 

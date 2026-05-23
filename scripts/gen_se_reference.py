@@ -49,7 +49,7 @@ CASES: tuple[dict[str, Any], ...] = (
         "conf": "data/conf/H.conf",
         "is_hydrogen": True,
         "entry": "cal_SE_with_Pg_Te_",
-        "atmos_kwargs": {"Pg": 1.8, "Nh": 1.0e12, "Ne": 1.0e11, "Te": 7.0e3, "Vd_obs": 0.0, "Vd_sun": 0.0, "Vt": 5.0e5},
+        "atmos_kwargs": {"Pg": 1.8, "Nh": 1.0e12, "Ne": 1.0e11, "Te": 7.0e3, "Vt": 5.0e5},
         "fields": ("n_SE", "n_LTE", "Ne", "Ntotal"),
     },
     {
@@ -57,7 +57,7 @@ CASES: tuple[dict[str, Any], ...] = (
         "conf": "data/conf/He.conf",
         "is_hydrogen": False,
         "entry": "cal_SE_with_Nh_Te_",
-        "atmos_kwargs": {"Nh": 1.0e12, "Ne": 1.0e11, "Te": 7.0e3, "Vd_obs": 0.0, "Vd_sun": 0.0, "Vt": 5.0e5},
+        "atmos_kwargs": {"Nh": 1.0e12, "Ne": 1.0e11, "Te": 7.0e3, "Vt": 5.0e5},
         "fields": ("n_SE", "n_LTE", "Ntotal"),
     },
     {
@@ -65,7 +65,7 @@ CASES: tuple[dict[str, Any], ...] = (
         "conf": "data/conf/He.conf",
         "is_hydrogen": False,
         "entry": "cal_SE_with_Pg_Te_",
-        "atmos_kwargs": {"Pg": 1.8, "Nh": 1.0e12, "Ne": 1.0e11, "Te": 7.0e3, "Vd_obs": 0.0, "Vd_sun": 0.0, "Vt": 5.0e5},
+        "atmos_kwargs": {"Pg": 1.8, "Nh": 1.0e12, "Ne": 1.0e11, "Te": 7.0e3, "Vt": 5.0e5},
         "fields": ("n_SE", "n_LTE", "Ntotal"),
     },
     {
@@ -73,7 +73,7 @@ CASES: tuple[dict[str, Any], ...] = (
         "conf": "data/conf/Ca_II.conf",
         "is_hydrogen": False,
         "entry": "cal_SE_with_Nh_Te_",
-        "atmos_kwargs": {"Nh": 1.0e12, "Ne": 1.0e11, "Te": 7.0e3, "Vd_obs": 0.0, "Vd_sun": 0.0, "Vt": 5.0e5},
+        "atmos_kwargs": {"Nh": 1.0e12, "Ne": 1.0e11, "Te": 7.0e3, "Vt": 5.0e5},
         "fields": ("n_SE", "n_LTE", "Ntotal"),
     },
     {
@@ -81,7 +81,7 @@ CASES: tuple[dict[str, Any], ...] = (
         "conf": "data/conf/Ca_II.conf",
         "is_hydrogen": False,
         "entry": "cal_SE_with_Ne_Te_",
-        "atmos_kwargs": {"Nh": 1.0e11, "Ne": 5.0e10, "Te": 7.0e3, "Vd_obs": 0.0, "Vd_sun": 0.0, "Vt": 5.0e5},
+        "atmos_kwargs": {"Nh": 1.0e11, "Ne": 5.0e10, "Te": 7.0e3, "Vt": 5.0e5},
         "fields": ("n_SE", "n_LTE"),
     },
     {
@@ -89,7 +89,7 @@ CASES: tuple[dict[str, Any], ...] = (
         "conf": "data/conf/Ca_II.conf",
         "is_hydrogen": False,
         "entry": "cal_SE_with_Pg_Te_",
-        "atmos_kwargs": {"Pg": 1.8, "Nh": 1.0e12, "Ne": 1.0e11, "Te": 7.0e3, "Vd_obs": 0.0, "Vd_sun": 0.0, "Vt": 5.0e5},
+        "atmos_kwargs": {"Pg": 1.8, "Nh": 1.0e12, "Ne": 1.0e11, "Te": 7.0e3, "Vt": 5.0e5},
         "fields": ("n_SE", "n_LTE", "Ntotal"),
     },
 )

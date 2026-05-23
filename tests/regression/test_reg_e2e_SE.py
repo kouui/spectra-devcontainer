@@ -14,7 +14,7 @@ class TestHydrogenSE:
 
     def test_SE_with_Nh_Te(self, ref):
         atom, wMesh, _ = self._load_H()
-        atmos = Atmosphere.Atmosphere0D(Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vd_obs=0.0, Vd_sun=0.0, Vt=5.0e5)
+        atmos = Atmosphere.Atmosphere0D(Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vt=5.0e5)
         radiation = Radiation.init_Radiation_()
         SE_con, _ = SELib.cal_SE_with_Nh_Te_(atom, atmos, wMesh, radiation, None)
 
@@ -24,7 +24,7 @@ class TestHydrogenSE:
 
     def test_SE_with_Ne_Te(self, ref):
         atom, wMesh, _ = self._load_H()
-        atmos = Atmosphere.Atmosphere0D(Nh=1.0e11, Ne=5.0e10, Te=7.0e3, Vd_obs=0.0, Vd_sun=0.0, Vt=5.0e5)
+        atmos = Atmosphere.Atmosphere0D(Nh=1.0e11, Ne=5.0e10, Te=7.0e3, Vt=5.0e5)
         radiation = Radiation.init_Radiation_()
         SE_con, _ = SELib.cal_SE_with_Ne_Te_(atom, atmos, wMesh, radiation, None)
 
@@ -35,7 +35,7 @@ class TestHydrogenSE:
         atom, wMesh, _ = self._load_H()
         # Nh/Ne are overwritten by cal_SE_with_Pg_Te_ for H (is_hydrogen=True
         # branch sets both from Pg); values here are placeholder only.
-        atmos = Atmosphere.Atmosphere0D(Pg=1.8, Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vd_obs=0.0, Vd_sun=0.0, Vt=5.0e5)
+        atmos = Atmosphere.Atmosphere0D(Pg=1.8, Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vt=5.0e5)
         radiation = Radiation.init_Radiation_()
         SE_con, _ = SELib.cal_SE_with_Pg_Te_(atom, atmos, wMesh, radiation, None)
 
@@ -53,7 +53,7 @@ class TestHeliumSE:
     def test_SE_with_Ne_Te(self, ref):
         atom, wMesh, _ = self._load_He()
 
-        atmos = Atmosphere.Atmosphere0D(Nh=1.0e11, Ne=5.0e10, Te=7.0e3, Vd_obs=0.0, Vd_sun=0.0, Vt=5.0e5)
+        atmos = Atmosphere.Atmosphere0D(Nh=1.0e11, Ne=5.0e10, Te=7.0e3, Vt=5.0e5)
         radiation = Radiation.init_Radiation_()
         SE_con, _ = SELib.cal_SE_with_Ne_Te_(atom, atmos, wMesh, radiation, None)
 
@@ -62,7 +62,7 @@ class TestHeliumSE:
 
     def test_SE_with_Nh_Te(self, ref):
         atom, wMesh, _ = self._load_He()
-        atmos = Atmosphere.Atmosphere0D(Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vd_obs=0.0, Vd_sun=0.0, Vt=5.0e5)
+        atmos = Atmosphere.Atmosphere0D(Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vt=5.0e5)
         radiation = Radiation.init_Radiation_()
         SE_con, _ = SELib.cal_SE_with_Nh_Te_(atom, atmos, wMesh, radiation, None)
 
@@ -75,7 +75,7 @@ class TestHeliumSE:
     def test_SE_with_Pg_Te(self, ref):
         atom, wMesh, _ = self._load_He()
         # Pg is unused by cal_SE_with_Pg_Te_ for non-H atoms; Nh/Ne drive the result.
-        atmos = Atmosphere.Atmosphere0D(Pg=1.8, Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vd_obs=0.0, Vd_sun=0.0, Vt=5.0e5)
+        atmos = Atmosphere.Atmosphere0D(Pg=1.8, Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vt=5.0e5)
         radiation = Radiation.init_Radiation_()
         SE_con, _ = SELib.cal_SE_with_Pg_Te_(atom, atmos, wMesh, radiation, None)
 
@@ -91,7 +91,7 @@ class TestCaIISE:
 
     def test_SE_with_Nh_Te(self, ref):
         atom, wMesh, _ = self._load_Ca_II()
-        atmos = Atmosphere.Atmosphere0D(Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vd_obs=0.0, Vd_sun=0.0, Vt=5.0e5)
+        atmos = Atmosphere.Atmosphere0D(Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vt=5.0e5)
         radiation = Radiation.init_Radiation_()
         SE_con, _ = SELib.cal_SE_with_Nh_Te_(atom, atmos, wMesh, radiation, None)
 
@@ -102,7 +102,7 @@ class TestCaIISE:
 
     def test_SE_with_Ne_Te(self, ref):
         atom, wMesh, _ = self._load_Ca_II()
-        atmos = Atmosphere.Atmosphere0D(Nh=1.0e11, Ne=5.0e10, Te=7.0e3, Vd_obs=0.0, Vd_sun=0.0, Vt=5.0e5)
+        atmos = Atmosphere.Atmosphere0D(Nh=1.0e11, Ne=5.0e10, Te=7.0e3, Vt=5.0e5)
         radiation = Radiation.init_Radiation_()
         SE_con, _ = SELib.cal_SE_with_Ne_Te_(atom, atmos, wMesh, radiation, None)
 
@@ -115,7 +115,7 @@ class TestCaIISE:
 
     def test_SE_with_Pg_Te(self, ref):
         atom, wMesh, _ = self._load_Ca_II()
-        atmos = Atmosphere.Atmosphere0D(Pg=1.8, Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vd_obs=0.0, Vd_sun=0.0, Vt=5.0e5)
+        atmos = Atmosphere.Atmosphere0D(Pg=1.8, Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vt=5.0e5)
         radiation = Radiation.init_Radiation_()
         SE_con, _ = SELib.cal_SE_with_Pg_Te_(atom, atmos, wMesh, radiation, None)
 
