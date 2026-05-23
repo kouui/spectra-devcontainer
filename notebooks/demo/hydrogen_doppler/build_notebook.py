@@ -393,6 +393,42 @@ This confirms the design contract: **`Vd_sun` lives entirely on the SE
 side, `Vd_obs` lives entirely on the cloud-output-mesh side**; they
 compose without interference. The cloud model never sees `Vd_sun` and
 SE never sees `Vd_obs`.
+
+### Note — why $\tau_{\max}(+V_{\rm sun}) \neq \tau_{\max}(-V_{\rm sun})$
+
+Naïvely one might expect the cloud opacity to be symmetric under
+$V_{\rm sun} \to -V_{\rm sun}$ because the solar spectrum *looks*
+symmetric around H$\alpha$ on a wide-scale plot. It isn't — the
+asymmetry is the physically correct response of the SE solver to
+sub-Å structure in the solar atlas. Concretely, for the
+$V_{\rm sun} = \pm 30$ km/s case:
+
+| $V_{\rm sun}$ | sampled $\lambda$ on sun | $I_{\odot}(\lambda)$ | which side of solar H$\alpha$ |
+|---------------|--------------------------|----------------------|-------------------------------|
+| $0$           | 6564.500 Å (atom rest)   | $4.7 \times 10^{13}$ | deep in the line core (low)   |
+| $+30$ km/s    | 6563.843 Å (blue of $\lambda_0$) | $1.69 \times 10^{14}$ | BLUE wing (brightest)  |
+| $-30$ km/s    | 6565.157 Å (red of $\lambda_0$)  | $1.25 \times 10^{14}$ | RED wing (dimmer)      |
+
+$I_{\odot}(\text{blue}) / I_{\odot}(\text{red}) \approx 1.35$ at the
+$\pm 0.66$ Å sample points. The asymmetry has three contributions:
+
+1. **Continuum slope.** At 6564 Å we are past the solar Planck peak
+   (~500 nm), so the continuum descends toward longer wavelengths —
+   bluer = brighter even without the H$\alpha$ feature itself.
+2. **Solar H$\alpha$ profile asymmetry.** Chromospheric velocity
+   fields (granulation upflows, magnetic activity) imprint
+   asymmetries on the photospheric/chromospheric H$\alpha$ profile;
+   the atlas in `radiation.solar` carries these.
+3. **Blends and telluric lines.** Small photospheric and
+   atmospheric features land at slightly different positions on
+   either side of $\lambda_0$ and are not required to mirror.
+
+Averaging $I_{\odot}$ over a $\pm 2$ Å window gives nearly identical
+means on both sides — which is why H$\alpha$ "looks symmetric" zoomed
+out — but SE samples at the *exact* shifted wavelengths, not a
+window-average. The 5.7% gap between $\tau_{\max}(+30)$ and
+$\tau_{\max}(-30)$ is the SE-rate-network response to the 35%
+single-point solar-intensity asymmetry.
 """
     ),
 ]
