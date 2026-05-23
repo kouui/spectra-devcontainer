@@ -32,7 +32,7 @@ class SE_Container:
     ## Sun-frame, atom-rest-frame wavelength labels in cm: wm * dopWidth_cm + w0,
     ## sliced per line via Line_mesh_idxs. These are the wavelength positions
     ## absorb_prof_1d is sampled at; downstream forward models pair them with
-    ## their own Vd_obs shift (e.g. wl_obs = wm_cm_1d - w0*Vd_obs/c in the cloud
+    ## their own Vd_obs shift (e.g. wl_obs = wm_cm_1d + w0*Vd_obs/c in the cloud
     ## model). Depends on Te / Vt (via dopWidth_cm), so it belongs alongside the
     ## SE result rather than the transition-only wMesh struct.
     wm_cm_1d: T_ARRAY  # 1d (sum_of_line_wavelength_mesh,), [cm]

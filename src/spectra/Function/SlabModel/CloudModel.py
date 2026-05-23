@@ -21,7 +21,7 @@ def SE_to_slab_0D_(
 
     The output `wl_1D` is the observer-frame wavelength mesh, derived from the
     sun-frame `SE_con.wm_cm_1d` (atom-rest-frame line centers in cm) by
-    subtracting the observer-frame Doppler shift `w0*Vd_obs/c`. The cloud
+    adding the observer-frame Doppler shift `w0*Vd_obs/c`. The cloud
     model reads only what it needs from `SE_con` (no `wMesh` dependency); SE
     already computed both `dopWidth_cm` (baked into `wm_cm_1d`) and the
     unshifted `absorb_prof_1d` (sampled at those same wavelengths).
@@ -75,10 +75,10 @@ def SE_to_slab_0D_(
 
         w0 = Line["w0"][k]
         # observer-frame wavelength mesh: sun-frame atom-rest-frame mesh
-        # shifted by -w0*Vd_obs/c. +Vd_obs = atom velocity TOWARDS observer
-        # (source approaching) → observer sees line center blue-shifted to
-        # w0 - w0*Vd_obs/c.
-        wl = wm_cm_1d[i1:i2] - (w0 * Vd_obs / CST.c_)
+        # shifted by +w0*Vd_obs/c. Astronomy radial-velocity convention:
+        # +Vd_obs = atom velocity AWAY from observer (source receding) →
+        # observer sees line center red-shifted to w0 + w0*Vd_obs/c.
+        wl = wm_cm_1d[i1:i2] + (w0 * Vd_obs / CST.c_)
 
         tau = depth * alp0[k] * absorb_prof_1d[i1:i2]
 

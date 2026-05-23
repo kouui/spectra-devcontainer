@@ -35,9 +35,10 @@ def _hydrogen_setup(Vd_obs: float = 0.0, Vd_sun: float = 0.0):
 
 def test_slab_wl_1D_matches_Vd_obs_formula():
     # Vd_obs must reproduce the observer-frame mesh formula
-    # wl = Line_mesh * dopWidth + w0 - w0 * Vd_obs / c, line-by-line.
-    # Sign: +Vd_obs = atom toward observer → observer sees blue shift, so the
-    # observer-frame line center sits at w0 - w0*Vd_obs/c.
+    # wl = Line_mesh * dopWidth + w0 + w0 * Vd_obs / c, line-by-line.
+    # Sign (astronomy radial-velocity convention): +Vd_obs = atom AWAY from
+    # observer (source receding) → observer sees red shift, so the
+    # observer-frame line center sits at w0 + w0*Vd_obs/c.
     Vd_obs = 3.0e5  # cm/s
     atom, wMesh, atmos, _, SE_con = _hydrogen_setup(Vd_obs=Vd_obs, Vd_sun=0.0)
 
@@ -52,7 +53,7 @@ def test_slab_wl_1D_matches_Vd_obs_formula():
         i2 = int(wMesh.Line_mesh_idxs[k, 1])
         w0 = float(atom.Line["w0"][k])
         dopWidth = BasicP.doppler_width_(w0, atmos.Te, atmos.Vt, atom.Mass)
-        expected = wMesh.Line_mesh[i1:i2] * dopWidth + w0 - w0 * Vd_obs / CST.c_
+        expected = wMesh.Line_mesh[i1:i2] * dopWidth + w0 + w0 * Vd_obs / CST.c_
         # atol=0 forces the comparison to be purely relative; numpy's default
         # atol=1e-8 would mask the ~1e-10 cm shift on UV lines and let a
         # missing Vd_obs term pass silently.
@@ -128,10 +129,18 @@ def test_cloud_tau_peak_tracks_Vd_obs_only():
     wl_peak_b = float(Cloud_b.wl_1D[i1 + int(np.argmax(np.abs(Cloud_b.tau_1D[i1:i2])))])
 
     w0 = float(atom_a.Line["w0"][k])
-    expected_peak = w0 - w0 * Vd_obs / CST.c_
+    expected_peak = w0 + w0 * Vd_obs / CST.c_
+
+    # Semantic peak-side check: under the astronomy radial-velocity convention,
+    # +Vd_obs (atom receding) must move the peak to the RED side of w0. Catches
+    # double-negative typos (formula + comment flipped together) with a clearer
+    # failure than an argmax-index mismatch.
+    assert expected_peak > w0, f"expected_peak {expected_peak} should be > w0 {w0} for +Vd_obs"
+    assert wl_peak_a > w0, f"measured peak {wl_peak_a} should be > w0 {w0} for +Vd_obs"
+    assert wl_peak_b > w0, f"measured peak {wl_peak_b} should be > w0 {w0} for +Vd_obs"
 
     # Both runs share the same Vd_obs; their peak wavelength labels must agree
-    # tightly and equal w0 - w0*Vd_obs/c. Tolerance is one mesh spacing (the
+    # tightly and equal w0 + w0*Vd_obs/c. Tolerance is one mesh spacing (the
     # argmax can only resolve to the nearest sample).
     dop = BasicP.doppler_width_(w0, atmos_a.Te, atmos_a.Vt, atom_a.Mass)
     mesh_step = float(wMesh_a.Line_mesh[i1 + 1] - wMesh_a.Line_mesh[i1]) * dop
@@ -140,6 +149,32 @@ def test_cloud_tau_peak_tracks_Vd_obs_only():
     )
     assert abs(wl_peak_b - expected_peak) <= mesh_step, (
         f"Vd_sun!=0 cloud tau peak {wl_peak_b} not within one mesh step of {expected_peak}"
+    )
+
+
+def test_cloud_tau_peak_negative_Vd_obs_blue_shift():
+    # Symmetric coverage of the positive-Vd test: with Vd_obs = -3 km/s
+    # (atom approaching observer), the observer-frame peak must sit on the
+    # BLUE side of w0. Guards against an off-by-sign bug that a +Vd-only
+    # test would not catch (e.g. an abs(Vd_obs) creeping in).
+    Vd_obs = -3.0e5  # cm/s, -3 km/s
+    atom, wMesh, atmos, _, SE_con = _hydrogen_setup(Vd_obs=Vd_obs, Vd_sun=0.0)
+    Cloud = SlabModel.SE_to_slab_0D_(atom, atmos, SE_con, depth=1.0e3 * 1.0e5)
+
+    k = int(np.argmax(np.abs(Cloud.tau_max)))
+    i1 = int(wMesh.Line_mesh_idxs[k, 0])
+    i2 = int(wMesh.Line_mesh_idxs[k, 1])
+    wl_peak = float(Cloud.wl_1D[i1 + int(np.argmax(np.abs(Cloud.tau_1D[i1:i2])))])
+    w0 = float(atom.Line["w0"][k])
+    expected_peak = w0 + w0 * Vd_obs / CST.c_
+
+    assert expected_peak < w0, f"expected_peak {expected_peak} should be < w0 {w0} for -Vd_obs"
+    assert wl_peak < w0, f"measured peak {wl_peak} should be < w0 {w0} for -Vd_obs"
+
+    dop = BasicP.doppler_width_(w0, atmos.Te, atmos.Vt, atom.Mass)
+    mesh_step = float(wMesh.Line_mesh[i1 + 1] - wMesh.Line_mesh[i1]) * dop
+    assert abs(wl_peak - expected_peak) <= mesh_step, (
+        f"-Vd_obs cloud tau peak {wl_peak} not within one mesh step of {expected_peak}"
     )
 
 

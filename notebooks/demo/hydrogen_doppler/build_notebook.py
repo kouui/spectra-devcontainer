@@ -46,8 +46,8 @@ We carry two distinct line-of-sight velocities for an atom:
   *Sign convention:* $+V_{\rm sun}$ points **OUTWARDS** from the sun
   (atom receding from sun).
 - **$V_{\rm obs}$** — atom velocity in the **observer's rest frame**.
-  *Sign convention:* $+V_{\rm obs}$ points **TOWARDS** the observer
-  (source approaching observer).
+  *Sign convention (astronomy radial-velocity):* $+V_{\rm obs}$ points
+  **AWAY** from the observer (source receding from observer).
 
 ### Non-relativistic Doppler
 
@@ -94,21 +94,22 @@ shift in Doppler-width units. SELib evaluates **both** profiles:
 
 The cloud / slab model consumes the **unshifted** SE profile
 `absorb_prof_1d` and pairs it with observer-frame wavelength labels
-$wl_{1D}$. The atom is moving toward the observer at $+V_{\rm obs}$,
-so the source approaches and the observer sees a blue shift:
+$wl_{1D}$. The atom is moving away from the observer at $+V_{\rm obs}$
+(astronomy radial-velocity convention), so the source recedes and the
+observer sees a red shift:
 
-$$\lambda_{\rm obs} = \lambda_{\rm src}\,(1 - V_{\rm obs}/c).$$
+$$\lambda_{\rm obs} = \lambda_{\rm src}\,(1 + V_{\rm obs}/c).$$
 
 With the atom emitting at $\lambda_{\rm src} = w_0$ in its rest frame,
 the observer-frame line center is
 
-$$w_0^{\rm obs} = w_0 - \frac{w_0 V_{\rm obs}}{c}.$$
+$$w_0^{\rm obs} = w_0 + \frac{w_0 V_{\rm obs}}{c}.$$
 
 The cloud-model builds the output wavelength axis directly from the
 sun-frame mesh exported by SE:
 
-$$wl_{1D} = w_m^{\rm cm} - \frac{w_0 V_{\rm obs}}{c}
-          = w_m\,\Delta\lambda_D + w_0 - \frac{w_0 V_{\rm obs}}{c}.$$
+$$wl_{1D} = w_m^{\rm cm} + \frac{w_0 V_{\rm obs}}{c}
+          = w_m\,\Delta\lambda_D + w_0 + \frac{w_0 V_{\rm obs}}{c}.$$
 
 Pairing this with `absorb_prof_1d` (sampled at the unshifted $w_m$)
 gives $\sigma((\lambda_{\rm obs} - w_0^{\rm obs})/\Delta\lambda_D)\,/\,\Delta\lambda_D$
@@ -116,14 +117,17 @@ exactly — no re-evaluation of the profile inside the cloud model.
 
 ### Summary of signs
 
-| velocity         | direction (+) | sun-frame line | observer-frame line |
-|------------------|---------------|----------------|---------------------|
+| velocity         | direction (+)     | sun-frame line | observer-frame line |
+|------------------|-------------------|----------------|---------------------|
 | $+V_{\rm sun}$  | OUTWARDS from sun | blue of $w_0$ | unchanged           |
-| $+V_{\rm obs}$  | TOWARDS observer  | unchanged       | blue of $w_0$       |
+| $+V_{\rm obs}$  | AWAY from observer | unchanged     | red of $w_0$        |
 
-Both positive directions produce a **blue** shift of their respective
-line center. SE uses $V_{\rm sun}$; cloud uses $V_{\rm obs}$; they
-compose without interference.
+$V_{\rm sun}$ and $V_{\rm obs}$ use different sign conventions:
+$V_{\rm sun}$ is geometric (sun-outwards = atom recedes from sun =
+sun-frame blue shift), while $V_{\rm obs}$ follows the astronomy
+radial-velocity convention (positive = recession = observer-frame red
+shift). SE uses $V_{\rm sun}$; cloud uses $V_{\rm obs}$; they compose
+without interference.
 """
     ),
     md(r"""## Setup
@@ -245,7 +249,8 @@ plt.show()
 
 Vary `Vd_obs` with `Vd_sun = 0`. We expect the cloud output's
 `tau_1D` peak (plotted against `wl_1D`, which is observer-frame) to sit
-at $w_0 - w_0 V_{\rm obs}/c$ — **blue** of $w_0$ for $+V_{\rm obs}$.
+at $w_0 + w_0 V_{\rm obs}/c$ — **red** of $w_0$ for $+V_{\rm obs}$
+(astronomy radial-velocity convention: positive = recession = red).
 SE populations are identical across runs (Vd_sun = 0 in all), so the
 peak **amplitudes** should match — only the wavelength labels move.
 """
@@ -261,7 +266,7 @@ for v, c in zip(Vd_obs_values, COLORS):
     wl_AA = Cloud_con.wl_1D[i1:i2] * 1.0e8
     tau = Cloud_con.tau_1D[i1:i2]
     ax.plot(wl_AA, tau, label=f"Vd_obs = {v / 1.0e5:+.0f} km/s", color=c)
-    expected_peak_AA = (w0_cm - w0_cm * v / CST.c_) * 1.0e8
+    expected_peak_AA = (w0_cm + w0_cm * v / CST.c_) * 1.0e8
     ax.axvline(expected_peak_AA, color=c, ls=":", lw=0.8)
 
     measured_peak_AA = float(wl_AA[int(np.argmax(tau))])
@@ -284,7 +289,7 @@ plt.show()
         r"""**Verification:**
 
 - Each $\tau_{1D}$ peak should sit on the same-colored dotted line at
-  $w_0 - w_0 V_{\rm obs}/c$.
+  $w_0 + w_0 V_{\rm obs}/c$.
 - Peak amplitudes should be identical: SE populations don't depend on
   Vd_obs.
 """
@@ -301,7 +306,7 @@ The two velocities act on **independent axes**:
   touch SE.
 
 So with the same `Vd_obs`, varying `Vd_sun` should give the **same
-peak position** $w_0 - w_0 V_{\rm obs}/c$ but possibly different
+peak position** $w_0 + w_0 V_{\rm obs}/c$ but possibly different
 **amplitudes** (populations differ because Jbar differs).
 """
     ),
@@ -328,9 +333,9 @@ for v_sun, v_obs, c in cases:
           f"peak = {measured_peak_AA:.3f} A  "
           f"tau_max = {float(tau.max()):.3e}")
 
-expected_peak_AA = (w0_cm - w0_cm * Vd_obs_fixed / CST.c_) * 1.0e8
+expected_peak_AA = (w0_cm + w0_cm * Vd_obs_fixed / CST.c_) * 1.0e8
 ax.axvline(expected_peak_AA, color="k", ls=":", lw=0.8,
-           label=f"expected peak = w0 - w0*Vd_obs/c = {expected_peak_AA:.2f} A")
+           label=f"expected peak = w0 + w0*Vd_obs/c = {expected_peak_AA:.2f} A")
 ax.axvline(w0_cm * 1.0e8, color="gray", ls="--", lw=0.5,
            label=f"w0 = {w0_cm * 1.0e8:.2f} A")
 ax.set_title("Cloud tau_1D — fixed Vd_obs, varying Vd_sun")
@@ -345,7 +350,7 @@ plt.show()
         r"""**Verification:**
 
 - All three $\tau_{1D}$ peaks should sit on the same dotted vertical
-  line at $w_0 - w_0 V_{\rm obs}/c$ — the wavelength axis depends only
+  line at $w_0 + w_0 V_{\rm obs}/c$ — the wavelength axis depends only
   on `Vd_obs`.
 - Peak **amplitudes** may differ between the three curves: `Vd_sun`
   changes the Jbar integrand → changes populations → changes
