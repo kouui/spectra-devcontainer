@@ -38,6 +38,25 @@ Re-run the script after any change to the SE / Cloud / Atmosphere APIs.
 """
     ),
     md(
+        r"""## Notation
+
+Math uses $\lambda$ for wavelength (standard physics convention);
+`monospace` is reserved for code variable names. The mapping
+between the two:
+
+| code              | math               | units             |
+|-------------------|--------------------|-------------------|
+| `w0`              | $\lambda_0$        | cm                |
+| `w0_cm`           | $\lambda_0$ (cm value of `w0` bound in the setup cell) | cm |
+| `wm`              | $x_m$              | **dimensionless** (Doppler-width detuning; argument of the Voigt profile, $x = (\lambda - \lambda_0)/\Delta\lambda_D$) |
+| `wm_cm_1d`        | $\lambda_m$        | cm                |
+| `wl_1D`           | $\lambda_{1D}$     | cm                |
+
+The derivations below use $\lambda$; backticked identifiers in
+narrative prose refer to the corresponding Python variables.
+"""
+    ),
+    md(
         r"""## Physics & sign convention
 
 We carry two distinct line-of-sight velocities for an atom:
@@ -59,36 +78,36 @@ $$\lambda_{\rm obs} = \lambda_{\rm src}\,(1 + v_{\rm relative}/c),
 
 ### How $V_{\rm sun}$ enters the SE (statistical equilibrium) solver
 
-The atom absorbs at its rest-frame line center $w_0$. The atom is
+The atom absorbs at its rest-frame line center $\lambda_0$. The atom is
 moving outward at $+V_{\rm sun}$, i.e. receding from the sun's
 radiation source. From the atom's frame, the incoming solar
 photon looks red-shifted:
 
 $$\lambda_{\rm atom} = \lambda_{\rm sun}\,(1 + V_{\rm sun}/c).$$
 
-Setting $\lambda_{\rm atom} = w_0$ gives the **sun-frame wavelength
+Setting $\lambda_{\rm atom} = \lambda_0$ gives the **sun-frame wavelength
 that gets absorbed**:
 
-$$\lambda_{\rm sun} = \frac{w_0}{1 + V_{\rm sun}/c}
-                    \approx w_0 - \frac{w_0 V_{\rm sun}}{c}.$$
+$$\lambda_{\rm sun} = \frac{\lambda_0}{1 + V_{\rm sun}/c}
+                    \approx \lambda_0 - \frac{\lambda_0 V_{\rm sun}}{c}.$$
 
 So in the **sun frame**, the absorption line center moves **blue** of
-$w_0$ by $w_0 V_{\rm sun}/c$. SE integrates the line profile
+$\lambda_0$ by $\lambda_0 V_{\rm sun}/c$. SE integrates the line profile
 $\sigma$ against `backRad` on the fixed sun-frame wavelength grid
-$w_m^{\rm cm} = w_m\,\Delta\lambda_D + w_0$.
+$\lambda_m = x_m\,\Delta\lambda_D + \lambda_0$.
 
-**Mesh-shift mechanic** (post refactor_04): the absorption profile
-stays anchored to the atom's rest-frame center $w_0$; only the
+**Mesh-shift mechanic** : the absorption profile
+stays anchored to the atom's rest-frame center $\lambda_0$; only the
 **solar spectrum sample wavelengths shift** to account for the atom's
 Doppler boost. This keeps the profile densely sampled on its dense
 core mesh even at large $|V_{\rm sun}|$ — the profile-shift mechanic
 truncated the peak off the mesh at large $|V_{\rm sun}|$ and collapsed
 $J_{\rm bar}$ toward zero. SELib stores:
 
-- `absorb_prof_1d` = $\sigma(w_m) / \Delta\lambda_D$ — unshifted
+- `absorb_prof_1d` = $\sigma(x_m) / \Delta\lambda_D$ — unshifted
   (canonical, atom rest frame). What SE integrates against the
   shifted solar spectrum.
-- `wm_cm_shifted_1d` = $w_m^{\rm cm} - w_0\,V_{\rm sun}/c$ —
+- `wm_cm_shifted_1d` = $\lambda_m - \lambda_0\,V_{\rm sun}/c$ —
   the sun-frame wavelengths the atom samples (per-line, debug).
 - `solar_intensity_shifted_1d` = solar spectrum evaluated at
   `wm_cm_shifted_1d` (or scalar `planck_cm_(w0, Tr)` under `use_Tr`).
@@ -97,33 +116,33 @@ $J_{\rm bar}$ toward zero. SELib stores:
 
 The cloud / slab model consumes the **unshifted** SE profile
 `absorb_prof_1d` and pairs it with observer-frame wavelength labels
-$wl_{1D}$. The atom is moving away from the observer at $+V_{\rm obs}$
+$\lambda_{1D}$. The atom is moving away from the observer at $+V_{\rm obs}$
 (astronomy radial-velocity convention), so the source recedes and the
 observer sees a red shift:
 
 $$\lambda_{\rm obs} = \lambda_{\rm src}\,(1 + V_{\rm obs}/c).$$
 
-With the atom emitting at $\lambda_{\rm src} = w_0$ in its rest frame,
+With the atom emitting at $\lambda_{\rm src} = \lambda_0$ in its rest frame,
 the observer-frame line center is
 
-$$w_0^{\rm obs} = w_0 + \frac{w_0 V_{\rm obs}}{c}.$$
+$$\lambda_0^{\rm obs} = \lambda_0 + \frac{\lambda_0 V_{\rm obs}}{c}.$$
 
 The cloud-model builds the output wavelength axis directly from the
 sun-frame mesh exported by SE:
 
-$$wl_{1D} = w_m^{\rm cm} + \frac{w_0 V_{\rm obs}}{c}
-          = w_m\,\Delta\lambda_D + w_0 + \frac{w_0 V_{\rm obs}}{c}.$$
+$$\lambda_{1D} = \lambda_m + \frac{\lambda_0 V_{\rm obs}}{c}
+          = x_m\,\Delta\lambda_D + \lambda_0 + \frac{\lambda_0 V_{\rm obs}}{c}.$$
 
-Pairing this with `absorb_prof_1d` (sampled at the unshifted $w_m$)
-gives $\sigma((\lambda_{\rm obs} - w_0^{\rm obs})/\Delta\lambda_D)\,/\,\Delta\lambda_D$
+Pairing this with `absorb_prof_1d` (sampled at the unshifted $x_m$)
+gives $\sigma((\lambda_{\rm obs} - \lambda_0^{\rm obs})/\Delta\lambda_D)\,/\,\Delta\lambda_D$
 exactly — no re-evaluation of the profile inside the cloud model.
 
 ### Summary of signs
 
 | velocity         | direction (+)     | sun-frame line | observer-frame line |
 |------------------|-------------------|----------------|---------------------|
-| $+V_{\rm sun}$  | OUTWARDS from sun | blue of $w_0$ | unchanged           |
-| $+V_{\rm obs}$  | AWAY from observer | unchanged     | red of $w_0$        |
+| $+V_{\rm sun}$  | OUTWARDS from sun | blue of $\lambda_0$ | unchanged           |
+| $+V_{\rm obs}$  | AWAY from observer | unchanged     | red of $\lambda_0$        |
 
 $V_{\rm sun}$ and $V_{\rm obs}$ use different sign conventions:
 $V_{\rm sun}$ is geometric (sun-outwards = atom recedes from sun =
@@ -186,7 +205,7 @@ print(f"Selected H-alpha: k={k}, w0 = {w0_cm * 1.0e8:.2f} Angstrom")
 Vary `Vd_sun` with `Vd_obs = 0`. We expect:
 
 - **`wm_cm_shifted_1d`** (the sun-frame wavelengths the atom samples)
-  to shift to **blue** of `wm_cm_1d` by $w_0 V_{\rm sun}/c$ for
+  to shift to **blue** of `wm_cm_1d` by $\lambda_0 V_{\rm sun}/c$ for
   $+V_{\rm sun}$. Plotted as `solar_intensity_shifted_1d` against the
   unshifted `wm_cm_1d` axis: features in the local solar spectrum
   appear to **slide along the line's local mesh** with `Vd_sun`.
@@ -230,7 +249,7 @@ axL.axvline(w0_cm * 1.0e8, color="gray", ls="--", lw=0.5,
 axL.legend()
 
 axR.set_title("absorb_prof_1d (unshifted) — must NOT move")
-axR.set_xlabel("sun-frame wavelength [Angstrom]")
+axR.set_xlabel("sun-frame unshifted wavelength [Angstrom]")
 axR.set_ylabel("absorb_prof_1d [/cm]")
 axR.axvline(w0_cm * 1.0e8, color="gray", ls="--", lw=0.5,
             label=f"w0 = {w0_cm * 1.0e8:.2f} A")
@@ -254,8 +273,7 @@ plt.show()
   `(Te, Vt, atom params)`, not on `Vd_sun`. Locked numerically by the
   regression test `test_se_absorb_prof_1d_is_unshifted`. Under the
   new mesh-shift mechanic the profile **stays on its dense mesh** even
-  at very large $|V_{\rm sun}|$ — the off-mesh peak-truncation bug
-  fixed by refactor_04.
+  at very large $|V_{\rm sun}|$.
 """
     ),
     md(
@@ -263,7 +281,7 @@ plt.show()
 
 Vary `Vd_obs` with `Vd_sun = 0`. We expect the cloud output's
 `tau_1D` peak (plotted against `wl_1D`, which is observer-frame) to sit
-at $w_0 + w_0 V_{\rm obs}/c$ — **red** of $w_0$ for $+V_{\rm obs}$
+at $\lambda_0 + \lambda_0 V_{\rm obs}/c$ — **red** of $\lambda_0$ for $+V_{\rm obs}$
 (astronomy radial-velocity convention: positive = recession = red).
 SE populations are identical across runs (Vd_sun = 0 in all), so the
 peak **amplitudes** should match — only the wavelength labels move.
@@ -303,7 +321,7 @@ plt.show()
         r"""**Verification:**
 
 - Each $\tau_{1D}$ peak should sit on the same-colored dotted line at
-  $w_0 + w_0 V_{\rm obs}/c$.
+  $\lambda_0 + \lambda_0 V_{\rm obs}/c$.
 - Peak amplitudes should be identical: SE populations don't depend on
   Vd_obs.
 """
@@ -320,7 +338,7 @@ The two velocities act on **independent axes**:
   touch SE.
 
 So with the same `Vd_obs`, varying `Vd_sun` should give the **same
-peak position** $w_0 + w_0 V_{\rm obs}/c$ but possibly different
+peak position** $\lambda_0 + \lambda_0 V_{\rm obs}/c$ but possibly different
 **amplitudes** (populations differ because Jbar differs).
 """
     ),
@@ -364,7 +382,7 @@ plt.show()
         r"""**Verification:**
 
 - All three $\tau_{1D}$ peaks should sit on the same dotted vertical
-  line at $w_0 + w_0 V_{\rm obs}/c$ — the wavelength axis depends only
+  line at $\lambda_0 + \lambda_0 V_{\rm obs}/c$ — the wavelength axis depends only
   on `Vd_obs`.
 - Peak **amplitudes** may differ between the three curves: `Vd_sun`
   changes the Jbar integrand → changes populations → changes
