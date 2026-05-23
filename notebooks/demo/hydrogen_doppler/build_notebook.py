@@ -75,20 +75,23 @@ $$\lambda_{\rm sun} = \frac{w_0}{1 + V_{\rm sun}/c}
 So in the **sun frame**, the absorption line center moves **blue** of
 $w_0$ by $w_0 V_{\rm sun}/c$. SE integrates the line profile
 $\sigma$ against `backRad` on the fixed sun-frame wavelength grid
-$w_m^{\rm cm} = w_m\,\Delta\lambda_D + w_0$, so the profile sampled
-on this grid evaluates to
+$w_m^{\rm cm} = w_m\,\Delta\lambda_D + w_0$.
 
-$$\sigma_{\rm sun}(w_m^{\rm cm})
-  = \sigma\!\left(\frac{w_m^{\rm cm} - (w_0 - w_0 V_{\rm sun}/c)}{\Delta\lambda_D}\right) \big/ \Delta\lambda_D
-  = \sigma\!\left(w_m + dv_{\rm sun}\right) \big/ \Delta\lambda_D,$$
-
-where $dv_{\rm sun} = w_0 V_{\rm sun} / (c\,\Delta\lambda_D)$ is the
-shift in Doppler-width units. SELib evaluates **both** profiles:
+**Mesh-shift mechanic** (post refactor_04): the absorption profile
+stays anchored to the atom's rest-frame center $w_0$; only the
+**solar spectrum sample wavelengths shift** to account for the atom's
+Doppler boost. This keeps the profile densely sampled on its dense
+core mesh even at large $|V_{\rm sun}|$ — the profile-shift mechanic
+truncated the peak off the mesh at large $|V_{\rm sun}|$ and collapsed
+$J_{\rm bar}$ toward zero. SELib stores:
 
 - `absorb_prof_1d` = $\sigma(w_m) / \Delta\lambda_D$ — unshifted
-  (canonical, atom rest frame).
-- `absorb_prof_shifted_1d` = $\sigma(w_m + dv_{\rm sun}) / \Delta\lambda_D$
-  — Vd_sun-shifted; this is what SE integrates for $J_{\rm bar}$.
+  (canonical, atom rest frame). What SE integrates against the
+  shifted solar spectrum.
+- `wm_cm_shifted_1d` = $w_m^{\rm cm} - w_0\,V_{\rm sun}/c$ —
+  the sun-frame wavelengths the atom samples (per-line, debug).
+- `solar_intensity_shifted_1d` = solar spectrum evaluated at
+  `wm_cm_shifted_1d` (or scalar `planck_cm_(w0, Tr)` under `use_Tr`).
 
 ### How $V_{\rm obs}$ enters the cloud / slab model
 
@@ -178,13 +181,15 @@ print(f"Selected H-alpha: k={k}, w0 = {w0_cm * 1.0e8:.2f} Angstrom")
 """
     ),
     md(
-        r"""## Section A — `Vd_sun` only
+        r"""## Section A — `Vd_sun` only (mesh-shift mechanic)
 
 Vary `Vd_sun` with `Vd_obs = 0`. We expect:
 
-- **`absorb_prof_shifted_1d`** (the SE integrand) to shift such that its
-  peak in the sun-frame grid sits at $w_0 - w_0 V_{\rm sun}/c$ — i.e.
-  **blue** of $w_0$ for $+V_{\rm sun}$.
+- **`wm_cm_shifted_1d`** (the sun-frame wavelengths the atom samples)
+  to shift to **blue** of `wm_cm_1d` by $w_0 V_{\rm sun}/c$ for
+  $+V_{\rm sun}$. Plotted as `solar_intensity_shifted_1d` against the
+  unshifted `wm_cm_1d` axis: features in the local solar spectrum
+  appear to **slide along the line's local mesh** with `Vd_sun`.
 - **`absorb_prof_1d`** (the canonical unshifted profile) to be
   **invariant** across `Vd_sun`. This is the contract the cloud model
   relies on (it never sees Vd_sun).
@@ -195,28 +200,31 @@ Vary `Vd_sun` with `Vd_obs = 0`. We expect:
 
 fig, (axL, axR) = plt.subplots(1, 2, figsize=(12, 4))
 
-print("Section A — measured peak vs expected (sun-frame, H-alpha):")
+print("Section A — wm_cm_shifted_1d shift check (sun-frame, H-alpha):")
 for v, c in zip(Vd_sun_values, COLORS):
     SE_con, _ = run(Vd_sun=v, Vd_obs=0.0)
     wl_AA = SE_con.wm_cm_1d[i1:i2] * 1.0e8
-    prof_shifted = SE_con.absorb_prof_shifted_1d[i1:i2]
+    solar_shifted = SE_con.se_bb_con.solar_intensity_shifted_1d[i1:i2]
 
-    axL.plot(wl_AA, prof_shifted,
+    axL.plot(wl_AA, solar_shifted,
              label=f"Vd_sun = {v / 1.0e5:+.0f} km/s", color=c)
-    expected_peak_AA = (w0_cm - w0_cm * v / CST.c_) * 1.0e8
-    axL.axvline(expected_peak_AA, color=c, ls=":", lw=0.8)
-
-    measured_peak_AA = float(wl_AA[int(np.argmax(prof_shifted))])
+    # mesh-shift formula: shifted-mesh center = w0 - w0*Vd_sun/c, so the
+    # solar-spectrum slice that the atom sees is offset by w0*Vd_sun/c
+    # toward blue (for +Vd_sun) when read along the unshifted wm_cm axis.
+    expected_shift_AA = -w0_cm * v / CST.c_ * 1.0e8
+    measured_shift_AA = float(
+        SE_con.se_bb_con.wm_cm_shifted_1d[i1] - SE_con.wm_cm_1d[i1]
+    ) * 1.0e8
     print(f"  Vd_sun = {v / 1.0e5:+5.0f} km/s  "
-          f"expected = {expected_peak_AA:.3f} A  "
-          f"measured = {measured_peak_AA:.3f} A")
+          f"expected dwl = {expected_shift_AA:+.3e} A  "
+          f"measured dwl = {measured_shift_AA:+.3e} A")
 
     axR.plot(wl_AA, SE_con.absorb_prof_1d[i1:i2],
              label=f"Vd_sun = {v / 1.0e5:+.0f} km/s", color=c)
 
-axL.set_title("absorb_prof_shifted_1d (SE integrand) — moves with Vd_sun")
-axL.set_xlabel("sun-frame wavelength [Angstrom]")
-axL.set_ylabel("absorb_prof_shifted_1d [/cm]")
+axL.set_title("solar_intensity_shifted_1d — the sun as the atom sees it")
+axL.set_xlabel("sun-frame unshifted wavelength [Angstrom]")
+axL.set_ylabel("solar_intensity_shifted_1d [erg/cm^2/Sr/cm/s]")
 axL.axvline(w0_cm * 1.0e8, color="gray", ls="--", lw=0.5,
             label=f"w0 = {w0_cm * 1.0e8:.2f} A")
 axL.legend()
@@ -235,13 +243,19 @@ plt.show()
     md(
         r"""**Verification:**
 
-- *Left panel:* the dotted vertical line of each color marks
-  $w_0 - w_0 V_{\rm sun}/c$. The shifted profile peak should sit on its
-  own dotted line. Positive `Vd_sun` → peak on the blue side.
-- *Right panel:* all three curves must overlap exactly. The unshifted
-  profile depends only on `(Te, Vt, atom params)`, not on `Vd_sun`.
-  Locked numerically by the regression test
-  `test_se_absorb_prof_1d_is_unshifted`.
+- *Left panel:* the three curves are the local solar spectrum **as the
+  atom samples it** — i.e. `solar_intensity_shifted_1d`, read along the
+  unshifted `wm_cm_1d` axis. The printed `measured dwl` should match
+  `expected dwl = -w0 * Vd_sun / c` (blue for $+V_{\rm sun}$). At
+  $\pm 30$ km/s this is sub-Angstrom on H$\alpha$; the visible feature
+  in the panel is the local slope of the solar spectrum.
+- *Right panel:* all three `absorb_prof_1d` curves must overlap
+  exactly. The unshifted profile depends only on
+  `(Te, Vt, atom params)`, not on `Vd_sun`. Locked numerically by the
+  regression test `test_se_absorb_prof_1d_is_unshifted`. Under the
+  new mesh-shift mechanic the profile **stays on its dense mesh** even
+  at very large $|V_{\rm sun}|$ — the off-mesh peak-truncation bug
+  fixed by refactor_04.
 """
     ),
     md(

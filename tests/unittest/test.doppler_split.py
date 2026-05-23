@@ -1,8 +1,9 @@
 # Behavioral tests that lock in the per-field semantics of the new
-# Atmosphere.Vd_obs (observer-frame; shifts slab output mesh) and
-# Atmosphere.Vd_sun (sun-rest-frame; shifts SE absorption profile) split.
-# All pre-existing regression tests use Vd=0 — a silent swap of these two
-# fields would pass undetected without these locks.
+# Atmosphere.Vd_obs (observer-frame; shifts slab output wavelength mesh)
+# and Atmosphere.Vd_sun (sun-rest-frame; SE samples the solar spectrum on a
+# Vd_sun-shifted mesh, profile stays at w0) split. All pre-existing
+# regression tests use Vd=0 — a silent swap of these two fields would pass
+# undetected without these locks.
 
 import numpy as np
 import pytest
@@ -65,28 +66,78 @@ def test_slab_wl_1D_matches_Vd_obs_formula():
     assert checked > 0, "no lines with f0 > 0 were checked"
 
 
-def test_se_absorb_prof_shifted_1d_tracks_Vd_sun():
-    # The SE-internal debug field absorb_prof_shifted_1d carries the
-    # Vd_sun-shifted profile. Non-zero Vd_sun must move its argmax on at least
-    # one line. Vd_obs is held at 0 to isolate the Vd_sun effect.
-    _, wMesh_a, _, _, SE_con_zero = _hydrogen_setup(Vd_obs=0.0, Vd_sun=0.0)
-    atom, wMesh_b, _, _, SE_con_shift = _hydrogen_setup(Vd_obs=0.0, Vd_sun=1.0e6)
-
-    assert np.array_equal(wMesh_a.Line_mesh_idxs, wMesh_b.Line_mesh_idxs)
-
-    any_moved = False
-    for k in range(atom.nLine):
+def test_se_wm_cm_shifted_1d_tracks_Vd_sun():
+    # Mesh-shift mechanic: the shifted-mesh debug field stores the sun-frame
+    # wavelengths the atom samples = wm_cm_1d - w0 * Vd_sun / c.
+    Vd_sun = 3.0e6  # cm/s
+    atom, _, _, _, SE_con = _hydrogen_setup(Vd_obs=0.0, Vd_sun=Vd_sun)
+    nLine = atom.nLine
+    for k in range(nLine):
         if atom.Line["f0"][k] <= 0:
             continue
-        i1 = int(wMesh_b.Line_mesh_idxs[k, 0])
-        i2 = int(wMesh_b.Line_mesh_idxs[k, 1])
-        prof_zero = SE_con_zero.absorb_prof_shifted_1d[i1:i2]
-        prof_shift = SE_con_shift.absorb_prof_shifted_1d[i1:i2]
-        if int(np.argmax(prof_zero)) != int(np.argmax(prof_shift)):
-            any_moved = True
-            break
+        i1, i2 = SE_con.Line_mesh_idxs[k]
+        w0 = atom.Line["w0"][k]
+        expected = SE_con.wm_cm_1d[i1:i2] - w0 * Vd_sun / CST.c_
+        np.testing.assert_allclose(SE_con.se_bb_con.wm_cm_shifted_1d[i1:i2], expected, rtol=1e-10)
 
-    assert any_moved, "no line's absorb_prof_shifted_1d argmax shifted under nonzero Vd_sun"
+
+def test_se_solar_intensity_shifted_1d_matches_interp():
+    Vd_sun = 3.0e6  # cm/s
+    atom, _, _, radiation, SE_con = _hydrogen_setup(Vd_obs=0.0, Vd_sun=Vd_sun)
+    nLine = atom.nLine
+    for k in range(nLine):
+        if atom.Line["f0"][k] <= 0:
+            continue
+        i1, i2 = SE_con.Line_mesh_idxs[k]
+        expected = np.interp(
+            SE_con.se_bb_con.wm_cm_shifted_1d[i1:i2],
+            radiation.solar[0, :],
+            radiation.solar[1, :],
+        )
+        np.testing.assert_allclose(SE_con.se_bb_con.solar_intensity_shifted_1d[i1:i2], expected, rtol=1e-10)
+
+
+def test_se_jbar_robust_at_large_Vd_sun():
+    # Locks the off-mesh peak-truncation fix. At Vd_sun = 2e8 cm/s, the
+    # profile-shift mechanic would push the peak ~170 Doppler widths away
+    # from w0 — outside the default qwing=10 mesh — and Jbar would collapse
+    # to ~0 (Voigt wings * truncated mesh ≈ machine noise) on every line.
+    # Mesh-shift keeps the normalized profile centered on the shifted solar
+    # sample, so Jbar stays a finite, positive, physically-sourced number.
+    # NOTE: tight closeness to the Vd_sun=0 baseline is NOT a valid lock —
+    # the H solar spectrum changes by orders of magnitude across the ~Å shift
+    # this Vd implies, especially for UV (Lyman) and Balmer-line cores. Lock
+    # only the bug signature: jb finite, > 0, and not collapsed.
+    atom, _, _, _, SE_con_zero = _hydrogen_setup(Vd_sun=0.0)
+    _, _, _, _, SE_con_big = _hydrogen_setup(Vd_sun=2.0e8)
+    nLine = atom.nLine
+    checked = 0
+    for k in range(nLine):
+        if atom.Line["f0"][k] <= 0:
+            continue
+        j0 = SE_con_zero.Jbar[k]
+        jb = SE_con_big.Jbar[k]
+        assert np.isfinite(jb), f"Jbar non-finite at large Vd_sun on line {k}"
+        assert jb > 0.0, f"Jbar collapsed to zero at large Vd_sun on line {k} (off-mesh bug?)"
+        # Empirical floor: the off-mesh bug would push jb/j0 to ~machine zero
+        # on ALL lines uniformly. Physical Vd_sun=2e8 keeps every H line's
+        # ratio above 1e-4 (worst case observed: Ly-alpha at ~1e-3 — solar UV
+        # spectrum dropoff, NOT profile truncation).
+        assert jb / j0 > 1.0e-4, (
+            f"line {k}: jb/j0={jb / j0:.2e} below physical floor; off-mesh profile truncation likely back"
+        )
+        checked += 1
+    assert checked > 0, "no active lines exercised"
+
+
+def test_se_wm_cm_shifted_within_backRad_at_large_Vd_sun():
+    _, _, _, radiation, SE_con = _hydrogen_setup(Vd_sun=2.0e8)
+    # Note: inactive-line slices in wm_cm_shifted_1d are zero by design
+    # (see refactor_04.md §2.6). Filter those out before bounds-checking.
+    active = SE_con.se_bb_con.wm_cm_shifted_1d[SE_con.se_bb_con.wm_cm_shifted_1d > 0]
+    assert active.size > 0
+    assert active.min() > radiation.solar[0, :].min(), "shifted mesh underflows backRad"
+    assert active.max() < radiation.solar[0, :].max(), "shifted mesh overflows backRad"
 
 
 def test_se_absorb_prof_1d_is_unshifted():

@@ -248,9 +248,12 @@ def line_prof_lte_(
     Ne: T_ARRAY = atmos.Ne[:]
     Nh: T_ARRAY = atmos.Nh[:]
     Vt: T_ARRAY = atmos.Vt[:]
-    # `line_prof_lte_` shifts the profile sample point by `v + vv`, i.e. the same
-    # profile-shift convention SE uses (+Vd_sun outward → sun-frame line at
-    # w0 - w0*Vd_sun/c, sampled on the unshifted grid as (v + vv)).
+    # `line_prof_lte_` shifts the profile sample point by `v + vv` — this LTE
+    # module keeps the profile-shift convention independently. SE reverted to
+    # mesh-shift in refactor_04 (the absorption profile stays at w0; the
+    # solar-spectrum sample wavelengths shift), but the LTE path here is
+    # untouched. Sign: +Vd_sun outward → sun-frame line at w0 - w0*Vd_sun/c,
+    # sampled on the unshifted grid as (v + vv).
     # Per-depth atom velocity in the sun frame.
     Vd_sun: T_ARRAY = atmos.Vd_sun[:]
 

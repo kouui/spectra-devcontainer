@@ -10,6 +10,31 @@ recent date inside the file) and start a fresh entry below.
 
 ## 2026-05-23
 
+### `Function/SEquil/SELib.py` — YW.Huang
+
+revert `_B_Jbar_` from profile-shift to mesh-shift mechanic (refactor 04). The absorption profile now stays anchored at `w0` on the dense atom-rest-frame mesh; the solar spectrum is sampled at `wm_cm_shifted = wm_cm - w0*Vd_sun/c` instead. Fixes the off-mesh peak-truncation bug that collapsed Jbar toward zero at large `|Vd_sun|` (≥ qwing Doppler widths). Return type promoted from positional 6-tuple to a `collections.namedtuple` (`_B_Jbar_Result`, 7 named fields) for safer downstream unpacking; `cal_SE_` rewired to access via attribute. `use_Tr=True` branch stores broadcast `planck_cm_(w0, Tr)` as `solar_intensity_shifted`. Inactive-line (f0<=0) slices of the new arrays remain zero (see `docs/tasks/009-doppler-velocity-split/refactor_04.md` §2.6).
+
+### `Struct/Container/SEquil.py` — YW.Huang
+
+drop `absorb_prof_shifted_1d` from `SE_Container`; add `SE_BB_Container` (debug / post-analysis) with `wm_cm_shifted_1d` and `solar_intensity_shifted_1d`, exposed via `SE_Container.se_bb_con`. Cleaned stale comments on `SE_BB_Container.wm_cm_shifted_1d` (it stores wavelength labels, not a profile) and on `SE_Container.Line_mesh_idxs` (no longer references the removed field).
+
+### `Experimental/ExLTELib.py` — YW.Huang
+
+update sign-convention comment to call out that this LTE module independently keeps the profile-shift mechanic (sampling at `v + vv`). SE reverted to mesh-shift in refactor 04 but the LTE path is unaffected.
+
+### `tests/unittest/test.doppler_split.py` — YW.Huang
+
+retire `test_se_absorb_prof_shifted_1d_tracks_Vd_sun` (referenced the removed field). Add `test_se_wm_cm_shifted_1d_tracks_Vd_sun` (locks `wm_cm_shifted_1d = wm_cm_1d - w0*Vd_sun/c` per line at rtol=1e-10), `test_se_solar_intensity_shifted_1d_matches_interp` (locks the `numpy.interp` storage contract), `test_se_jbar_robust_at_large_Vd_sun` (Vd_sun=2e8 cm/s, ≈170 Hα Doppler widths — off-mesh under the old profile-shift; the test sweeps all active lines and locks `Jbar(Vd_sun=2e8) / Jbar(Vd_sun=0) > 1e-4` so the bug-signature uniform-collapse-to-machine-zero is caught while permitting the real physical variation around solar UV / Hα-core absorption features — see in-test comment for the empirical floor rationale), and `test_se_wm_cm_shifted_within_backRad_at_large_Vd_sun` (locks that the shifted mesh stays inside the solar spectrum coverage so `numpy.interp` does not silently endpoint-clamp).
+
+### `notebooks/demo/hydrogen_doppler/build_notebook.py` — YW.Huang
+
+rewrite Section A markdown and code for the mesh-shift mechanic. Section A now plots `solar_intensity_shifted_1d` (the local solar spectrum the atom samples) against `wm_cm_1d` (left panel) and the invariant `absorb_prof_1d` (right panel). Updated derivation text and verification narrative. Sections B and C unchanged (they were already independent of the shifted field).
+
+### `notebooks/demo/hydrogen_doppler/hydrogen_doppler.ipynb` — YW.Huang
+
+regenerated from updated builder and re-executed end-to-end. Section A printed shifts now report `expected dwl = -w0*Vd_sun/c` and verify the mesh-shift formula numerically at ±30 km/s on Hα (≈ ±0.657 Å).
+
+
 ### `Struct/Atmosphere.py` — YW.Huang
 
 `Atmosphere0D.Vd_obs` and `Vd_sun` now default to `0.0` (and are reordered to follow `Vt` per the dataclass defaults-last rule). `AtmosphereC1D` array fields stay required (per-depth shape; both construction sites already build `zeros(nDep)`). See `docs/tasks/009-doppler-velocity-split/refactor_03.md`.
