@@ -60648,13 +60648,6 @@
       19865
     ]
   ],
-  "Ca_I-II-III.waveMesh.Line_mesh_share": [],
-  "Ca_I-II-III.waveMesh.Line_mesh_share_idxs": {
-    "_shape_only": [
-      471,
-      2
-    ]
-  },
   "Ca_II.Abun": 2.2908676527677747e-06,
   "Ca_II.CE.Coe.dEij": [
     2.71153652910096e-12,
@@ -63268,13 +63261,6 @@
       860
     ]
   ],
-  "Ca_II.waveMesh.Line_mesh_share": [],
-  "Ca_II.waveMesh.Line_mesh_share_idxs": {
-    "_shape_only": [
-      10,
-      2
-    ]
-  },
   "H.Abun": 1.0,
   "H.CE.Coe.dEij": [
     1.63403429991208e-11,
@@ -68869,13 +68855,6 @@
       1845
     ]
   ],
-  "H.waveMesh.Line_mesh_share": [],
-  "H.waveMesh.Line_mesh_share_idxs": {
-    "_shape_only": [
-      45,
-      2
-    ]
-  },
   "H6.Abun": 1.0,
   "H6.CE.Coe.dEij": [
     1.63403429991208e-11,
@@ -71367,13 +71346,6 @@
       1030
     ]
   ],
-  "H6.waveMesh.Line_mesh_share": [],
-  "H6.waveMesh.Line_mesh_share_idxs": {
-    "_shape_only": [
-      10,
-      2
-    ]
-  },
   "H_theory.Abun": 1.0,
   "H_theory.CE.Coe.dEij": [
     1.6337401402846478e-11,
@@ -91243,13 +91215,6 @@
       7790
     ]
   ],
-  "H_theory.waveMesh.Line_mesh_share": [],
-  "H_theory.waveMesh.Line_mesh_share_idxs": {
-    "_shape_only": [
-      190,
-      2
-    ]
-  },
   "He.Abun": 0.09772372209558111,
   "He.CE.Coe.dEij": [
     3.1754523517305456e-11,
@@ -117268,13 +117233,6 @@
       7965
     ]
   ],
-  "He.waveMesh.Line_mesh_share": [],
-  "He.waveMesh.Line_mesh_share_idxs": {
-    "_shape_only": [
-      205,
-      2
-    ]
-  },
   "He_I.Abun": 0.09772372209558111,
   "He_I.CE.Coe.dEij": [
     3.1754523517305456e-11,
@@ -136027,13 +135985,6 @@
       7480
     ]
   ],
-  "He_I.waveMesh.Line_mesh_share": [],
-  "He_I.waveMesh.Line_mesh_share_idxs": {
-    "_shape_only": [
-      190,
-      2
-    ]
-  },
   "He_I_II.Abun": 0.09772372209558111,
   "He_I_II.CE.Coe.dEij": [
     3.1754523517305456e-11,
@@ -159413,12 +159364,5 @@
       7439,
       7480
     ]
-  ],
-  "He_I_II.waveMesh.Line_mesh_share": [],
-  "He_I_II.waveMesh.Line_mesh_share_idxs": {
-    "_shape_only": [
-      190,
-      2
-    ]
-  }
+  ]
 }

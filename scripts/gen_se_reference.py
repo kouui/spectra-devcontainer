@@ -105,12 +105,12 @@ def _run_case_(case: dict[str, Any]) -> dict[str, Any]:
     divergent run from being written to disk.
     """
     conf_path = str(CFG._ROOT_DIR / case["conf"])
-    atom, wMesh, _ = Atom.init_Atom_(conf_path, is_hydrogen=case["is_hydrogen"])
+    atom, _ = Atom.init_Atom_(conf_path, is_hydrogen=case["is_hydrogen"])
     atmos = Atmosphere.Atmosphere0D(**case["atmos_kwargs"])
     radiation = Radiation.init_Radiation_()
 
     entry = getattr(SELib, case["entry"])
-    SE_con, _ = entry(atom, atmos, wMesh, radiation, None)
+    SE_con, _ = entry(atom, atmos, radiation, None)
 
     n_sum = float(SE_con.n_SE.sum())
     if not math.isfinite(n_sum) or abs(n_sum - 1.0) > _N_SE_SUM_TOL:

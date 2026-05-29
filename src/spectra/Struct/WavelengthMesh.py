@@ -26,10 +26,6 @@ class Wavelength_Mesh:
 
     Line_Coe: T_ARRAY  # struct
 
-    ##: we need Line_mesh_share to deal with non-uniform atmoshere
-    Line_mesh_share: T_ARRAY  # 1d,
-    Line_mesh_share_idxs: T_ARRAY  # 2d,   (nLine, 2)
-
 
 _N_CONT_MESH: T_INT = 41
 _N_LINE_MESH: T_INT = 41
@@ -139,8 +135,6 @@ def init_Wave_Mesh_(Cont: T_ARRAY, Line: T_ARRAY, RL_Coe: T_ARRAY) -> Wavelength
         Line_Coe=Line_Coe,
         Line_absorb_prof=Line_absorb_prof,
         Line_mesh_idxs=Line_mesh_idxs,
-        Line_mesh_share=_numpy.empty(0, dtype=DT_NB_FLOAT),
-        Line_mesh_share_idxs=_numpy.empty((nLine, 2), dtype=DT_NB_INT),
     )
 
     return wavelength_mesh

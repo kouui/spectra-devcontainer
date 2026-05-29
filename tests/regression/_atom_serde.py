@@ -1,20 +1,19 @@
 """Serialization and assertion helpers for Atom regression tests.
 
-Flattens the `(atom, waveMesh, path_dict)` tuple returned by
-`Atom.init_Atom_()` into a flat ``{key: json_value}`` dict suitable for
-JSON storage, and provides the reverse comparison used by
-``test_reg_e2e_AtomLoad.py``.
+Flattens the `(atom, path_dict)` tuple returned by `Atom.init_Atom_()`
+(the wavelength mesh is read from ``atom._wave_mesh``) into a flat
+``{key: json_value}`` dict suitable for JSON storage, and provides the
+reverse comparison used by ``test_reg_e2e_AtomLoad.py``.
 
 Design notes
 ------------
 - ``path_dict`` absolute paths (returned by ``read_conf_`` via
   ``Path.resolve()``) are relativized against ``CFG._ROOT_DIR`` so the
   reference JSON is portable across machines.
-- A few numpy arrays inside the returned structs are intentionally
-  allocated with ``numpy.empty`` and never populated by the load path
-  (``waveMesh.Line_absorb_prof``, ``waveMesh.Line_mesh_share_idxs``).
-  Comparing their contents is non-deterministic, so only their ``shape``
-  is stored/compared (sentinel form: ``{"_shape_only": [d1, d2, ...]}``).
+- ``waveMesh.Line_absorb_prof`` is intentionally allocated with
+  ``numpy.empty`` and never populated by the load path. Comparing its
+  contents is non-deterministic, so only its ``shape`` is stored/compared
+  (sentinel form: ``{"_shape_only": [d1, d2, ...]}``).
 - ``PI.alpha_table_idxs`` and four ``PI.Coe`` fields (``alpha0``, ``gi``,
   ``gj``, ``dEij``) are uninitialized when the conf file has no PI entry
   (``data_source_PI == CALCULATE``); they are also tracked shape-only in
@@ -79,12 +78,14 @@ def _enum_name(e: Any) -> str:
 # ---------------------------------------------------------------------------
 
 
-def dump_atom(atom: Any, wave_mesh: Any, path_dict: dict[str, str | None], name: str) -> dict[str, Any]:
-    """Flatten ``(atom, wave_mesh, path_dict)`` into a JSON-ready dict.
+def dump_atom(atom: Any, path_dict: dict[str, str | None], name: str) -> dict[str, Any]:
+    """Flatten ``(atom, path_dict)`` into a JSON-ready dict.
 
-    All keys are prefixed with ``<name>.``.
+    The wavelength mesh is read from ``atom._wave_mesh``. All keys are
+    prefixed with ``<name>.``.
     """
     out: dict[str, Any] = {}
+    wave_mesh = atom._wave_mesh
 
     # --- scalars / enums ---
     out[f"{name}.Z"] = int(atom.Z)
@@ -164,10 +165,8 @@ def dump_atom(atom: Any, wave_mesh: Any, path_dict: dict[str, str | None], name:
     out[f"{name}.waveMesh.Line_mesh"] = wave_mesh.Line_mesh.tolist()
     out[f"{name}.waveMesh.Line_mesh_idxs"] = wave_mesh.Line_mesh_idxs.tolist()
     out.update(_struct_array_as_flat(wave_mesh.Line_Coe, f"{name}.waveMesh.Line_Coe"))
-    out[f"{name}.waveMesh.Line_mesh_share"] = wave_mesh.Line_mesh_share.tolist()
     # Uninitialised memory — shape-only comparison.
     out[f"{name}.waveMesh.Line_absorb_prof"] = _shape_only(wave_mesh.Line_absorb_prof)
-    out[f"{name}.waveMesh.Line_mesh_share_idxs"] = _shape_only(wave_mesh.Line_mesh_share_idxs)
 
     return out
 
@@ -255,13 +254,12 @@ def _compare_list(key: str, actual: Any, expected: list) -> None:
 
 def assert_atom_matches(
     atom: Any,
-    wave_mesh: Any,
     path_dict: dict[str, str | None],
     name: str,
     ref: dict[str, Any],
 ) -> None:
     """Assert that the loaded atom matches the reference snapshot for ``name``."""
-    actual = dump_atom(atom, wave_mesh, path_dict, name)
+    actual = dump_atom(atom, path_dict, name)
 
     name_prefix = f"{name}."
     expected_keys = {k for k in ref if k.startswith(name_prefix)}

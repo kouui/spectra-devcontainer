@@ -9,7 +9,6 @@ import numpy as _numpy
 from ..Atomic import BasicP as _BasicP
 from ..ImportAll import *
 from ..Struct import Atom as _Atom
-from ..Struct import WavelengthMesh as _WavelengthMesh
 
 _MAX_OVERLAP_LINE = 10
 _MAX_OVERLAP_CONT = 20
@@ -32,12 +31,13 @@ class Spectrum:  ##: struct contains line & cont mesh
     dop_width_cm: T_ARRAY
 
 
-def init_spectrum_(atom: _Atom.Atom, wMesh: _WavelengthMesh.Wavelength_Mesh, Te: T_FLOAT, Vt: T_FLOAT, Vd_obs: T_FLOAT):  # noqa: C901
+def init_spectrum_(atom: _Atom.Atom, Te: T_FLOAT, Vt: T_FLOAT, Vd_obs: T_FLOAT):  # noqa: C901
     # Vd_obs: atom line-of-sight velocity vs observer, [cm/s]. Sign convention
     # (astronomy radial-velocity): +Vd_obs points AWAY from the observer (source
     # receding) → observer-frame line center sits at w0 + w0*Vd_obs/c (red of w0).
     # Same convention as Atmosphere.Vd_obs / CloudModel.SE_to_slab_0D_.
 
+    wMesh = atom._wave_mesh
     Line_mesh_idxs = wMesh.Line_mesh_idxs
     Line_mesh = wMesh.Line_mesh
     Cont_mesh = wMesh.Cont_mesh

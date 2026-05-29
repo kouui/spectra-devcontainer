@@ -20,7 +20,8 @@ _FAL_PATH = CFG._ROOT_DIR / "data/atmos/FAL/FALC_82.atmos"
 
 
 def _hydrogen_setup(Vd_obs: float = 0.0, Vd_sun: float = 0.0):
-    atom, wMesh, _ = Atom.init_Atom_(_CONF_PATH, is_hydrogen=True)
+    atom, _ = Atom.init_Atom_(_CONF_PATH, is_hydrogen=True)
+    wMesh = atom._wave_mesh
     atmos = Atmosphere.Atmosphere0D(
         Nh=1.0e12,
         Ne=1.0e11,
@@ -30,7 +31,7 @@ def _hydrogen_setup(Vd_obs: float = 0.0, Vd_sun: float = 0.0):
         Vt=5.0e5,
     )
     radiation = Radiation.init_Radiation_()
-    SE_con, _ = SELib.cal_SE_with_Nh_Te_(atom, atmos, wMesh, radiation, None)
+    SE_con, _ = SELib.cal_SE_with_Nh_Te_(atom, atmos, radiation, None)
     return atom, wMesh, atmos, radiation, SE_con
 
 

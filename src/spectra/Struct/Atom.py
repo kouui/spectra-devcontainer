@@ -97,15 +97,15 @@ class Atom:
     PI: Photo_Ionization
     RL: Radiative_Line
 
+    _wave_mesh: "_WavelengthMesh.Wavelength_Mesh"
+
 
 # -------------------------------------------------------------------------------
 # init function
 # -------------------------------------------------------------------------------
 
 
-def init_Atom_(
-    conf_path: T_STR, is_hydrogen: T_BOOL = False
-) -> T_TUPLE[Atom, _WavelengthMesh.Wavelength_Mesh, T_DICT[T_STR, None | T_STR]]:
+def init_Atom_(conf_path: T_STR, is_hydrogen: T_BOOL = False) -> T_TUPLE[Atom, T_DICT[T_STR, None | T_STR]]:
     """given the *.conf file, create the Atom struct
 
     Parameters
@@ -120,7 +120,7 @@ def init_Atom_(
     T_TUPLE[Atom, T_DICT[T_STR, None | T_STR]]
 
     atom : Atom
-        the Atom struct
+        the Atom struct (the wavelength mesh is stored on ``atom._wave_mesh``)
     path_dict : T_DICT[T_STR, None | T_STR]
         a dictionary of the path of data files
     """
@@ -251,13 +251,14 @@ def init_Atom_(
         CI=CI,
         PI=PI,
         RL=RL,
+        _wave_mesh=waveMesh,
     )
-    return atom, waveMesh, path_dict
+    return atom, path_dict
 
 
 def init_theoretical_hydrogen_atom_(
     nLevel: T_INT = 8,
-) -> T_TUPLE[Atom, _WavelengthMesh.Wavelength_Mesh]:
+) -> Atom:
     """Create an `Atom` struct for hydrogen from purely theoretical atomic
     data. No file I/O, no conf parsing, no delegation to `init_Atom_`.
 
@@ -277,7 +278,7 @@ def init_theoretical_hydrogen_atom_(
     Returns
     -------
     atom : Atom
-    waveMesh : Wavelength_Mesh
+        the Atom struct (the wavelength mesh is stored on ``atom._wave_mesh``)
     """
     import numpy as _numpy
 
@@ -429,5 +430,6 @@ def init_theoretical_hydrogen_atom_(
         CI=CI,
         PI=PI,
         RL=RL,
+        _wave_mesh=waveMesh,
     )
-    return atom, waveMesh
+    return atom
