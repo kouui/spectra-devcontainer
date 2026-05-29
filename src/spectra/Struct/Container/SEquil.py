@@ -8,6 +8,22 @@ from ...ImportAll import *
 
 
 @_dataclass(**STRUCT_KWGS_UNFROZEN)
+class SE_BB_Container:
+    """Statistical Equilibrium (bound-bound) result container
+    - single spatial point
+    """
+
+    ## Vd_sun-shifted sun-frame wavelength labels in cm
+    ## (= wm_cm_1d - w0*Vd_sun/c). The wavelengths at which SE evaluated the
+    ## solar spectrum to compute Jbar. Per-analysis / debug only — Jbar
+    ## itself is exposed on `SE_Container`.
+    wm_cm_shifted_1d: T_ARRAY  # 1d (sum_of_line_wavelength_mesh,), [cm]
+    ## Solar spectrum intensity evaluated at `wm_cm_shifted_1d` (or broadcast
+    ## `planck_cm_(w0, Tr)` under `use_Tr`).
+    solar_intensity_shifted_1d: T_ARRAY  # 1d (sum_of_line_wavelength_mesh,), [erg/cm^2/Sr/cm/s]
+
+
+@_dataclass(**STRUCT_KWGS_UNFROZEN)
 class SE_Container:
     """Statistical Equilibrium result container for
     - single spatial point
@@ -18,12 +34,25 @@ class SE_Container:
 
     nj_by_ni: T_ARRAY  # 1d (nLine+nCont,), [-]
 
-    ## wavelength mesh of line transition
-    wave_mesh_shifted_1d: T_ARRAY  # 1d (sum_of_line_wavelength_mesh,), [cm]
-    ## absorption profile of line transition
+    # Statistical Equilibrium (bound-bound) result container
+    se_bb_con: SE_BB_Container
+
+    ## Unshifted base absorption profile of line transitions: sigma(wm) / dopWidth_cm
+    ## evaluated on `wMesh.Line_mesh` (atom rest frame). This is the canonical
+    ## profile used by downstream forward-model consumers (e.g. slab/cloud), which
+    ## apply their own velocity shift via the output wavelength axis. Sliced per
+    ## line via Line_mesh_idxs.
     absorb_prof_1d: T_ARRAY  # 1d (sum_of_line_wavelength_mesh,), [/cm]
-    ## index array of line transition
-    Line_mesh_idxs: T_ARRAY  # 1d (sum_of_line_wavelength_mesh,), [-]
+    ## Sun-frame, atom-rest-frame wavelength labels in cm: wm * dopWidth_cm + w0,
+    ## sliced per line via Line_mesh_idxs. These are the wavelength positions
+    ## absorb_prof_1d is sampled at; downstream forward models pair them with
+    ## their own Vd_obs shift (e.g. wl_obs = wm_cm_1d + w0*Vd_obs/c in the cloud
+    ## model). Depends on Te / Vt (via dopWidth_cm), so it belongs alongside the
+    ## SE result rather than the transition-only wMesh struct.
+    wm_cm_1d: T_ARRAY  # 1d (sum_of_line_wavelength_mesh,), [cm]
+    ## index array partitioning absorb_prof_1d / wm_cm_1d into per-line
+    ## segments. Mirrors wMesh.Line_mesh_idxs.
+    Line_mesh_idxs: T_ARRAY  # 2d (nLine, 2), [-]
 
     Jbar: T_ARRAY  # 1d (nLine,), [erg/cm^2/Sr/s]
 
@@ -36,15 +65,10 @@ class SE_Container:
     ## electron temperature
     Te: T_FLOAT  # 0d, [K]
 
-    ## continuum wavelength mesh actually used in this SE call.
-    ## currently aliases `wMesh.Cont_mesh` (no doppler shift implemented yet);
-    ## the field exists as a forward-ready hook so future doppler-shifted continuum
-    ## arrays land here, parallel to bound-bound `wave_mesh_shifted_1d`.
-    ## Mutating it also mutates wMesh.Cont_mesh — copy if you need to modify.
-    cont_wave_mesh_shifted: T_ARRAY  # 2d (nCont, _N_CONT_MESH), [cm]
-    ## PI (photoionization) intensity used to drive bound-free rates.
-    ## continuum-mesh-resolved: planck(Tr) when se_params.Tr is not None,
-    ## else interp(radiation.solar, cont_wave_mesh_shifted).
+    ## PI (photoionization) intensity used to drive bound-free rates. Returned
+    ## here (not just consumed internally) so callers can inspect/analyse the
+    ## per-call radiation field. planck(Tr) when se_params.Tr is not None, else
+    ## interp(radiation.solar, wMesh.Cont_mesh). 2d (nCont, _N_CONT_MESH).
     PI_intensity: T_ARRAY  # 2d (nCont, _N_CONT_MESH), [erg/cm^2/Sr/cm/s]
 
 

@@ -2,6 +2,8 @@
 # definition of functions to perform statistical equilibrium
 # -------------------------------------------------------------------------------
 
+from collections import namedtuple as _namedtuple
+
 import numpy as _numpy
 
 from ...Atomic import BasicP as _BasicP
@@ -293,7 +295,7 @@ def cal_SE_(
     Te = atmos.Te
     Ne = atmos.Ne
     Vt = atmos.Vt
-    Vd = atmos.Vd
+    Vd_sun = atmos.Vd_sun
 
     if se_params is None:
         se_params = _Container.SE_Params_Container()
@@ -307,14 +309,16 @@ def cal_SE_(
     if se_params.doppler_shift_continuum:
         raise NotImplementedError("Doppler shift of continuum wavelength mesh not yet implemented.")
 
-    # alias for now; future doppler-shift implementation produces a new array here
-    cont_wave_mesh_shifted = Cont_mesh
+    # Local placeholder: future continuum-shift work replaces this with a shifted
+    # array. Today the continuum mesh is fixed (the flag above gates that path),
+    # so we use wMesh.Cont_mesh directly. Not exported via SE_Container.
+    cont_wave_mesh = Cont_mesh
 
     if PI_intensity is None:
         if use_Tr:
-            PI_intensity = _LTELib.planck_cm_(cont_wave_mesh_shifted[:, :], Tr)
+            PI_intensity = _LTELib.planck_cm_(cont_wave_mesh[:, :], Tr)
         else:
-            PI_intensity = _PhotoIonize.interpolate_PI_intensity_(solar[:, :], cont_wave_mesh_shifted[:, :])
+            PI_intensity = _PhotoIonize.interpolate_PI_intensity_(solar[:, :], cont_wave_mesh[:, :])
 
     Nh_I_ground: T_FLOAT
     if Nh_SE is None:
@@ -340,21 +344,21 @@ def cal_SE_(
 
     Rik, Rki_stim, Rki_spon = _bf_R_rate_(
         Cont,
-        cont_wave_mesh_shifted[:, :],
+        cont_wave_mesh[:, :],
         Te,
         nj_by_ni_Cont[:],
         alpha_interp[:, :],
         PI_intensity[:, :],
     )
 
-    Bij_Jbar, Bji_Jbar, wave_mesh_cm_shifted_all, absorb_prof_cm_all, Jbar_all = _B_Jbar_(
+    bj = _B_Jbar_(
         Line,
         Line_mesh_Coe,
         Line_mesh[:],
         Line_mesh_idxs[:, :],
         Te,
         Vt,
-        Vd,
+        Vd_sun,
         Ne,
         Nh_I_ground,
         Mass,
@@ -380,20 +384,25 @@ def cal_SE_(
     )
     Cji = _Collision.Cij_to_Cji_(Cij[:], nj_by_ni[:])
 
-    Rij, Rji_stim, Rji_spon = _make_Rji_Rij_(Aji[:], Bji_Jbar[:], Bij_Jbar[:], Rki_spon[:], Rki_stim[:], Rik[:])
+    Rij, Rji_stim, Rji_spon = _make_Rji_Rij_(Aji[:], bj.Bji_Jbar[:], bj.Bij_Jbar[:], Rki_spon[:], Rki_stim[:], Rik[:])
     n_SE, Rmat, Cmat = _solve_SE_(
         nLevel, idxI[:], idxJ[:], Rji_spon[:], Rji_stim[:], Rij[:], Cji[:], Cij[:], Ne, rate_only
+    )
+
+    se_bb_con = _Container.SE_BB_Container(
+        wm_cm_shifted_1d=bj.wm_cm_shifted_all,
+        solar_intensity_shifted_1d=bj.solar_intensity_shifted_all,
     )
 
     SE_con = _Container.SE_Container(
         n_SE=n_SE,
         n_LTE=n_LTE,
         nj_by_ni=nj_by_ni,
-        wave_mesh_shifted_1d=wave_mesh_cm_shifted_all,
-        absorb_prof_1d=absorb_prof_cm_all,
+        se_bb_con=se_bb_con,
+        absorb_prof_1d=bj.absorb_prof_cm_all,
+        wm_cm_1d=bj.wm_cm_all,
         Line_mesh_idxs=Line_mesh_idxs,
-        Jbar=Jbar_all,
-        cont_wave_mesh_shifted=cont_wave_mesh_shifted,
+        Jbar=bj.Jbar_all,
         PI_intensity=PI_intensity,
         Ntotal=0.0,
         Nh=0.0,
@@ -520,6 +529,23 @@ def _bf_R_rate_(
     return Rik, Rki_stim, Rki_spon
 
 
+# NamedTuple return type for _B_Jbar_. Module-scope so numba can capture it
+# at @njit-compile time (numba supports collections.namedtuple as a tuple
+# with attribute access in nopython mode).
+_B_Jbar_Result = _namedtuple(
+    "_B_Jbar_Result",
+    [
+        "Bij_Jbar",  # 1d (nLine,)
+        "Bji_Jbar",  # 1d (nLine,)
+        "absorb_prof_cm_all",  # 1d (sum_of_line_wavelength_mesh,)
+        "wm_cm_all",  # 1d (sum_of_line_wavelength_mesh,)
+        "wm_cm_shifted_all",  # 1d (sum_of_line_wavelength_mesh,)
+        "solar_intensity_shifted_all",  # 1d (sum_of_line_wavelength_mesh,)
+        "Jbar_all",  # 1d (nLine,)
+    ],
+)
+
+
 def _B_Jbar_(
     Line: T_ARRAY,
     Line_mesh_Coe: T_ARRAY,
@@ -527,7 +553,7 @@ def _B_Jbar_(
     Line_mesh_idxs: T_ARRAY,
     Te: T_FLOAT,
     Vt: T_FLOAT,
-    Vd: T_FLOAT,
+    Vd_sun: T_FLOAT,
     Ne: T_FLOAT,
     Nh_I_ground: T_FLOAT,
     Mass: T_FLOAT,
@@ -535,14 +561,43 @@ def _B_Jbar_(
     backRad: T_ARRAY,
     Tr: T_FLOAT,
     use_Tr: T_BOOL,
-) -> T_TUPLE[T_ARRAY, T_ARRAY, T_ARRAY, T_ARRAY, T_ARRAY]:
+) -> "_B_Jbar_Result":
     ##: TODO: add input argument for PRD correlation matrix and PRD/CRD binary indicator for lines
     ##        this requires adding one more ProfileType called PRD
 
+    # Mesh-shift mechanic (see docs/tasks/009-doppler-velocity-split/refactor_04.md):
+    #   absorb_prof_cm_all  : sigma(wm) / dopWidth_cm — unshifted base profile
+    #                         (atom rest frame). Consumed by downstream forward
+    #                         models (slab/cloud), which apply their own Vd_obs
+    #                         shift via the output wavelength axis.
+    #   wm_cm_all           : sun-frame wavelength labels in cm
+    #                         (= wm * dopWidth_cm + w0). Unshifted; exported so
+    #                         the cloud model can build its observer-frame mesh
+    #                         without recomputing dopWidth_cm.
+    #   wm_cm_shifted_all   : sun-frame wavelengths the atom samples after a
+    #                         Doppler boost (= wm_cm - w0*Vd_sun/c). Used to
+    #                         interpolate the solar spectrum without shifting
+    #                         the profile off-mesh at large |Vd_sun|.
+    #   solar_intensity_shifted_all : backRad / planck evaluated at
+    #                         wm_cm_shifted_all (per-line). Stored so the SE
+    #                         radiation field is inspectable at the same
+    #                         wavelengths the Jbar integral consumed.
+    # Sign convention: +Vd_sun = OUTWARDS from the sun, so the sun-frame
+    # absorption line center sits at w0 - w0*Vd_sun/c (blue of w0). Sampling
+    # the sun at the atom's rest-frame wavelengths therefore requires querying
+    # the solar spectrum at wm_cm - w0*Vd_sun/c.
+
     nLine = Line.shape[0]
 
-    wave_mesh_cm_shifted_all: T_ARRAY = _numpy.empty_like(Line_mesh)
     absorb_prof_cm_all: T_ARRAY = _numpy.empty_like(Line_mesh)
+    # Sun-frame wavelength labels in cm, parallel to absorb_prof_cm_all. Exposed
+    # so the cloud model can build its observer-frame mesh without recomputing
+    # dopWidth_cm (Te/Vt-dependent, identical to the value used here).
+    wm_cm_all: T_ARRAY = _numpy.empty_like(Line_mesh)
+    # Shifted-mesh diagnostics. zeros so inactive-line (f0<=0) slices have a
+    # well-defined value when downstream consumers iterate over Line_mesh_idxs.
+    wm_cm_shifted_all: T_ARRAY = _numpy.zeros_like(Line_mesh)
+    solar_intensity_shifted_all: T_ARRAY = _numpy.zeros_like(Line_mesh)
     Jbar_all: T_ARRAY = _numpy.empty(nLine, dtype=DT_NB_FLOAT)
 
     Bji_Jbar = _numpy.empty(nLine, dtype=DT_NB_FLOAT)
@@ -581,12 +636,13 @@ def _B_Jbar_(
         #         this line could be replaced by
         #         wm = Line_mesh[i_start:i_end]
         wm = _MeshUtil.make_full_line_mesh_(nLambda, qcore, qwing)
+        # Always export the sun-frame wavelength labels (even for f0<=0 lines)
+        # so the per-line slice is well-defined for any downstream consumer.
+        wm_cm_all[i_start:i_end] = wm[:] * dopWidth_cm + w0
         if Line["f0"][k] <= 0:
             absorb_prof_cm_all[i_start:i_end] = 0.0
-            wave_mesh_cm_shifted_all[i_start:i_end] = 0
             continue
 
-        ##: in SE we re-caculate the wavelength mesh based on (Te, Vt, Vd)
         if proftype == E_ABSORPTION_PROFILE_TYPE.VOIGT:
             dopWidth_hz = dopWidth_cm * f0 / w0
             a = gamma / (4.0 * CST.pi_ * dopWidth_hz)
@@ -598,23 +654,33 @@ def _B_Jbar_(
         else:
             raise ValueError("Only 'VOIGT' and 'GAUSSIAN' are valid E_ABSORPTION_PROFILE_TYPE")
 
-        absorb_prof_cm[:] = absorb_prof_cm[:] / dopWidth_cm  # normalization, now (absorb_prof_cm * wm_cm) sum to 1
-        ## -> could save to `absorb_prof_cm_all` here
+        # normalize: (prof_cm * wm_cm) integrates to 1 over each line's mesh
+        absorb_prof_cm[:] = absorb_prof_cm[:] / dopWidth_cm
         absorb_prof_cm_all[i_start:i_end] = absorb_prof_cm[:]
 
-        wm_cm = wm[:] * dopWidth_cm + w0  ##: in unit of [cm]
-        wm_cm_shifted = wm_cm[:] + (w0 * Vd / CST.c_)
-        ## -> could save to `wave_mesh_cm_shifted_all` here
-        wave_mesh_cm_shifted_all[i_start:i_end] = wm_cm_shifted[:]
+        # Sun-frame unshifted mesh in [cm] — aliased to the already-stored
+        # wm_cm_all segment for clarity inside the integrand expressions below.
+        wm_cm = wm_cm_all[i_start:i_end]
 
-        ## : interpolate background intensity
+        # Mesh-shift: query the solar spectrum at sun-frame wavelengths that
+        # account for the atom's Doppler boost. wm_cm_shifted differs from
+        # wm_cm by a constant offset (w0*Vd_sun/c is line-dependent but
+        # wm-independent), so d(wm_cm_shifted) = d(wm_cm) and the trapezoid
+        # measure is identical to the unshifted-mesh case.
+        wm_cm_shifted = wm_cm[:] - w0 * Vd_sun / CST.c_
+        wm_cm_shifted_all[i_start:i_end] = wm_cm_shifted[:]
+
         if use_Tr:
-            # make sure this integral eqauls to 1.
-            Jbar0 = _Integrate.trapze_(absorb_prof_cm[:], wm_cm_shifted[:])
-            Jbar0 *= _LTELib.planck_cm_(w0, Tr)
+            # SE uses planck(Tr) as a scalar; broadcast across the per-line
+            # slice for the debug field, then evaluate Jbar with the same
+            # scalar pulled out of the trapze integrand.
+            planck_val = _LTELib.planck_cm_(w0, Tr)
+            solar_intensity_shifted_all[i_start:i_end] = planck_val
+            Jbar0 = _Integrate.trapze_(absorb_prof_cm[:], wm_cm_shifted[:]) * planck_val
         else:
-            I_cm_interp = _numpy.interp(wm_cm_shifted[:], backRad[0, :], backRad[1, :])
-            integrand = I_cm_interp[:] * absorb_prof_cm[:]
+            solar_intensity_shifted = _numpy.interp(wm_cm_shifted[:], backRad[0, :], backRad[1, :])
+            solar_intensity_shifted_all[i_start:i_end] = solar_intensity_shifted[:]
+            integrand = solar_intensity_shifted[:] * absorb_prof_cm[:]
             Jbar0 = _Integrate.trapze_(integrand[:], wm_cm_shifted[:])
 
         Jbar_all[k] = Jbar0
@@ -622,10 +688,15 @@ def _B_Jbar_(
         Bij_Jbar[k] = Bij * Jbar0
         Bji_Jbar[k] = Bji * Jbar0
 
-        ##: wMesh.Line.Line_mesh : symmetric wavelength mesh in [dop_width_cm], global, fixed
-        ##  wave_mesh_cm_shifted_all  : shifted wavelength mesh in [cm], dependes on local Te, Vt, Vd,
-
-    return Bij_Jbar, Bji_Jbar, wave_mesh_cm_shifted_all, absorb_prof_cm_all, Jbar_all
+    return _B_Jbar_Result(
+        Bij_Jbar,
+        Bji_Jbar,
+        absorb_prof_cm_all,
+        wm_cm_all,
+        wm_cm_shifted_all,
+        solar_intensity_shifted_all,
+        Jbar_all,
+    )
 
 
 def _get_Cij_(  # noqa: C901

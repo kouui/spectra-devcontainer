@@ -32,7 +32,11 @@ class Spectrum:  ##: struct contains line & cont mesh
     dop_width_cm: T_ARRAY
 
 
-def init_spectrum_(atom: _Atom.Atom, wMesh: _WavelengthMesh.Wavelength_Mesh, Te: T_FLOAT, Vt: T_FLOAT, Vd: T_FLOAT):  # noqa: C901
+def init_spectrum_(atom: _Atom.Atom, wMesh: _WavelengthMesh.Wavelength_Mesh, Te: T_FLOAT, Vt: T_FLOAT, Vd_obs: T_FLOAT):  # noqa: C901
+    # Vd_obs: atom line-of-sight velocity vs observer, [cm/s]. Sign convention
+    # (astronomy radial-velocity): +Vd_obs points AWAY from the observer (source
+    # receding) → observer-frame line center sits at w0 + w0*Vd_obs/c (red of w0).
+    # Same convention as Atmosphere.Vd_obs / CloudModel.SE_to_slab_0D_.
 
     Line_mesh_idxs = wMesh.Line_mesh_idxs
     Line_mesh = wMesh.Line_mesh
@@ -59,7 +63,7 @@ def init_spectrum_(atom: _Atom.Atom, wMesh: _WavelengthMesh.Wavelength_Mesh, Te:
         i1, i2 = Line_mesh_idxs[k, :]
         nwave = i2 - i1
         spectrum[bias : bias + nwave] = Line_mesh[i1:i2] * dopWidth_cm + w0  ##: wavelength mesh [cm]
-        spectrum[bias : bias + nwave] += w0 * Vd / CST.c_
+        spectrum[bias : bias + nwave] += w0 * Vd_obs / CST.c_
         line_mesh_dop[bias : bias + nwave] = Line_mesh[i1:i2]
         # line_mesh_cm[bias:bias+nwave] = spectrum[bias:bias+nwave]
         line_mesh_cm[i1:i2] = spectrum[bias : bias + nwave]

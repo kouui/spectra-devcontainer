@@ -7,16 +7,25 @@ import numpy as _numpy
 from ...ImportAll import *
 from ...Math import Integrate as _Integrate
 from ...Struct import Atmosphere as _Atmosphere
-
-# from ..SEquil import SELib as _SELib
 from ...Struct import Atom as _Atom
 from ...Struct import Container as _Container
 
 
 def SE_to_slab_0D_(
-    atom: _Atom.Atom, atmos: _Atmosphere.Atmosphere0D, SE_con: _Container.SE_Container, depth: T_FLOAT
+    atom: _Atom.Atom,
+    atmos: _Atmosphere.Atmosphere0D,
+    SE_con: _Container.SE_Container,
+    depth: T_FLOAT,
 ) -> _Container.CloudModel_Container:
-    """calculate the optical depth and source function for a slab model"""
+    """calculate the optical depth and source function for a slab model.
+
+    The output `wl_1D` is the observer-frame wavelength mesh, derived from the
+    sun-frame `SE_con.wm_cm_1d` (atom-rest-frame line centers in cm) by
+    adding the observer-frame Doppler shift `w0*Vd_obs/c`. The cloud
+    model reads only what it needs from `SE_con` (no `wMesh` dependency); SE
+    already computed both `dopWidth_cm` (baked into `wm_cm_1d`) and the
+    unshifted `absorb_prof_1d` (sampled at those same wavelengths).
+    """
 
     nLine = atom.nLine
     Line = atom.Line
@@ -24,8 +33,10 @@ def SE_to_slab_0D_(
     N_ele = atmos.Nh * atom.Abun
 
     Line_mesh_idxs = SE_con.Line_mesh_idxs
-    wave_mesh_shifted_1d = SE_con.wave_mesh_shifted_1d
+    wm_cm_1d = SE_con.wm_cm_1d
     absorb_prof_1d = SE_con.absorb_prof_1d
+
+    Vd_obs = atmos.Vd_obs
 
     ## 1. obtain the upper/lower level population for line transitions
     nj: T_ARRAY = SE_con.n_SE[Line["idxJ"][:]]
@@ -57,20 +68,30 @@ def SE_to_slab_0D_(
     arr_Ibar = _numpy.empty(nLine, dtype=DT_NB_FLOAT)
     arr_prof_1D = _numpy.empty_like(absorb_prof_1d)
     arr_tau_1D = _numpy.empty_like(absorb_prof_1d)
-    # arr_wl_1D     = _numpy.empty_like( absorb_prof_1d )
+    arr_wl_1D = _numpy.empty_like(absorb_prof_1d)
     for k in range(nLine):
         i1 = Line_mesh_idxs[k, 0]
         i2 = Line_mesh_idxs[k, 1]
 
+        w0 = Line["w0"][k]
+        # observer-frame wavelength mesh: sun-frame atom-rest-frame mesh
+        # shifted by +w0*Vd_obs/c. Astronomy radial-velocity convention:
+        # +Vd_obs = atom velocity AWAY from observer (source receding) →
+        # observer sees line center red-shifted to w0 + w0*Vd_obs/c.
+        wl = wm_cm_1d[i1:i2] + (w0 * Vd_obs / CST.c_)
+
         tau = depth * alp0[k] * absorb_prof_1d[i1:i2]
-        wl = wave_mesh_shifted_1d[i1:i2]
+
+        # TODO: this formula should be converted into an individual function,
+        # with background intensity as optional input argument.
         prof = Src[k] * (1.0 - _numpy.exp(-tau[:]))
+
         # l.tau0[i] = np.max(tau)
         # l.prof[i][:] = S[i] * (1. - np.exp(-tau[:]))
         Ibar = _Integrate.trapze_(prof[:], wl[:])
 
         # store value
-        arr_w0[k] = Line["w0"][k]
+        arr_w0[k] = w0
         # abs() handles population inversion: alp0 < 0 when Bji*nj > Bij*ni,
         # which makes tau negative; .max() on a negative array returns the
         # least-negative value, masking the strongest |tau|.
@@ -78,6 +99,7 @@ def SE_to_slab_0D_(
         arr_Ibar[k] = Ibar
         arr_prof_1D[i1:i2] = prof[:]
         arr_tau_1D[i1:i2] = tau[:]
+        arr_wl_1D[i1:i2] = wl[:]
 
     cloud_con = _Container.CloudModel_Container(
         w0=arr_w0,
@@ -86,7 +108,7 @@ def SE_to_slab_0D_(
         Src=Src,
         tau_1D=arr_tau_1D,
         prof_1D=arr_prof_1D,
-        wl_1D=wave_mesh_shifted_1d.copy(),
+        wl_1D=arr_wl_1D,
         Line_mesh_idxs=Line_mesh_idxs.copy(),
         line_emissivity=line_emissivity,
         line_absorption=line_absorption,

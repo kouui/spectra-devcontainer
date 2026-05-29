@@ -145,7 +145,11 @@ def init_FAL_(file: T_STR):  # noqa: C901
         Nh=n_total,
         Ne=ne,
         Te=temperature,
-        Vd=vel,
+        # FAL `vel` is vertical flow velocity in the sun's rest frame ⇒ Vd_sun.
+        # Vd_obs (observer-frame line-of-sight) is left as zeros; caller must set
+        # it explicitly when modeling a specific observer geometry.
+        Vd_obs=_numpy.zeros(nDep, dtype=DT_NB_FLOAT),
+        Vd_sun=vel,
         Vt=vturb,
         Z=height,
         tau5=_numpy.zeros(nDep, dtype=DT_NB_FLOAT),
