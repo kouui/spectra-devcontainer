@@ -97,7 +97,7 @@ class Atom:
     PI: Photo_Ionization
     RL: Radiative_Line
 
-    _wave_mesh: "_WavelengthMesh.Wavelength_Mesh"
+    _wave_mesh: _WavelengthMesh.Wavelength_Mesh
 
 
 # -------------------------------------------------------------------------------
