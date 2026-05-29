@@ -74,7 +74,8 @@ class Atom:
     Mass: T_FLOAT
     Abun: T_FLOAT
 
-    nLevel: T_INT
+    nLevel: T_INT  # total levels, bound + continuum
+    nBoundLevel: T_INT  # bound levels only (excludes the continuum level)
     nLine: T_INT
     nCont: T_INT
     nTran: T_INT
@@ -143,6 +144,7 @@ def init_Atom_(conf_path: T_STR, is_hydrogen: T_BOOL = False) -> T_TUPLE[Atom, T
     # nTran nLine nCont
     # --------------------
     nLine, nCont, nTran, _has_continuum = _AtomIO.nLine_nCont_nTran_(Level["stage"])
+    nBoundLevel = nLevel - 1 if _has_continuum else nLevel
     # if not _has_continuum:
     #    raise ValueError("Currently we don't support Atomic Model without comtinuum.")
 
@@ -235,6 +237,7 @@ def init_Atom_(conf_path: T_STR, is_hydrogen: T_BOOL = False) -> T_TUPLE[Atom, T
         Mass=Mass,
         Abun=Abun,
         nLevel=nLevel,
+        nBoundLevel=nBoundLevel,
         nLine=nLine,
         nCont=nCont,
         nTran=nTran,
@@ -344,6 +347,7 @@ def init_theoretical_hydrogen_atom_(
 
     # counts and CTJ/index mapping tables
     nLine, nCont, nTran, _has_continuum = _AtomIO.nLine_nCont_nTran_(Level["stage"])
+    nBoundLevel = nLevel - 1 if _has_continuum else nLevel
     Line_idx_table, Line_ctj_table, Cont_idx_table, Cont_ctj_table = _AtomIO.prepare_idx_ctj_mapping_(
         Level_info_table, Level["stage"], Level["isGround"], nLine, nCont
     )
@@ -414,6 +418,7 @@ def init_theoretical_hydrogen_atom_(
         Mass=Mass,
         Abun=Abun,
         nLevel=nLevel,
+        nBoundLevel=nBoundLevel,
         nLine=nLine,
         nCont=nCont,
         nTran=nTran,
