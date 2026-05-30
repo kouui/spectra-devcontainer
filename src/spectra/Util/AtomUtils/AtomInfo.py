@@ -5,6 +5,7 @@
 import numpy as _numpy
 
 from ...ImportAll import *
+from ...RadiativeTransfer import CloudModel as _RTCloud
 from ...Struct import Atom as _Atom
 from ...Struct.Container import CloudModel as _CloudModel
 
@@ -59,7 +60,8 @@ def extract_lprof(l: _CloudModel.CloudModel_Container, wmin: T_FLOAT, wmax: T_FL
         idx2 = l.Line_mesh_idxs[j, 1]
         tau1 = _numpy.interp(wl, l.wl_1D[idx1:idx2] * 1e8, l.tau_1D[idx1:idx2])
         # prof1 = np.interp(wl, l.wl_1D[idx1:idx2]*1e8, l.prof_1D[idx1:idx2])
-        prof1 = l.Src[j] * (1.0 - _numpy.exp(-tau1))
+        # background applied once after the loop (see below), so pass I0=0 here.
+        prof1 = _RTCloud.emergent_intensity_(l.Src[j], tau1, 0.0)
         print("Ic, Src=", Ic, l.Src[j])
         tau += tau1
         profe += prof1
