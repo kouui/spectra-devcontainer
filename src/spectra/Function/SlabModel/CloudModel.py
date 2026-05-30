@@ -6,6 +6,7 @@ import numpy as _numpy
 
 from ...ImportAll import *
 from ...Math import Integrate as _Integrate
+from ...RadiativeTransfer import CloudModel as _RTCloud
 from ...Struct import Atmosphere as _Atmosphere
 from ...Struct import Atom as _Atom
 from ...Struct import Container as _Container
@@ -16,6 +17,7 @@ def SE_to_slab_0D_(
     atmos: _Atmosphere.Atmosphere0D,
     SE_con: _Container.SE_Container,
     depth: T_FLOAT,
+    I0: T_ARRAY | None = None,
 ) -> _Container.CloudModel_Container:
     """calculate the optical depth and source function for a slab model.
 
@@ -25,6 +27,11 @@ def SE_to_slab_0D_(
     model reads only what it needs from `SE_con` (no `wMesh` dependency); SE
     already computed both `dopWidth_cm` (baked into `wm_cm_1d`) and the
     unshifted `absorb_prof_1d` (sampled at those same wavelengths).
+
+    `I0` is the optional background intensity entering the slab from behind,
+    given as a 2d table `(2, n_wavelength)` like `Radiation.solar` (row 0
+    wavelength [cm], row 1 intensity), or `None` for zero background. It is
+    interpolated once onto the observer-frame `wl_1D` so it aligns with `tau`.
     """
 
     nLine = atom.nLine
@@ -69,22 +76,37 @@ def SE_to_slab_0D_(
     arr_prof_1D = _numpy.empty_like(absorb_prof_1d)
     arr_tau_1D = _numpy.empty_like(absorb_prof_1d)
     arr_wl_1D = _numpy.empty_like(absorb_prof_1d)
+
+    # fill the full observer-frame wavelength mesh first, so the background
+    # intensity can be interpolated onto it in a single pass below.
+    for k in range(nLine):
+        i1 = Line_mesh_idxs[k, 0]
+        i2 = Line_mesh_idxs[k, 1]
+        # observer-frame wavelength mesh: sun-frame atom-rest-frame mesh
+        # shifted by +w0*Vd_obs/c. Astronomy radial-velocity convention:
+        # +Vd_obs = atom velocity AWAY from observer (source receding) →
+        # observer sees line center red-shifted to w0 + w0*Vd_obs/c.
+        arr_wl_1D[i1:i2] = wm_cm_1d[i1:i2] + (Line["w0"][k] * Vd_obs / CST.c_)
+
+    # one interpolation of the background onto the full observer-frame mesh;
+    # sliced per line below so it stays aligned with each line's tau.
+    if I0 is None:
+        bg_1D = _numpy.zeros_like(arr_wl_1D)
+    else:
+        if I0.shape[0] != 2:
+            raise ValueError(f"background intensity I0 must have shape (2, n_wavelength), but got {I0.shape}")
+        bg_1D = _numpy.interp(arr_wl_1D, I0[0, :], I0[1, :])
+
     for k in range(nLine):
         i1 = Line_mesh_idxs[k, 0]
         i2 = Line_mesh_idxs[k, 1]
 
         w0 = Line["w0"][k]
-        # observer-frame wavelength mesh: sun-frame atom-rest-frame mesh
-        # shifted by +w0*Vd_obs/c. Astronomy radial-velocity convention:
-        # +Vd_obs = atom velocity AWAY from observer (source receding) →
-        # observer sees line center red-shifted to w0 + w0*Vd_obs/c.
-        wl = wm_cm_1d[i1:i2] + (w0 * Vd_obs / CST.c_)
+        wl = arr_wl_1D[i1:i2]
 
         tau = depth * alp0[k] * absorb_prof_1d[i1:i2]
 
-        # TODO: this formula should be converted into an individual function,
-        # with background intensity as optional input argument.
-        prof = Src[k] * (1.0 - _numpy.exp(-tau[:]))
+        prof = _RTCloud.emergent_intensity_(Src[k], tau[:], bg_1D[i1:i2])
 
         # l.tau0[i] = np.max(tau)
         # l.prof[i][:] = S[i] * (1. - np.exp(-tau[:]))
@@ -99,7 +121,6 @@ def SE_to_slab_0D_(
         arr_Ibar[k] = Ibar
         arr_prof_1D[i1:i2] = prof[:]
         arr_tau_1D[i1:i2] = tau[:]
-        arr_wl_1D[i1:i2] = wl[:]
 
     cloud_con = _Container.CloudModel_Container(
         w0=arr_w0,
