@@ -71,6 +71,11 @@ class SE_Container:
     ## interp(radiation.solar, wMesh.Cont_mesh). 2d (nCont, _N_CONT_MESH).
     PI_intensity: T_ARRAY  # 2d (nCont, _N_CONT_MESH), [erg/cm^2/Sr/cm/s]
 
+    ## Continuum wavelength mesh the bound-free quantities (PI_intensity, etc.)
+    ## are evaluated on. Currently fixed to wMesh.Cont_mesh (no doppler shift);
+    ## exported so callers can pair PI_intensity with its wavelength axis.
+    cont_wm_cm: T_ARRAY  # 2d (nCont, _N_CONT_MESH), [cm]
+
 
 @_dataclass(**STRUCT_KWGS_UNFROZEN)
 class SE_Params_Container:
