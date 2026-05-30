@@ -307,7 +307,7 @@ def cal_SE_(
 
     # Local placeholder: future continuum-shift work replaces this with a shifted
     # array. Today the continuum mesh is fixed (the flag above gates that path),
-    # so we use wMesh.Cont_mesh directly. Not exported via SE_Container.
+    # so we use wMesh.Cont_mesh directly. Exported via SE_Container.cont_wm_cm.
     cont_wave_mesh = Cont_mesh
 
     if PI_intensity is None:
@@ -400,6 +400,7 @@ def cal_SE_(
         Line_mesh_idxs=Line_mesh_idxs,
         Jbar=bj.Jbar_all,
         PI_intensity=PI_intensity,
+        cont_wm_cm=cont_wave_mesh,
         Ntotal=0.0,
         Nh=0.0,
         Ne=Ne,
