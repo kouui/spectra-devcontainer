@@ -16,11 +16,11 @@ class Test_SE_With_H_I(unittest.TestCase):
         super().__init__(*args, **kwargs)
 
         conf_path = CFG._ROOT_DIR / "data/conf/H.conf"
-        atom, wMesh, _path_dict = Atom.init_Atom_(str(conf_path), is_hydrogen=True)
+        atom, _path_dict = Atom.init_Atom_(str(conf_path), is_hydrogen=True)
 
         atmos = Atmosphere.Atmosphere0D(Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vt=5.0e5)
         radiation = Radiation.init_Radiation_()
-        SE_con, Rate_con = SELib.cal_SE_with_Nh_Te_(atom, atmos, wMesh, radiation, None)
+        SE_con, Rate_con = SELib.cal_SE_with_Nh_Te_(atom, atmos, radiation, None)
 
         self.atmos = atmos
         self.SE_con = SE_con

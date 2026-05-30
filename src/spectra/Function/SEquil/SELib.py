@@ -26,14 +26,12 @@ from ...Struct import Atmosphere as _Atmosphere
 from ...Struct import Atom as _Atom
 from ...Struct import Container as _Container
 from ...Struct import Radiation as _Radiation
-from ...Struct import WavelengthMesh as _WavelengthMesh
 from ...Util import MeshUtil as _MeshUtil
 
 
 def cal_SE_with_Pg_Te_single_Atom_(
     atom: _Atom.Atom,
     atmos: _Atmosphere.Atmosphere0D,
-    wMesh: _WavelengthMesh.Wavelength_Mesh,
     radiation: _Radiation.Radiation,
     se_params: _Container.SE_Params_Container | None = None,
 ):
@@ -56,7 +54,7 @@ def cal_SE_with_Pg_Te_single_Atom_(
     PI_intensity: T_ARRAY | None = None
     while True:
         print(f"Ne2Ng={Ne2Ng:.3E}  Ng={Ng:.3E}  Ne={atmos.Ne:.3E}")
-        SE_con, tran_rate_con = cal_SE_(atom, atmos, wMesh, radiation, Nh_SE, se_params, PI_intensity=PI_intensity)
+        SE_con, tran_rate_con = cal_SE_(atom, atmos, radiation, Nh_SE, se_params, PI_intensity=PI_intensity)
         PI_intensity = SE_con.PI_intensity
         n_SE = SE_con.n_SE
         Ne2Ng = 2 * n_SE[-1] + n_SE[-7:-1].sum()  ##: for He
@@ -83,7 +81,6 @@ def cal_SE_with_Pg_Te_single_Atom_(
 def cal_SE_with_Pg_Te_(
     atom: _Atom.Atom,
     atmos: _Atmosphere.Atmosphere0D,
-    wMesh: _WavelengthMesh.Wavelength_Mesh,
     radiation: _Radiation.Radiation,
     Nh_SE: T_ARRAY | None,
     se_params: _Container.SE_Params_Container | None = None,
@@ -104,7 +101,7 @@ def cal_SE_with_Pg_Te_(
     PI_intensity: T_ARRAY | None = None
     while True:
         # print(f"Ne2Nh={Ne2Nh}, Ne={atmos.Ne:.2E}")
-        SE_con, tran_rate_con = cal_SE_(atom, atmos, wMesh, radiation, Nh_SE, se_params, PI_intensity=PI_intensity)
+        SE_con, tran_rate_con = cal_SE_(atom, atmos, radiation, Nh_SE, se_params, PI_intensity=PI_intensity)
         PI_intensity = SE_con.PI_intensity
         n_SE = SE_con.n_SE
 
@@ -137,7 +134,6 @@ def cal_SE_with_Pg_Te_(
 def cal_SE_with_Nh_Te_(
     atom: _Atom.Atom,
     atmos: _Atmosphere.Atmosphere0D,
-    wMesh: _WavelengthMesh.Wavelength_Mesh,
     radiation: _Radiation.Radiation,
     Nh_SE: T_ARRAY | None,
     se_params: _Container.SE_Params_Container | None = None,
@@ -155,7 +151,7 @@ def cal_SE_with_Nh_Te_(
     PI_intensity: T_ARRAY | None = None
     while True:
         # print(f"Ne={atmos.Ne:.2E}")
-        SE_con, tran_rate_con = cal_SE_(atom, atmos, wMesh, radiation, Nh_SE, se_params, PI_intensity=PI_intensity)
+        SE_con, tran_rate_con = cal_SE_(atom, atmos, radiation, Nh_SE, se_params, PI_intensity=PI_intensity)
         PI_intensity = SE_con.PI_intensity
 
         n_SE = SE_con.n_SE
@@ -185,7 +181,6 @@ def cal_SE_with_Nh_Te_(
 def cal_SE_with_Ne_Te_(
     atom: _Atom.Atom,
     atmos: _Atmosphere.Atmosphere0D,
-    wMesh: _WavelengthMesh.Wavelength_Mesh,
     radiation: _Radiation.Radiation,
     Nh_SE: T_ARRAY | None,
     se_params: _Container.SE_Params_Container | None = None,
@@ -222,7 +217,7 @@ def cal_SE_with_Ne_Te_(
         if (Nh_SE is not None) and (is_hydrogen):
             atmos.Nh = atmos.Ne / (Nh_SE[-1])
 
-    SE_con, tran_rate_con = cal_SE_(atom, atmos, wMesh, radiation, Nh_SE, se_params, rate_only=rate_only)
+    SE_con, tran_rate_con = cal_SE_(atom, atmos, radiation, Nh_SE, se_params, rate_only=rate_only)
     if rate_only:
         return SE_con, tran_rate_con
 
@@ -247,7 +242,6 @@ def cal_SE_with_Ne_Te_(
 def cal_SE_(
     atom: _Atom.Atom,
     atmos: _Atmosphere.Atmosphere0D,
-    wMesh: _WavelengthMesh.Wavelength_Mesh,
     radiation: _Radiation.Radiation,
     Nh_SE: T_ARRAY | None,
     se_params: _Container.SE_Params_Container | None = None,
@@ -281,6 +275,8 @@ def cal_SE_(
     CI_Omega_table = atom.CI.Omega_table
     CI_Te_table = atom.CI.Te_table
     CI_Coe = atom.CI.Coe
+
+    wMesh = atom._wave_mesh
 
     Cont_mesh = wMesh.Cont_mesh
 

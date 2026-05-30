@@ -47,8 +47,8 @@ def main() -> None:
     for rel, name, is_H in CONFIGS:
         conf_path = str(CFG._ROOT_DIR / rel)
         print(f"loading {name}  <- {rel}", flush=True)
-        atom, wave_mesh, path_dict = Atom.init_Atom_(conf_path, is_hydrogen=is_H)
-        merged.update(dump_atom(atom, wave_mesh, path_dict, name))
+        atom, path_dict = Atom.init_Atom_(conf_path, is_hydrogen=is_H)
+        merged.update(dump_atom(atom, path_dict, name))
 
     out.parent.mkdir(parents=True, exist_ok=True)
     with out.open("w") as f:
