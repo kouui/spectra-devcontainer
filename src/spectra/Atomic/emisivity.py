@@ -103,6 +103,12 @@ def bf_emissivity(
     """
     nu = CST.c_ / wl
     eps = CST.h_ * nu - chi
+    # below threshold (wl > edge, eps < 0) there is no recombination continuum;
+    # return 0 rather than the analytically-continued exp(-eps/kTe) which would
+    # blow up (and give 0*inf=nan when alpha==0). Production meshes are
+    # edge-first and stay at/below the edge, so this only guards misuse.
+    if eps < 0.0:
+        return 0.0
     # sigma_fb * f(eps)v with the divergent factors cancelled analytically:
     #   - eps: 1/eps (sigma_fb) * eps (Maxwell flux) -> 1  (this is what removes
     #     the 0/0 at the edge; the cancelled form stays finite there)

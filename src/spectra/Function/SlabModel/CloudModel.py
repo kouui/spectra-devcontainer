@@ -158,6 +158,10 @@ def _SE_to_slab_0D_bb_(
     # physical, wavelength-integrated line coefficients restored from the RT
     # quantities above (Src and the integrated opacity alp0). These keep
     # Src == emissivity / absorption. emissivity is 0 where Src is 0 (Aji<=0).
+    # NOTE: alp0 is kept inline (not routed through Atomic.extinction.bb_extinction)
+    # on purpose: the RT path uses hv = h*Line["f0"], whereas bb_extinction would
+    # use h*c/Line["w0"]; these differ at the ULP level, so calling it here would
+    # break the bit-for-bit identity of tau/Src/prof with the pre-existing output.
     emissivity: T_ARRAY = Src * alp0
     absorption: T_ARRAY = alp0
 
@@ -171,9 +175,9 @@ def _SE_to_slab_0D_bb_(
         wl_1D=arr_wl_1D,
         Line_mesh_idxs=Line_mesh_idxs.copy(),
         emissivity=emissivity,
-        # zero-copy alias: same ndarray object, kept for backward compatibility.
-        line_emissivity=emissivity,
         absorption=absorption,
+        # zero-copy aliases: SAME ndarray object, not a copy
+        line_emissivity=emissivity,
         line_absorption=absorption,
     )
 

@@ -18,7 +18,9 @@ class CloudModel_BB_Container:
     dependence factors entirely into the normalized profile, leaving a single
     integrated coefficient. The spectral coefficients follow by multiplying with
     the profile. `line_emissivity` / `line_absorption` are zero-copy aliases
-    (the SAME ndarray object) kept for backward compatibility.
+    (the SAME ndarray object, assigned in the constructor) kept for backward
+    compatibility and for visibility under `help_`. Do NOT reassign them
+    independently of `emissivity` / `absorption`, or they will silently desync.
     """
 
     w0: T_ARRAY  # 1d, (nLine,) wavelength, [cm]
