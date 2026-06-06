@@ -85,11 +85,12 @@ def _SE_to_slab_0D_bb_(
     nj: T_ARRAY = SE_con.n_SE[Line["idxJ"][:]]
     ni: T_ARRAY = SE_con.n_SE[Line["idxI"][:]]
 
-    ## 2. compute extinction coefficient alpha
-    hv: T_ARRAY = CST.h_ * Line["f0"][:]
+    ## 2. compute extinction coefficient alpha via Atomic.extinction.bb_extinction_
     Bij: T_ARRAY = Line["BIJ"][:]
     Bji: T_ARRAY = Line["BJI"][:]
-    alp0: T_ARRAY = hv / (4.0 * CST.pi_) * (Bij * ni - Bji * nj) * N_ele
+    Ni: T_ARRAY = ni * N_ele
+    Nj: T_ARRAY = nj * N_ele
+    alp0: T_ARRAY = _extinction.bb_extinction_(Line["w0"][:], Bji, Bij, Nj, Ni)
 
     ## 3. compute line source function
     Aji: T_ARRAY = Line["AJI"][:]
@@ -155,13 +156,13 @@ def _SE_to_slab_0D_bb_(
         arr_prof_1D[i1:i2] = prof[:]
         arr_tau_1D[i1:i2] = tau[:]
 
-    # physical, wavelength-integrated line coefficients restored from the RT
-    # quantities above (Src and the integrated opacity alp0). These keep
-    # Src == emissivity / absorption. emissivity is 0 where Src is 0 (Aji<=0).
-    # NOTE: alp0 is kept inline (not routed through Atomic.extinction.bb_extinction_)
-    # on purpose: the RT path uses hv = h*Line["f0"], whereas bb_extinction_ would
-    # use h*c/Line["w0"]; these differ at the ULP level, so calling it here would
-    # break the bit-for-bit identity of tau/Src/prof with the pre-existing output.
+    # physical, wavelength-integrated line coefficients from the RT quantities
+    # above: absorption is the integrated opacity alp0 (computed via
+    # bb_extinction_ in step 2), emissivity = Src * alp0. These keep
+    # Src == emissivity / absorption exactly; emissivity is 0 where Src is 0
+    # (Aji<=0). Routing alp0 through bb_extinction_ shifts tau/prof/emissivity/
+    # absorption by ~1e-15 vs the pre-refactor inline form (term ordering and
+    # N_ele distribution), so the regression baseline compares with allclose.
     emissivity: T_ARRAY = Src * alp0
     absorption: T_ARRAY = alp0
 
