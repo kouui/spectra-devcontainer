@@ -158,8 +158,8 @@ def _SE_to_slab_0D_bb_(
     # physical, wavelength-integrated line coefficients restored from the RT
     # quantities above (Src and the integrated opacity alp0). These keep
     # Src == emissivity / absorption. emissivity is 0 where Src is 0 (Aji<=0).
-    # NOTE: alp0 is kept inline (not routed through Atomic.extinction.bb_extinction)
-    # on purpose: the RT path uses hv = h*Line["f0"], whereas bb_extinction would
+    # NOTE: alp0 is kept inline (not routed through Atomic.extinction.bb_extinction_)
+    # on purpose: the RT path uses hv = h*Line["f0"], whereas bb_extinction_ would
     # use h*c/Line["w0"]; these differ at the ULP level, so calling it here would
     # break the bit-for-bit identity of tau/Src/prof with the pre-existing output.
     emissivity: T_ARRAY = Src * alp0
@@ -197,9 +197,9 @@ def _SE_to_slab_0D_bf_(
     mesh ``SE_con.cont_wm_cm`` (edge-first, aligned column-by-column with
     ``atom.PI.alpha_interp``):
 
-    - the spectral emissivity ``j_lambda`` (``emisivity.bf_emissivity``, the Milne
+    - the spectral emissivity ``j_lambda`` (``emisivity.bf_emissivity_``, the Milne
       recombination form) and extinction ``alpha_lambda``
-      (``extinction.bf_extinction``), both wavelength-resolved,
+      (``extinction.bf_extinction_``), both wavelength-resolved,
     - the source function ``Src = j_lambda / alpha_lambda`` (guarded where the
       extinction is zero), the optical depth ``tau = depth * alpha_lambda``, and
       the emergent intensity ``I = Src(1 - e^{-tau}) + I0 e^{-tau}``.
@@ -272,8 +272,8 @@ def _SE_to_slab_0D_bf_(
         # population of the next-higher-ion ground level (proton for hydrogen).
         Ni1: T_ARRAY = n_SE[Cont["idxJ"][k]] * N_ele
 
-        emi = _emisivity.bf_emissivity(wl, alpha, Te, Ne, Ni1, gi, gk, chi)
-        ext = _extinction.bf_extinction(wl, alpha, Te, Ni)
+        emi = _emisivity.bf_emissivity_(wl, alpha, Te, Ne, Ni1, gi, gk, chi)
+        ext = _extinction.bf_extinction_(wl, alpha, Te, Ni)
 
         tau = depth * ext
         # source function S = j_lambda / alpha_lambda; guard zero extinction.

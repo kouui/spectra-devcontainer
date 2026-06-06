@@ -9,7 +9,7 @@ from ..ImportAll import *
 
 
 @_numpy.vectorize
-def bb_extinction(
+def bb_extinction_(
     wl: T_FLOAT,
     Bji: T_FLOAT,
     Bij: T_FLOAT,
@@ -56,7 +56,7 @@ def bb_extinction(
 
 
 @_numpy.vectorize
-def bf_extinction(wl: T_FLOAT, alpha: T_FLOAT, Te: T_FLOAT, Ni: T_FLOAT) -> T_FLOAT:
+def bf_extinction_(wl: T_FLOAT, alpha: T_FLOAT, Te: T_FLOAT, Ni: T_FLOAT) -> T_FLOAT:
     r"""bound-free (continuum) extinction coefficient, corrected for stimulated emission.
 
     .. math::

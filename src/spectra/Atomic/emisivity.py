@@ -9,7 +9,7 @@ from ..ImportAll import *
 
 
 @_numpy.vectorize
-def bb_emissivity(wl: T_FLOAT, Aji: T_FLOAT, Nj: T_FLOAT) -> T_FLOAT:
+def bb_emissivity_(wl: T_FLOAT, Aji: T_FLOAT, Nj: T_FLOAT) -> T_FLOAT:
     r"""bound-bound (line) emission coefficient.
 
     .. math:: j = \frac{h\nu}{4\pi} A_{ji} N_j
@@ -38,7 +38,7 @@ def bb_emissivity(wl: T_FLOAT, Aji: T_FLOAT, Nj: T_FLOAT) -> T_FLOAT:
 
 
 @_numpy.vectorize
-def bf_emissivity(
+def bf_emissivity_(
     wl: T_FLOAT,
     alpha: T_FLOAT,
     Te: T_FLOAT,
