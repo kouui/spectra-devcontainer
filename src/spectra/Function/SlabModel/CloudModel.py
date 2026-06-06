@@ -26,12 +26,14 @@ def _SE_to_slab_0D_bb_(
     For every line transition this forms, on the per-line Doppler-broadened
     wavelength mesh:
 
-    - the integrated opacity ``alp0 = (h nu / 4pi)(N_i B_ij - N_j B_ji)`` and the
-      line source function ``Src = A_ji n_j / (N_i B_ij - N_j B_ji)`` (the latter
-      reduces to the standard two-level value; ``Src = 0`` where ``A_ji <= 0``),
-    - the optical depth ``tau = depth * alp0 * phi(lambda)`` (``phi`` the
+    - the integrated opacity ``absorption = (h nu / 4pi)(N_i B_ij - N_j B_ji)``
+      and emissivity ``emissivity = (h nu / 4pi) A_ji N_j``, from which the line
+      source function ``Src = emissivity / absorption`` (reduces to the standard
+      two-level value ``A_ji n_j / (N_i B_ij - N_j B_ji)``; ``Src = 0`` where
+      ``A_ji <= 0``),
+    - the optical depth ``tau = depth * absorption * phi(lambda)`` (``phi`` the
       normalized absorption profile, so ``tau`` is dimensionless even though
-      ``alp0`` is the wavelength-integrated coefficient),
+      ``absorption`` is the wavelength-integrated coefficient),
     - the emergent intensity ``I = Src(1 - e^{-tau}) + I0 e^{-tau}`` and its
       wavelength integral ``Ibar``.
 
@@ -85,22 +87,28 @@ def _SE_to_slab_0D_bb_(
     nj: T_ARRAY = SE_con.n_SE[Line["idxJ"][:]]
     ni: T_ARRAY = SE_con.n_SE[Line["idxI"][:]]
 
-    ## 2. compute extinction coefficient alpha via Atomic.extinction.bb_extinction_
+    ## 2. compute integrated opacity via Atomic.extinction.bb_extinction_
     Bij: T_ARRAY = Line["BIJ"][:]
     Bji: T_ARRAY = Line["BJI"][:]
     Ni: T_ARRAY = ni * N_ele
     Nj: T_ARRAY = nj * N_ele
-    alp0: T_ARRAY = _extinction.bb_extinction_(Line["w0"][:], Bji, Bij, Nj, Ni)
+    absorption: T_ARRAY = _extinction.bb_extinction_(Line["w0"][:], Bji, Bij, Nj, Ni)
 
-    ## 3. compute line source function
-    Aji: T_ARRAY = Line["AJI"][:]
-    # Src   : T_ARRAY = ( Aji * nj ) / ( Bij * ni - Bji * nj )
-    Src: T_ARRAY = _numpy.zeros_like(Aji)
-    for k in range(nLine):
-        if Aji[k] <= 0.0:
-            Src[k] = 0.0
-        else:
-            Src[k] = (Aji[k] * nj[k]) / (Bij[k] * ni[k] - Bji[k] * nj[k])
+    ## 3. compute line emissivity j and source function S = j / alpha
+    # clip Aji<=0 to 0: no spontaneous emission -> zero emissivity -> Src = 0.
+    Aji_clip: T_ARRAY = _numpy.where(Line["AJI"][:] > 0.0, Line["AJI"][:], 0.0)
+    emissivity: T_ARRAY = _emisivity.bb_emissivity_(Line["w0"][:], Aji_clip, Nj)
+    # S = j / alpha (== Aji*nj / (Bij*ni - Bji*nj); hv/4pi and N_ele cancel).
+    # alpha == 0 (Bij*Ni == Bji*Nj) has two cases:
+    #   1. Ni == Nj == 0 (both levels unpopulated): j == 0 too, the line is
+    #      absent, so Src = 0 -> I = I0 is correct. This is the only case
+    #      reachable in floating point (e.g. high levels underflowing to 0.0).
+    #   2. ni/nj == gi/gj with j != 0 (infinite-temperature boundary between
+    #      absorption and inversion): the true S diverges, so Src = 0 is wrong
+    #      (it drops the optically-thin emission j*depth*phi). This is a
+    #      measure-zero knife-edge, not reachable bitwise from SE populations.
+    # So Src = 0 is a numerical guard, NOT the physical alpha->0 limit of S.
+    Src: T_ARRAY = _numpy.divide(emissivity, absorption, out=_numpy.zeros_like(emissivity), where=(absorption != 0.0))
 
     ## 4. compute optical depth given the thichness of the slab
     ## 5. compute the line profile
@@ -138,7 +146,7 @@ def _SE_to_slab_0D_bb_(
         w0 = Line["w0"][k]
         wl = arr_wl_1D[i1:i2]
 
-        tau = depth * alp0[k] * absorb_prof_1d[i1:i2]
+        tau = depth * absorption[k] * absorb_prof_1d[i1:i2]
 
         prof = _RTCloud.emergent_intensity_(Src[k], tau[:], bg_1D[i1:i2])
 
@@ -148,23 +156,13 @@ def _SE_to_slab_0D_bb_(
 
         # store value
         arr_w0[k] = w0
-        # abs() handles population inversion: alp0 < 0 when Bji*nj > Bij*ni,
+        # abs() handles population inversion: absorption < 0 when Bji*nj > Bij*ni,
         # which makes tau negative; .max() on a negative array returns the
         # least-negative value, masking the strongest |tau|.
         arr_tau_max[k] = _numpy.abs(tau[:]).max()
         arr_Ibar[k] = Ibar
         arr_prof_1D[i1:i2] = prof[:]
         arr_tau_1D[i1:i2] = tau[:]
-
-    # physical, wavelength-integrated line coefficients from the RT quantities
-    # above: absorption is the integrated opacity alp0 (computed via
-    # bb_extinction_ in step 2), emissivity = Src * alp0. These keep
-    # Src == emissivity / absorption exactly; emissivity is 0 where Src is 0
-    # (Aji<=0). Routing alp0 through bb_extinction_ shifts tau/prof/emissivity/
-    # absorption by ~1e-15 vs the pre-refactor inline form (term ordering and
-    # N_ele distribution), so the regression baseline compares with allclose.
-    emissivity: T_ARRAY = Src * alp0
-    absorption: T_ARRAY = alp0
 
     cloud_con = _Container.CloudModel_BB_Container(
         w0=arr_w0,
