@@ -1878,6 +1878,7 @@ notebook = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "nbconvert" },
     { name = "nbformat" },
 ]
 
@@ -1900,7 +1901,10 @@ requires-dist = [
 provides-extras = ["dev", "notebook"]
 
 [package.metadata.requires-dev]
-dev = [{ name = "nbformat", specifier = ">=5.10.4" }]
+dev = [
+    { name = "nbconvert", specifier = ">=7.17.1" },
+    { name = "nbformat", specifier = ">=5.10.4" },
+]
 
 [[package]]
 name = "stack-data"

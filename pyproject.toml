@@ -110,5 +110,6 @@ addopts = "--import-mode=importlib"
 
 [dependency-groups]
 dev = [
+    "nbconvert>=7.17.1",
     "nbformat>=5.10.4",
 ]
