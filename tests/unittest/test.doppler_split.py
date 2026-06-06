@@ -10,8 +10,8 @@ import pytest
 
 from spectra.Atomic import BasicP
 from spectra.Experimental import ExFAL
-from spectra.Function import SlabModel
 from spectra.Function.SEquil import SELib
+from spectra.Function.SlabModel import CloudModel as _CloudModel
 from spectra.ImportAll import *
 from spectra.Struct import Atmosphere, Atom, Radiation
 
@@ -44,7 +44,7 @@ def test_slab_wl_1D_matches_Vd_obs_formula():
     Vd_obs = 3.0e5  # cm/s
     atom, wMesh, atmos, _, SE_con = _hydrogen_setup(Vd_obs=Vd_obs, Vd_sun=0.0)
 
-    Cloud_con = SlabModel.SE_to_slab_0D_(atom, atmos, SE_con, depth=1.0e3 * 1.0e5)
+    Cloud_con = _CloudModel._SE_to_slab_0D_bb_(atom, atmos, SE_con, depth=1.0e3 * 1.0e5)
 
     nLine = atom.nLine
     checked = 0
@@ -170,8 +170,8 @@ def test_cloud_tau_peak_tracks_Vd_obs_only():
     atom_a, wMesh_a, atmos_a, _, SE_con_a = _hydrogen_setup(Vd_obs=Vd_obs, Vd_sun=0.0)
     _atom_b, _wMesh_b, atmos_b, _, SE_con_b = _hydrogen_setup(Vd_obs=Vd_obs, Vd_sun=1.0e6)
 
-    Cloud_a = SlabModel.SE_to_slab_0D_(atom_a, atmos_a, SE_con_a, depth=1.0e3 * 1.0e5)
-    Cloud_b = SlabModel.SE_to_slab_0D_(atom_a, atmos_b, SE_con_b, depth=1.0e3 * 1.0e5)
+    Cloud_a = _CloudModel._SE_to_slab_0D_bb_(atom_a, atmos_a, SE_con_a, depth=1.0e3 * 1.0e5)
+    Cloud_b = _CloudModel._SE_to_slab_0D_bb_(atom_a, atmos_b, SE_con_b, depth=1.0e3 * 1.0e5)
 
     # Pick the strongest line in either run to keep the test robust.
     k = int(np.argmax(np.abs(Cloud_a.tau_max)))
@@ -211,7 +211,7 @@ def test_cloud_tau_peak_negative_Vd_obs_blue_shift():
     # test would not catch (e.g. an abs(Vd_obs) creeping in).
     Vd_obs = -3.0e5  # cm/s, -3 km/s
     atom, wMesh, atmos, _, SE_con = _hydrogen_setup(Vd_obs=Vd_obs, Vd_sun=0.0)
-    Cloud = SlabModel.SE_to_slab_0D_(atom, atmos, SE_con, depth=1.0e3 * 1.0e5)
+    Cloud = _CloudModel._SE_to_slab_0D_bb_(atom, atmos, SE_con, depth=1.0e3 * 1.0e5)
 
     k = int(np.argmax(np.abs(Cloud.tau_max)))
     i1 = int(wMesh.Line_mesh_idxs[k, 0])

@@ -29,7 +29,7 @@ def Level_ctj_table_to_Level_info_(
 
 
 # -------------------------------------------------------------
-def each_prof(l: _CloudModel.CloudModel_Container, il: T_INT):
+def each_prof(l: _CloudModel.CloudModel_BB_Container, il: T_INT):
     # -------------------------------------------------------------
     # extract one line profile from l.wl_1D, l.prof_1D
 
@@ -40,7 +40,7 @@ def each_prof(l: _CloudModel.CloudModel_Container, il: T_INT):
 
 
 # -------------------------------------------------------------
-def extract_lprof(l: _CloudModel.CloudModel_Container, wmin: T_FLOAT, wmax: T_FLOAT, dw: T_FLOAT, Ic: T_FLOAT = 0.0):
+def extract_lprof(l: _CloudModel.CloudModel_BB_Container, wmin: T_FLOAT, wmax: T_FLOAT, dw: T_FLOAT, Ic: T_FLOAT = 0.0):
     # -------------------------------------------------------------
     # extract line profile in a wl interval from l-structure
     # wmin,wmax,dw  -- in A
