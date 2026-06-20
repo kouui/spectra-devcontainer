@@ -181,7 +181,8 @@ def make_atmos(Vd_obs=0.0, Vd_sun=0.0):
 def run(Vd_sun=0.0, Vd_obs=0.0):
     atmos = make_atmos(Vd_obs=Vd_obs, Vd_sun=Vd_sun)
     SE_con, _ = SELib.cal_SE_with_Nh_Te_(atom, atmos, radiation, None)
-    Cloud_con = SlabModel.SE_to_slab_0D_(atom, atmos, SE_con, depth=DEPTH)
+    # SE_to_slab_0D_ now returns (bb, bf); this demo only needs the b-b lines.
+    Cloud_con, _ = SlabModel.SE_to_slab_0D_(atom, atmos, SE_con, depth=DEPTH)
     return SE_con, Cloud_con
 
 

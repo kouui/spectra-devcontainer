@@ -11,7 +11,7 @@ from ..Struct.Container import CloudModel as _CloudModel
 
 
 # -------------------------------------------------------------
-def each_prof(l: _CloudModel.CloudModel_Container, il: int):
+def each_prof(l: _CloudModel.CloudModel_BB_Container, il: int):
     # -------------------------------------------------------------
     # extract one line profile from l.wl_1D, l.prof_1D
 
@@ -22,7 +22,7 @@ def each_prof(l: _CloudModel.CloudModel_Container, il: int):
 
 
 # -------------------------------------------------------------
-def extract_lprof(l: _CloudModel.CloudModel_Container, wmin: float, wmax: float, dw: float, Ic: float = 0.0):
+def extract_lprof(l: _CloudModel.CloudModel_BB_Container, wmin: float, wmax: float, dw: float, Ic: float = 0.0):
     # -------------------------------------------------------------
     # extract line profile in a wl interval from l-structure
     # wmin,wmax,dw  -- in AA
