@@ -52,7 +52,7 @@ def _flu(nl, nu):
 #  based on the formula in Fujimoto 2004
 def Cmat_HI_Theoretical(nLevel, Te, Ne):
 
-    G = 2**4 * np.pi * Cst.a0_**2 * Cst.E_Rydberg_ * np.sqrt(1.0 / 2 / np.pi / Cst.me_ / Cst.k_ / Te)
+    G = 2**4 * np.pi * Cst.a0_**2 * Cst.E_Rydberg_H_ * np.sqrt(1.0 / 2 / np.pi / Cst.me_ / Cst.k_ / Te)
     Cmat = np.zeros([nLevel, nLevel])
     nn = np.linspace(1, nLevel - 1, nLevel - 1, dtype=int)
 
@@ -61,13 +61,13 @@ def Cmat_HI_Theoretical(nLevel, Te, Ne):
         gl = 2 * nl**2
         for nu in nus:
             f1 = _flu(nl, nu)
-            Elu = Cst.E_Rydberg_ * (1 / nl**2 - 1 / nu**2)
+            Elu = Cst.E_Rydberg_H_ * (1 / nl**2 - 1 / nu**2)
             gu = 2 * nu**2
-            Cmat[nu - 1, nl - 1] = G * Cst.E_Rydberg_ / Elu * np.exp(-Elu / Cst.k_ / Te) * f1 * Ne  # l->u
-            Cmat[nl - 1, nu - 1] = G * Cst.E_Rydberg_ / Elu * gl / gu * f1 * Ne  # u->l
-    En = Cst.E_Rydberg_ / nn**2
+            Cmat[nu - 1, nl - 1] = G * Cst.E_Rydberg_H_ / Elu * np.exp(-Elu / Cst.k_ / Te) * f1 * Ne  # l->u
+            Cmat[nl - 1, nu - 1] = G * Cst.E_Rydberg_H_ / Elu * gl / gu * f1 * Ne  # u->l
+    En = Cst.E_Rydberg_H_ / nn**2
     fn = 2**3 / 3 / np.sqrt(3) / nn  # approx. <g_bf> = 1
-    Cmat[nLevel - 1, 0:-1] = G * Cst.E_Rydberg_ / En * fn * np.exp(-En / Cst.k_ / Te) * Ne
+    Cmat[nLevel - 1, 0:-1] = G * Cst.E_Rydberg_H_ / En * fn * np.exp(-En / Cst.k_ / Te) * Ne
     Zn = nn**2 * (Cst.h_**2 / 2 / np.pi / Cst.me_ / Cst.k_ / Te) ** 1.5 * np.exp(En / Cst.k_ / Te)
     Cmat[0:-1, nLevel - 1] = Zn * Cmat[nLevel - 1, 0:-1] * Ne
     return Cmat

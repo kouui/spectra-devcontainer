@@ -43,7 +43,7 @@ def ratio_Etran_to_Eionize_(ni: T_VEC_IA, w: T_VEC_FA) -> T_VEC_FA:
         [:math:`-`]
     """
     # ionization energy
-    # Eik = E_Rydberg_ * (1./ni**2)
+    # Eik = E_Rydberg_H_ * (1./ni**2)
     # transition energy
     # E_tran = h_ * c_ / w
 
@@ -132,7 +132,7 @@ def gaunt_factor_gingerich_(ni: T_VEC_IA, x: T_VEC_IFA) -> T_VEC_FA:
 
     `x` is the ratio of the transition energy to the ionization energy.
 
-    ionization energy is `Cst.E_Rydberg_ * (1/ni**2)`
+    ionization energy is `Cst.E_Rydberg_H_ * (1/ni**2)`
 
     transition and `hc/w` for bound-free transition where `w` wavelength.
 
@@ -141,7 +141,7 @@ def gaunt_factor_gingerich_(ni: T_VEC_IA, x: T_VEC_IFA) -> T_VEC_FA:
     .. [1] Gingerich, March 1964
     """
     # ionization energy
-    Eik = CST.E_Rydberg_ * (1.0 / ni**2)
+    Eik = CST.E_Rydberg_H_ * (1.0 / ni**2)
     # transition energy
     E_tran = x * Eik
     # wavelength
@@ -225,9 +225,9 @@ def gaunt_factor_(ni: T_VEC_IA, x: T_VEC_IFA) -> T_VEC_FA:
 
     `x` is the ratio of the transition energy to the ionization energy.
 
-    ionization energy is `Cst.E_Rydberg_ * (1/ni**2)`
+    ionization energy is `Cst.E_Rydberg_H_ * (1/ni**2)`
 
-    transition energy is `Cst.E_Rydberg_ * (1/ni**2 - 1/nj**2)` for bound-bound
+    transition energy is `Cst.E_Rydberg_H_ * (1/ni**2 - 1/nj**2)` for bound-bound
     transition and `hc/w` for bound-free transition where `w` wavelength
 
 
@@ -342,7 +342,7 @@ def einstein_A_coefficient_(ni: T_VEC_IA, nj: T_VEC_IA) -> T_VEC_FA:
     fij = absorption_oscillator_strength_(ni, nj) * g
 
     # excitation energy
-    Eij = CST.E_Rydberg_ * (1.0 / ni**2 - 1.0 / nj**2)
+    Eij = CST.E_Rydberg_H_ * (1.0 / ni**2 - 1.0 / nj**2)
 
     # wavelength
     w = CST.h_ * CST.c_ / Eij
@@ -441,7 +441,7 @@ def CE_rate_coe_(ni: T_VEC_IA, nj: T_VEC_IA, Te: T_VEC_IFA) -> T_VEC_FA:
     Bij = 4.0 * ni * (ni / nj) ** 3 * x_m**2 * (1.0 + x_m * (4 / 3 + x_m * bi))
 
     # excitation energy
-    Eij = CST.E_Rydberg_ * (1.0 / ni**2 - 1.0 / nj**2)
+    Eij = CST.E_Rydberg_H_ * (1.0 / ni**2 - 1.0 / nj**2)
 
     # Eq(37)
     y = Eij / kT
@@ -536,7 +536,7 @@ def CI_rate_coe_(ni: T_VEC_IA, Te: T_VEC_IFA) -> T_VEC_FA:
     Bi = 2.0 / 3.0 * ni * ni * (5.0 + bi)
 
     # ionization energy
-    Eik = CST.E_Rydberg_ * (1.0 / ni**2)
+    Eik = CST.E_Rydberg_H_ * (1.0 / ni**2)
 
     # Eq(40)
     y = Eik / kT
@@ -622,7 +622,7 @@ def CI_rate_coe_clark_(ni: T_VEC_IA, Te: T_VEC_IFA) -> T_VEC_FA:
     G = (ni - 1) * (4 * ni + 1) / (6 * ni)
 
     # ionization energy
-    Eik = CST.E_Rydberg_ * (1.0 / ni**2)
+    Eik = CST.E_Rydberg_H_ * (1.0 / ni**2)
 
     y = Eik / kT
     TeV = Te * CST.K2eV_
@@ -693,7 +693,7 @@ def PI_cross_section_cm_(ni: T_VEC_IA, w: T_VEC_IFA, Z: T_VEC_IA) -> T_VEC_FA:
         Princeton University Press, 2015.
     """
     # ionization energy
-    Eik = CST.E_Rydberg_ * (1.0 / ni**2)
+    Eik = CST.E_Rydberg_H_ * (1.0 / ni**2)
 
     # frequency
     v = CST.c_ / w
@@ -753,7 +753,7 @@ def PI_cross_section_(ni: T_VEC_IA, x: T_VEC_IFA, Z: T_VEC_IA) -> T_VEC_FA:
         Princeton University Press, 2015.
     """
     # ionization energy
-    Eik = CST.E_Rydberg_ * (1.0 / ni**2)
+    Eik = CST.E_Rydberg_H_ * (1.0 / ni**2)
 
     # frequency
     v = x * Eik / CST.h_
@@ -807,7 +807,7 @@ def Rki_spon_rate_coe_(ni: T_VEC_IA, Te: T_VEC_IFA) -> T_VEC_FA:
     """
     kT = CST.k_ * Te
     # ionization energy
-    Eik = CST.E_Rydberg_ * (1.0 / ni**2)
+    Eik = CST.E_Rydberg_H_ * (1.0 / ni**2)
     #
     r = Eik / kT
 

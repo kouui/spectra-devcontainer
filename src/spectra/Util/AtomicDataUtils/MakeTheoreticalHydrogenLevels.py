@@ -19,7 +19,7 @@ END
 prefix    -
     1s            2S      1/2        1   0   2     2       1      0.0000000E+00
 {levels}prefix    -
-    -             -       -          -   -   -     1       2      1.3598430E+01
+    -             -       -          -   -   -     1       2      {continuum}
 END
 #--------------------------------------------------------------------------------------------------
 """
@@ -36,12 +36,12 @@ def make_hydrogen_levels_(nlevel: int, outfile: str):
         n = conf = i
         g = 2 * n * n
         # ionization energy
-        # Eik = CST.E_Rydberg_ * (1./n**2)
-        R_H = 109677.59  # [cm-1],  Hydrogen Rydberg const w/ proton mass
-        Ry = R_H * CST.c_ * CST.h_  # Rydberg energy unit
+        Ry = CST.E_Rydberg_H_  # Rydberg energy unit, proton-mass corrected
         Eik = Ry * (1.0 / n**2)
-        erg = (1.3598430e01 * CST.eV2erg_ - Eik) / CST.eV2erg_
+        erg = (Ry - Eik) / CST.eV2erg_
         s += f"    {conf:<2d}            -       -          {n:<2d}  -   -     {g:<4d}    1      {erg:.7E}\n"
+    continuum_erg = CST.E_Rydberg_H_ / CST.eV2erg_  # ionization energy [eV], proton-mass corrected
+    template = template.replace("{continuum}", f"{continuum_erg:.7E}")
     template = template.replace("{levels}", s)
     with Path(outfile).open("w") as f:
         f.write(template)

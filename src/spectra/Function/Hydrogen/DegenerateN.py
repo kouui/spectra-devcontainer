@@ -14,7 +14,7 @@ def ratio_Etran_to_Eionize_(ni_arr: T_ARRAY, wave_arr: T_ARRAY) -> T_ARRAY:
     ratio = _numpy.empty(wave_arr.shape, T_FLOAT)
 
     for k in range(nCont):
-        E_ionize = CST.E_Rydberg_ / ni_arr[k] ** 2
+        E_ionize = CST.E_Rydberg_H_ / ni_arr[k] ** 2
         E_tran = CST.h_ * CST.c_ / wave_arr[k, :]
         E_tran[:] += E_ionize - E_tran[0]  # fixed floating error
         ratio[k, :] = E_tran[:] / E_ionize

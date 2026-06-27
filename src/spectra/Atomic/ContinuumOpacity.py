@@ -211,7 +211,7 @@ def HI_bf_LTE_cross_sec_(Te: T_VEC_IFA, w: T_VEC_IFA) -> T_VEC_FA:
     else:
         alpha = 0.0
         kT = CST.k_ * Te
-        fac = CST.E_Rydberg_ * (1.0 - 1 / (n_limit * n_limit)) / kT
+        fac = CST.E_Rydberg_H_ * (1.0 - 1 / (n_limit * n_limit)) / kT
         # for n in range(_n_limit, min([_n_limit+3, 7])+1 ):
         for n in range(n_limit, min(n_limit + 3, 7) + 1):
             ## what is this `n*n` here ?
