@@ -311,9 +311,7 @@ def init_theoretical_hydrogen_atom_(
     Level = _numpy.zeros(nLevel, dtype=_level_dtype)
     _Level_info_list: T_LIST[T_TUPLE[T_STR, T_STR, T_STR]] = []
 
-    R_H = 109677.59  # [cm^-1], Hydrogen Rydberg const w/ proton mass
-    Ry = R_H * _CST.c_ * _CST.h_  # Rydberg energy unit [erg]
-    ionization_erg = 1.3598430e01 * _CST.eV2erg_
+    Ry = _CST.E_Rydberg_H_  # Rydberg energy unit [erg], proton-mass corrected
 
     # n=1 ground state (1s 2S 1/2), stage=1
     Level[0]["erg"] = 0.0
@@ -326,7 +324,7 @@ def init_theoretical_hydrogen_atom_(
     # n=2..nLevel-1 bound states, stage=1
     for k in range(1, nLevel - 1):
         n = k + 1
-        Level[k]["erg"] = ionization_erg - Ry * (1.0 / n**2)
+        Level[k]["erg"] = Ry - Ry * (1.0 / n**2)
         Level[k]["g"] = 2 * n * n
         Level[k]["stage"] = 1
         Level[k]["n"] = n
@@ -334,7 +332,7 @@ def init_theoretical_hydrogen_atom_(
         _Level_info_list.append((f"{n}", "-", "-"))
 
     # continuum, stage=2
-    Level[nLevel - 1]["erg"] = ionization_erg
+    Level[nLevel - 1]["erg"] = Ry
     Level[nLevel - 1]["g"] = 1
     Level[nLevel - 1]["stage"] = 2
     Level[nLevel - 1]["n"] = 0
