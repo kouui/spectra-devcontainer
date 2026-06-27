@@ -66,10 +66,14 @@ uv run python scripts/gen_atom_reference.py
 
 `gen_reference.py` runs the regression suite in record mode (`REGEN_REFS=1`):
 each `assert_close(actual, ref[key])` writes `actual` back under `key` (see
-`conftest.py`), so the golden file is rebuilt from the exact inputs the tests
-already define -- there is no separate input table to keep in sync. A second
-normal pass then verifies the regenerated file. Review the resulting diff before
-committing.
+`conftest.py`), so those goldens are rebuilt from the exact inputs the tests
+already define -- there is no separate input table to keep in sync. Recording is
+keyed on object identity, so a locally computed `expected` (e.g. a sum-to-one
+invariant) is asserted, never recorded. Keys compared with a direct
+`assert x == ref[key]` (all of RomanUtil, the string/int keys of ElementUtil)
+are only verified by the second pass, not rewritten -- update those by hand. A
+second normal pass then verifies the regenerated file. Review the resulting diff
+before committing.
 
 ## Running
 

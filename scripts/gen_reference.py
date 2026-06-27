@@ -6,8 +6,11 @@ Runs the regression suite in record mode (``REGEN_REFS=1``): every
 inputs the tests already define -- there is no separate input table to keep in
 sync. A second normal pass then verifies the regenerated file.
 
-Covers all ``reference_values.json`` keys (unit + e2e SE + cloud model). The
-atom snapshot (``atom_reference_values.json``) is generated separately by
+Rewrites every key compared via ``assert_close(actual, ref[key])`` (unit + e2e
+SE + cloud model). Keys compared with a direct ``assert x == ref[key]`` (all of
+RomanUtil, the string/int keys of ElementUtil) are verified by the second pass
+but not rewritten -- change one of those and update its golden by hand. The atom
+snapshot (``atom_reference_values.json``) is generated separately by
 ``scripts/gen_atom_reference.py``.
 
 Run intentionally after a deliberate algorithm/constant change:
