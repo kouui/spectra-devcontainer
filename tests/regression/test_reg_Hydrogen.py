@@ -2,9 +2,22 @@
 
 import pytest
 
+from spectra import Constants as _CST
 from spectra.Atomic import Hydrogen
 
 from .conftest import assert_close
+
+
+def _pi_edge_wave_(ni: int) -> float:
+    """Bound-free threshold wavelength [cm] for level ``ni``.
+
+    Derived from the Rydberg constant the code itself uses so the
+    "at threshold" cases track the ionization edge exactly. A hardcoded
+    wavelength sits on the cross-section discontinuity and would flip
+    between 0 and the edge peak under any sub-angstrom change to the
+    constant (e.g. the Balmer edge moves ~2 A between R_inf and R_H).
+    """
+    return _CST.h_ * _CST.c_ / (_CST.E_Rydberg_H_ / ni**2)
 
 
 class TestGauntFactor:
@@ -67,13 +80,19 @@ class TestCIRateCoe:
 
 class TestPICrossSection:
     def test_ni1_at_threshold(self, ref):
-        assert_close(Hydrogen.PI_cross_section_cm_(1, 912e-8, 1), ref["Hydrogen.PI_ni1_w912AA"])
+        assert_close(
+            Hydrogen.PI_cross_section_cm_(1, _pi_edge_wave_(1), 1),
+            ref["Hydrogen.PI_ni1_w912AA"],
+        )
 
     def test_ni1_above_threshold(self, ref):
         assert_close(Hydrogen.PI_cross_section_cm_(1, 500e-8, 1), ref["Hydrogen.PI_ni1_w500AA"])
 
     def test_ni2_at_threshold(self, ref):
-        assert_close(Hydrogen.PI_cross_section_cm_(2, 3647e-8, 1), ref["Hydrogen.PI_ni2_w3647AA"])
+        assert_close(
+            Hydrogen.PI_cross_section_cm_(2, _pi_edge_wave_(2), 1),
+            ref["Hydrogen.PI_ni2_w3647AA"],
+        )
 
     def test_below_threshold(self, ref):
         assert_close(Hydrogen.PI_cross_section_cm_(1, 2000e-8, 1), ref["Hydrogen.PI_ni1_w2000AA"])
