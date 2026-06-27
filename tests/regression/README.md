@@ -54,12 +54,22 @@ Keys follow the pattern `Module.function_description`:
 
 ## How to regenerate reference values
 
-If you need to regenerate (e.g., after an intentional algorithm change):
+After an intentional algorithm/constant change, regenerate both snapshots from
+current code:
 
-1. Checkout the commit you want as the new baseline
-2. Write a script that calls the changed functions with the same inputs used in the tests
-3. Replace the corresponding entries in `reference_values.json`
-4. Verify all tests pass: `uv run --extra dev python -m pytest tests/regression/ -v`
+```bash
+# reference_values.json  (unit + e2e SE + cloud model keys)
+uv run python scripts/gen_reference.py
+# atom_reference_values.json  (8 canonical atom loads)
+uv run python scripts/gen_atom_reference.py
+```
+
+`gen_reference.py` runs the regression suite in record mode (`REGEN_REFS=1`):
+each `assert_close(actual, ref[key])` writes `actual` back under `key` (see
+`conftest.py`), so the golden file is rebuilt from the exact inputs the tests
+already define -- there is no separate input table to keep in sync. A second
+normal pass then verifies the regenerated file. Review the resulting diff before
+committing.
 
 ## Running
 
