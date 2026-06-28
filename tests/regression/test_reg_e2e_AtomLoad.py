@@ -1,10 +1,10 @@
 """Regression tests for the AtomIO load pipeline.
 
 For each of 8 canonical configurations, loads the atom via
-``Atom.init_Atom_()`` and asserts that every field of the returned
-``(atom, path_dict)`` tuple (the wavelength mesh is read from
-``atom._wave_mesh``) matches the reference snapshot in
-``atom_reference_values.json``.
+``Atom.init_Atom_()`` (with the data-file paths read separately via
+``AtomIO.read_conf_()``) and asserts that every field of the atom (the
+wavelength mesh is read from ``atom._wave_mesh``) and every path matches
+the reference snapshot in ``atom_reference_values.json``.
 
 The snapshot was generated at commit ``a84128b`` (pre-refactoring) and
 bit-exact equal to a snapshot generated on current ``main``, confirming
@@ -17,6 +17,7 @@ import pytest
 
 from spectra.ImportAll import CFG
 from spectra.Struct import Atom
+from spectra.Util.AtomUtils import AtomIO as _AtomIO
 
 from ._atom_serde import assert_atom_matches
 
@@ -40,5 +41,6 @@ _CONFIGS: list[tuple[str, str, bool]] = [
 )
 def test_load_atom_matches_reference(conf_rel: str, name: str, is_hydrogen: bool, ref_atom):
     conf_path = str(CFG._ROOT_DIR / conf_rel)
-    atom, path_dict = Atom.init_Atom_(conf_path, is_hydrogen=is_hydrogen)
+    atom = Atom.init_Atom_(conf_path, is_hydrogen=is_hydrogen)
+    path_dict = _AtomIO.read_conf_(conf_path)
     assert_atom_matches(atom, path_dict, name, ref_atom)

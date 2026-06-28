@@ -106,7 +106,7 @@ class Atom:
 # -------------------------------------------------------------------------------
 
 
-def init_Atom_(conf_path: T_STR, is_hydrogen: T_BOOL = False) -> T_TUPLE[Atom, T_DICT[T_STR, None | T_STR]]:
+def init_Atom_(conf_path: T_STR, is_hydrogen: T_BOOL = False) -> Atom:
     """given the *.conf file, create the Atom struct
 
     Parameters
@@ -118,12 +118,13 @@ def init_Atom_(conf_path: T_STR, is_hydrogen: T_BOOL = False) -> T_TUPLE[Atom, T
 
     Returns
     -------
-    T_TUPLE[Atom, T_DICT[T_STR, None | T_STR]]
-
     atom : Atom
         the Atom struct (the wavelength mesh is stored on ``atom._wave_mesh``)
-    path_dict : T_DICT[T_STR, None | T_STR]
-        a dictionary of the path of data files
+
+    Notes
+    -----
+    If the data-file paths are needed, obtain them separately via
+    ``_AtomIO.read_conf_(conf_path)``.
     """
 
     # path dict
@@ -256,7 +257,7 @@ def init_Atom_(conf_path: T_STR, is_hydrogen: T_BOOL = False) -> T_TUPLE[Atom, T
         RL=RL,
         _wave_mesh=waveMesh,
     )
-    return atom, path_dict
+    return atom
 
 
 def init_theoretical_hydrogen_atom_(

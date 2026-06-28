@@ -23,6 +23,7 @@ import matplotlib.pyplot as plt
 
 from spectra.ImportAll import *
 from spectra.Struct import Atom
+from spectra.Util.AtomUtils import AtomIO as _AtomIO
 from spectra.Visual.Grotrian import Grotrian
 
 
@@ -36,7 +37,8 @@ def scaleFunc_inv(x):
 
 def main():
     conf_path = CFG._ROOT_DIR / "data" / "conf" / "H.conf"
-    atom, path_dict = Atom.init_Atom_(str(conf_path), is_hydrogen=True)
+    atom = Atom.init_Atom_(str(conf_path), is_hydrogen=True)
+    path_dict = _AtomIO.read_conf_(str(conf_path))
 
     print(f"[before construct] fignums = {plt.get_fignums()}")
     gro = Grotrian(
