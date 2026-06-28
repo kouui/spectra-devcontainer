@@ -3,7 +3,7 @@ from spectra.ImportAll import *
 from spectra.Struct import Atmosphere, Atom, Radiation
 
 conf_path = CFG._ROOT_DIR / "data" / "conf" / "He.conf"
-atom, path_dict = Atom.init_Atom_(str(conf_path), is_hydrogen=False)
+atom = Atom.init_Atom_(str(conf_path), is_hydrogen=False)
 
 atmos = Atmosphere.Atmosphere0D(Nh=1.0e11, Ne=5.0e10, Te=7.0e3, Vt=5.0e5)
 radiation = Radiation.init_Radiation_()

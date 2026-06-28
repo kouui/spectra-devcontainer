@@ -1,9 +1,10 @@
 """Serialization and assertion helpers for Atom regression tests.
 
-Flattens the `(atom, path_dict)` tuple returned by `Atom.init_Atom_()`
-(the wavelength mesh is read from ``atom._wave_mesh``) into a flat
-``{key: json_value}`` dict suitable for JSON storage, and provides the
-reverse comparison used by ``test_reg_e2e_AtomLoad.py``.
+Flattens the ``Atom`` produced by `Atom.init_Atom_()` together with its
+``path_dict`` (read separately via ``AtomIO.read_conf_()``; the wavelength
+mesh is read from ``atom._wave_mesh``) into a flat ``{key: json_value}``
+dict suitable for JSON storage, and provides the reverse comparison used
+by ``test_reg_e2e_AtomLoad.py``.
 
 Design notes
 ------------

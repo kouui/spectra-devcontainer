@@ -24,6 +24,7 @@ from _atom_serde import dump_atom  # noqa: E402  # pyright: ignore[reportMissing
 
 from spectra import Configurations as CFG  # noqa: E402
 from spectra.Struct import Atom  # noqa: E402
+from spectra.Util.AtomUtils import AtomIO as _AtomIO  # noqa: E402
 
 # (relative conf path from repo root, readable name, is_hydrogen)
 CONFIGS: tuple[tuple[str, str, bool], ...] = (
@@ -47,7 +48,8 @@ def main() -> None:
     for rel, name, is_H in CONFIGS:
         conf_path = str(CFG._ROOT_DIR / rel)
         print(f"loading {name}  <- {rel}", flush=True)
-        atom, path_dict = Atom.init_Atom_(conf_path, is_hydrogen=is_H)
+        atom = Atom.init_Atom_(conf_path, is_hydrogen=is_H)
+        path_dict = _AtomIO.read_conf_(conf_path)
         merged.update(dump_atom(atom, path_dict, name))
 
     out.parent.mkdir(parents=True, exist_ok=True)

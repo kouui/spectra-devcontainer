@@ -20,7 +20,7 @@ _FAL_PATH = CFG._ROOT_DIR / "data/atmos/FAL/FALC_82.atmos"
 
 
 def _hydrogen_setup(Vd_obs: float = 0.0, Vd_sun: float = 0.0):
-    atom, _ = Atom.init_Atom_(_CONF_PATH, is_hydrogen=True)
+    atom = Atom.init_Atom_(_CONF_PATH, is_hydrogen=True)
     wMesh = atom._wave_mesh
     atmos = Atmosphere.Atmosphere0D(
         Nh=1.0e12,

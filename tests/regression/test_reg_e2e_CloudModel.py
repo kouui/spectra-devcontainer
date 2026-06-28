@@ -13,7 +13,7 @@ from .conftest import assert_close
 class TestHydrogenCloudModel:
     def test_slab_0D(self, ref):
         conf_path = str(CFG._ROOT_DIR / "data/conf/H.conf")
-        atom, _ = Atom.init_Atom_(conf_path, is_hydrogen=True)
+        atom = Atom.init_Atom_(conf_path, is_hydrogen=True)
 
         atmos = Atmosphere.Atmosphere0D(Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vt=5.0e5)
         radiation = Radiation.init_Radiation_()
@@ -37,7 +37,7 @@ class TestHydrogenCloudModel:
         valid because they don't depend on populations).
         """
         conf_path = str(CFG._ROOT_DIR / "data/conf/H.conf")
-        atom, _ = Atom.init_Atom_(conf_path, is_hydrogen=True)
+        atom = Atom.init_Atom_(conf_path, is_hydrogen=True)
 
         atmos = Atmosphere.Atmosphere0D(Nh=1.0e12, Ne=1.0e11, Te=7.0e3, Vt=5.0e5)
         radiation = Radiation.init_Radiation_()
