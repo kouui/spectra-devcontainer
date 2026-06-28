@@ -120,11 +120,15 @@ def bf_emissivity_(
     # the guard below would then wrongly zero out (the Balmer-limit spike).
     eps = chi * (w0 - wl) / wl
 
-    # below threshold (wl > edge, eps < 0) there is no recombination continuum;
-    # return 0 rather than the analytically-continued exp(-eps/kTe) which would
-    # blow up (and give 0*inf=nan when alpha==0). Production meshes are
-    # edge-first and stay at/below the edge, so this only guards misuse.
-    if eps < 0.0:
+    # below threshold (wl > edge) there is no recombination continuum; return 0
+    # rather than the analytically-continued exp(-eps/kTe) which would blow up
+    # (and give 0*inf=nan when alpha==0). The rearrangement above makes eps
+    # exactly 0 at the edge for meshes built from w0. The small tolerance (~1e-9
+    # of chi: far above 1 ULP, far below kTe) is a belt-and-suspenders guard for
+    # a caller whose wl was NOT built from this exact w0 and rounds a hair past
+    # the edge -- such a point stays on the emitting side, where eps is a tiny
+    # negative and exp(-eps/kTe) ~ 1 is finite.
+    if eps < -1.0e-9 * chi:
         return 0.0
     # sigma_fb * f(eps)v with the divergent factors cancelled analytically:
     #   - eps: 1/eps (sigma_fb) * eps (Maxwell flux) -> 1  (this is what removes
