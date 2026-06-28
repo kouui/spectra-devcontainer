@@ -48,8 +48,8 @@ repos:
       #   always_run: true
 
       - id: pytest-regression
-        name: pytest regression tests
-        entry: uv run --extra dev python -m pytest tests/regression/ -q
+        name: pytest regression + unit tests
+        entry: uv run --extra dev python -m pytest tests/regression/ tests/unittest/ -q
         language: system
         pass_filenames: false
         always_run: true

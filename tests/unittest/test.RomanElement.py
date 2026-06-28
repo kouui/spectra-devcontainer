@@ -34,7 +34,11 @@ class Test_Element(unittest.TestCase):
 
     def test_sym_to_Abun(self):
 
-        self.assertTrue(_ISCLOSE(_ElementUtil.sym_to_abun_("He"), 10.0 ** (10.93 - 12.0), **_KWGS_CLOSE))  # type: ignore[arg-type]
+        # Assert the symbol->index lookup + 10**(A-12) transformation against
+        # the loaded abundance table, not a literal: the He abundance is
+        # solar-compilation-dependent and previously drifted out of sync.
+        _abun_He = ELEMENT_ABUN[ELEMENT_SYMBOL.index("He")]
+        self.assertTrue(_ISCLOSE(_ElementUtil.sym_to_abun_("He"), 10.0 ** (_abun_He - 12.0), **_KWGS_CLOSE))  # type: ignore[arg-type]
 
     def test_format_ion(self):
 

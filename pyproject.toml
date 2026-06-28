@@ -107,6 +107,11 @@ stubPath = "typings"
 # (e.g. tests/unittest/test.doppler_split.py). Without importlib mode,
 # pytest derives a module name from the path and fails on the first dot.
 addopts = "--import-mode=importlib"
+# The project names test files with dots (test.Math.py, test.SE.H_I.py),
+# which the default `test_*.py` glob does not match. Without this, a
+# directory-level run (e.g. pytest tests/) silently collects nothing from
+# tests/unittest/, so those tests rot undetected.
+python_files = ["test_*.py", "test.*.py"]
 
 [dependency-groups]
 dev = [
