@@ -167,7 +167,7 @@ CONF_PATH = str(CFG._ROOT_DIR / "data/conf/H.conf")
 DEPTH = 1.0e3 * 1.0e5  # 1000 km slab in cm
 COLORS = ["C0", "k", "C3"]  # blue / black / red, used as -, 0, + velocity throughout
 
-atom, _ = Atom.init_Atom_(CONF_PATH, is_hydrogen=True)
+atom = Atom.init_Atom_(CONF_PATH, is_hydrogen=True)
 radiation = Radiation.init_Radiation_()
 
 
