@@ -271,7 +271,7 @@ def _SE_to_slab_0D_bf_(
         # population of the next-higher-ion ground level (proton for hydrogen).
         Ni1: T_ARRAY = n_SE[Cont["idxJ"][k]] * N_ele
 
-        emi = _emisivity.bf_emissivity_(wl, alpha, Te, Ne, Ni1, gi, gk, chi)
+        emi = _emisivity.bf_emissivity_(wl, alpha, Te, Ne, Ni1, gi, gk, chi, Cont["w0"][k])
         ext = _extinction.bf_extinction_(wl, alpha, Te, Ni)
 
         tau = depth * ext

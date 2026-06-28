@@ -47,6 +47,7 @@ def bf_emissivity_(
     gi: T_FLOAT,
     gk: T_FLOAT,
     chi: T_FLOAT,
+    w0: T_FLOAT,
 ) -> T_FLOAT:
     r"""bound-free (continuum) spectral emission coefficient :math:`j_\lambda`.
 
@@ -95,6 +96,10 @@ def bf_emissivity_(
     chi : T_FLOAT
         ionization energy from the lower (bound) level, :math:`\chi = h f_0`
         (continuum edge), [erg]
+    w0 : T_FLOAT
+        continuum edge wavelength :math:`\lambda_0 = c/f_0`, the same value used to
+        build the wavelength mesh ``wl``, [cm]. Used only to evaluate
+        :math:`\varepsilon` without catastrophic cancellation (see below).
 
     Returns
     -------
@@ -102,7 +107,19 @@ def bf_emissivity_(
         spectral b-f emissivity :math:`j_\lambda`, [erg/cm^3/s/Sr/cm]
     """
     nu = CST.c_ / wl
-    eps = CST.h_ * nu - chi
+    # eps = h*nu - chi, rearranged to avoid catastrophic cancellation at the edge.
+    # The idea: eps = h*nu - chi subtracts two nearly-equal large numbers, and nu
+    # is reconstructed from wl which itself came from f0 -- that round-trip
+    # (f0 -> w0=c/f0 -> nu=c/w0) is where the 1-ULP error crept in. Instead of
+    # round-tripping, rearrange the same formula so the edge term cancels exactly.
+    # With w0 = c/f0 and chi = h*f0 we have chi*w0 = h*c, so
+    #   h*nu - chi = h*c/wl - chi = chi*w0/wl - chi = chi*(w0 - wl)/wl,
+    # which is algebraically identical but, since the mesh edge column is wl == w0
+    # bitwise, evaluates to exactly 0 there. The direct form h*(c/wl) - h*f0
+    # round-trips f0 -> w0 -> f0 and can land 1 ULP negative at the edge, which
+    # the guard below would then wrongly zero out (the Balmer-limit spike).
+    eps = chi * (w0 - wl) / wl
+
     # below threshold (wl > edge, eps < 0) there is no recombination continuum;
     # return 0 rather than the analytically-continued exp(-eps/kTe) which would
     # blow up (and give 0*inf=nan when alpha==0). Production meshes are
