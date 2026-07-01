@@ -77,28 +77,22 @@ $n_p/N_\mathrm{tot}$. The Rydberg reaches them through **two channels**:
 |---|---|---|
 | **level energies** | `atom.Level["erg"]` in the Saha/Boltzmann factors | $\exp(-E/kT_e)$ — thermodynamic balance |
 | **rate coefficients** | `Hydrogen.CE_rate_coe_`, `CI_rate_coe_`, PI cross-sections | $E_{ij} = E_\mathrm{Ry}\,(1/n_i^2 - 1/n_j^2)$ — kinetic rates |
+| **radiative sampling** | line/continuum $\lambda$ where the incident field is read | shifted $E_{ij}$ moves $\lambda$ across a non-Planckian solar spectrum |
 
-The *theoretical* hydrogen atom rebuilds both from the one constant
+The *theoretical* hydrogen atom rebuilds the first two from the one constant
 `Constants.E_Rydberg_H_`, so a single monkeypatch toggles the whole solve
 self-consistently (numba JIT is off, every lookup is qualified `CST.E_Rydberg_H_`).
 
-**Analytic expectation (Saha).** Bound level $n$ binds to the continuum by
-$\chi/n^2$, so in the ionized regime its population scales as
-$n_n \propto e^{+\chi/(n^2 kT_e)}$, giving
-
-$$\frac{\Delta n_n}{n_n} \approx -\frac{\Delta\chi}{n^2\,kT_e},
-  \qquad
-  \frac{\Delta(\text{ion frac})}{\text{ion frac}} \approx +\frac{\Delta\chi}{kT_e}
-  \ \ (\text{neutral regime}).$$
-
-The ground-state amplitude is $\Delta\chi/kT_e = \{1.2\%,\, 0.84\%,\, 0.17\%\}$ at
-$T_e=\{7000, 10000, 50000\}$ K, falling as $1/n^2$ up the series. The effect
-therefore **shrinks with $T_e$ and up the series**, and along $N_e$ it is largest
-wherever the *minority* species sits deepest in the Boltzmann tail.
-
-A clean **collisional-radiative** field is used (`se_params.Tr = Te`, i.e. a
-Planck driver at $T_e$), so the high-$N_e$ limit reduces to exact LTE and the
-numbers can be checked against the analytic Saha estimate above.
+**No clean analytic limit.** The solve is driven by the *default solar radiation
+field* (`se_params=None` ⇒ `radiation.solar`), **not** a Planck function at $T_e$.
+Because that field is not thermal, there is no single closed form for the shift —
+it is mapped numerically below. Only the **ground state at high $N_e$**, where
+collisions fully enforce LTE, recovers the Saha scaling
+$\Delta n_1/n_1 \approx -\Delta\chi/kT_e \approx -1\%$ at $7000$ K. The excited
+levels and the ionization fraction are set by the radiative rates and move by
+order-unity fractions of their (small) populations — consistent with the Rydberg
+shift dragging line wavelengths across a steeply varying solar UV field, which
+*amplifies* rather than damps the sensitivity.
 """
     ),
     md(r"""## Setup
@@ -111,7 +105,6 @@ import spectra.Constants as CST
 from spectra.Atomic import Hydrogen
 from spectra.Function.SEquil import SELib
 from spectra.Struct import Atmosphere, Atom, Radiation
-from spectra.Struct.Container.SEquil import SE_Params_Container
 
 # the patch only propagates if the rate modules share this Constants object
 assert Hydrogen.CST is CST, "Rydberg monkeypatch would not reach the rate functions"
@@ -142,9 +135,7 @@ def solve_SE(R_cm, Te, Ne):
     atom = Atom.init_theoretical_hydrogen_atom_(nLevel=NLEVEL)
     atmos = Atmosphere.Atmosphere0D(Nh=0, Ne=Ne, Te=Te, Vd_obs=0.0, Vd_sun=0.0, Vt=VT)
     radiation = Radiation.init_Radiation_()
-    se, _ = SELib.cal_SE_with_Ne_Te_(
-        atom, atmos, radiation, None, se_params=SE_Params_Container(Tr=Te)
-    )
+    se, _ = SELib.cal_SE_with_Ne_Te_(atom, atmos, radiation, None)
     return se.n_SE
 """
     ),
@@ -236,14 +227,15 @@ plt.show()
     md(
         r"""**Reading the maps.**
 
-- **Bound levels $n_1, n_2, n_3$** move by a nearly $N_e$-independent amount
-  that tracks $-\Delta\chi/kT_e$ in the ionized regime and shrinks down each
-  column as $T_e$ rises. $n_2$ and $n_3$ depart from the $n_1$ value toward
-  high $N_e$/low $T_e$, where they couple to the rising ionization.
-- **Ionization fraction** moves most at **low $T_e$ / high $N_e$** — the
-  bottom-right of its panel, where H is mostly neutral and the ions sit in the
-  Boltzmann tail. Where H is already fully ionized (high $T_e$, low $N_e$) the
-  fraction saturates at 1 and is insensitive.
+- **Ground state $n_1$** moves most at **low $N_e$** (radiation-dominated,
+  reaching $\sim-70\%$) and relaxes toward the small Saha value ($\sim-1\%$) at
+  high $N_e$, where collisions enforce LTE. It is weakest at high $T_e$.
+- **Excited $n_2, n_3$** show large *positive* relative changes (order unity to
+  several hundred percent) — large fractions of very small populations, driven by
+  the radiative rates rather than the Saha binding-energy shift.
+- **Ionization fraction** is insensitive wherever H is fully ionized (high
+  $T_e$, or low $N_e$) and moves most at **low $T_e$ / high $N_e$**, where the
+  ion is a deep-tail minority.
 """
     ),
     md(r"""## Per-level change at one representative cell
@@ -268,41 +260,19 @@ plt.tight_layout()
 plt.show()
 """
     ),
-    md(r"""## Validation against the analytic Saha estimate
-
-Bound level $n$ binds to the continuum by $\chi/n^2$, so in the ionized regime
-its Saha sensitivity is $-\Delta\chi/(n^2 kT_e)$ — a $1/n^2$ reduction down the
-series. Compare the lowest-$N_e$ (most ionized) cells against the closed form.
-"""),
-    code(
-        r"""dchi_erg = (R_INF_CM - R_H_CM) * CST.c_ * CST.h_   # ionization-energy drop [erg], > 0
-# level n binds to the continuum by chi/n^2, so its Saha sensitivity is
-# -d(chi/n^2)/kTe = -dchi/(n^2 kTe): the 1/n^2 law checked below (most-ionized
-# column, Ne=1e8).
-print(f"{'Te [K]':>8} {'n':>3} {'-dchi/(n^2 kTe)':>18} {'d n_n (Ne=1e8)':>18}")
-for i, Te in enumerate(TE_LIST):
-    for n, d in ((1, d_n1), (2, d_n2), (3, d_n3)):
-        analytic = -dchi_erg / (n**2 * CST.k_ * Te)
-        print(f"{Te:8.0f} {n:>3} {analytic:18.2e} {d[i, 0]:18.2e}")
-    print()
-"""
-    ),
     md(
-        r"""**Verification.** Each bound level matches $-\Delta\chi/(n^2 kT_e)$ in the
-most-ionized cells (at 7000 K: $n_1=-1.2\%$, $n_2=-0.30\%\approx-1.2\%/4$,
-$n_3=-0.13\%\approx-1.2\%/9$), confirming the effect is the Saha shift of each
-level's binding energy $\chi/n^2$. The $1/(n^2 T_e)$ scaling explains why the
-impact is largest for the ground state at low $T_e$ (~1%) and falls off both up
-the series and with temperature (~0.2% at 50000 K).
+        r"""## Takeaway
 
-## Takeaway
-
-Swapping $R_\infty \to R_H$ ($\sim$0.05% in the constant) shifts the hydrogen SE
-populations by at most $\sim$1% (collisional-excitation / -ionization rates and
-the neutral fraction at low $T_e$), and far less at high $T_e$. The change is a
-clean $\Delta\chi/kT_e$ Saha effect, concentrated wherever the minority species
-sits deepest in the Boltzmann tail — consistent with the small
-golden-value shifts seen when the constant was standardized.
+Under a realistic solar radiation field (`se_params=None`) the Rydberg swap
+$R_\infty \to R_H$ ($\sim$0.05% in the constant) does **not** reduce to a clean
+Saha shift. Only the collision-dominated ground state at high $N_e$ recovers the
+analytic $-\Delta\chi/kT_e \approx -1\%$ estimate. Elsewhere the effect is
+radiative-rate driven: excited-level populations and the neutral/ion balance move
+by order-unity fractions of their (typically small) populations, largest where the
+affected species is a Boltzmann-tail minority. These are large *relative* swings
+on small absolute populations, amplified by how the shifted line wavelengths
+sample the non-thermal solar field — a realistic-conditions sensitivity, distinct
+from the idealized LTE limit.
 """
     ),
 ]
