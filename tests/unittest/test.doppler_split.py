@@ -133,9 +133,9 @@ def test_se_jbar_robust_at_large_Vd_sun():
 
 def test_se_wm_cm_shifted_within_backRad_at_large_Vd_sun():
     _, _, _, radiation, SE_con = _hydrogen_setup(Vd_sun=2.0e8)
-    # Note: inactive-line slices in wm_cm_shifted_1d are zero by design
-    # (see refactor_04.md §2.6). Filter those out before bounds-checking.
-    active = SE_con.se_bb_con.wm_cm_shifted_1d[SE_con.se_bb_con.wm_cm_shifted_1d > 0]
+    # Note: inactive-line (f0<=0) slices in wm_cm_shifted_1d are inf by design
+    # (no finite wavelength exists). Filter those out before bounds-checking.
+    active = SE_con.se_bb_con.wm_cm_shifted_1d[np.isfinite(SE_con.se_bb_con.wm_cm_shifted_1d)]
     assert active.size > 0
     assert active.min() > radiation.solar[0, :].min(), "shifted mesh underflows backRad"
     assert active.max() < radiation.solar[0, :].max(), "shifted mesh overflows backRad"

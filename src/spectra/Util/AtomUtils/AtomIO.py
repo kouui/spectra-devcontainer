@@ -775,7 +775,12 @@ def make_Atom_Line_(
         j: int = Line["idxJ"][k]
         Line["f0"][k] = (Level["erg"][j] - Level["erg"][i]) / CST.h_
         if Line["f0"][k] <= 0.0:
-            Line["w0"][k] = 0.0
+            # degenerate level pair (e.g. unresolved fine structure): no
+            # radiative transition exists. w0=inf is the physical limit of
+            # c/f0; it keeps c_/w0-style expressions finite (-> 0.0) and is
+            # dropped by matplotlib, whereas a 0.0 placeholder would
+            # divide-by-zero and plot at wavelength 0.
+            Line["w0"][k] = _numpy.inf
             Line["AJI"][k] = 0.0
         else:
             Line["w0"][k] = CST.c_ / Line["f0"][k]

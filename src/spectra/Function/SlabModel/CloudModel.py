@@ -119,36 +119,45 @@ def _SE_to_slab_0D_bb_(
     arr_tau_1D = _numpy.empty_like(absorb_prof_1d)
     arr_wl_1D = _numpy.empty_like(absorb_prof_1d)
 
-    # fill the full observer-frame wavelength mesh first, so the background
-    # intensity can be interpolated onto it in a single pass below.
-    for k in range(nLine):
-        i1 = Line_mesh_idxs[k, 0]
-        i2 = Line_mesh_idxs[k, 1]
-        # observer-frame wavelength mesh: sun-frame atom-rest-frame mesh
-        # shifted by +w0*Vd_obs/c. Astronomy radial-velocity convention:
-        # +Vd_obs = atom velocity AWAY from observer (source receding) →
-        # observer sees line center red-shifted to w0 + w0*Vd_obs/c.
-        arr_wl_1D[i1:i2] = wm_cm_1d[i1:i2] + (Line["w0"][k] * Vd_obs / CST.c_)
-
-    # one interpolation of the background onto the full observer-frame mesh;
-    # sliced per line below so it stays aligned with each line's tau.
-    if I0 is None:
-        bg_1D = _numpy.zeros_like(arr_wl_1D)
-    else:
-        if I0.shape[0] != 2:
-            raise ValueError(f"background intensity I0 must have shape (2, n_wavelength), but got {I0.shape}")
-        bg_1D = _numpy.interp(arr_wl_1D, I0[0, :], I0[1, :])
+    if I0 is not None and I0.shape[0] != 2:
+        raise ValueError(f"background intensity I0 must have shape (2, n_wavelength), but got {I0.shape}")
 
     for k in range(nLine):
         i1 = Line_mesh_idxs[k, 0]
         i2 = Line_mesh_idxs[k, 1]
 
         w0 = Line["w0"][k]
-        wl = arr_wl_1D[i1:i2]
+
+        if Line["f0"][k] <= 0.0:
+            # inactive line (degenerate levels, w0=inf): wavelength-like
+            # outputs are inf (no finite wavelength exists), radiation-like
+            # outputs are physically 0. These slices must stay excluded from
+            # all arithmetic below (inf would propagate as nan).
+            arr_w0[k] = w0
+            arr_tau_max[k] = 0.0
+            arr_Ibar[k] = 0.0
+            arr_wl_1D[i1:i2] = _numpy.inf
+            arr_prof_1D[i1:i2] = 0.0
+            arr_tau_1D[i1:i2] = 0.0
+            continue
+
+        # observer-frame wavelength mesh: sun-frame atom-rest-frame mesh
+        # shifted by +w0*Vd_obs/c. Astronomy radial-velocity convention:
+        # +Vd_obs = atom velocity AWAY from observer (source receding) →
+        # observer sees line center red-shifted to w0 + w0*Vd_obs/c.
+        wl = wm_cm_1d[i1:i2] + (w0 * Vd_obs / CST.c_)
+        arr_wl_1D[i1:i2] = wl[:]
+
+        # background intensity interpolated onto this line's observer-frame
+        # mesh, so it stays aligned with the line's tau.
+        if I0 is None:
+            bg = _numpy.zeros_like(wl)
+        else:
+            bg = _numpy.interp(wl, I0[0, :], I0[1, :])
 
         tau = depth * absorption[k] * absorb_prof_1d[i1:i2]
 
-        prof = _RTCloud.emergent_intensity_(Src[k], tau[:], bg_1D[i1:i2])
+        prof = _RTCloud.emergent_intensity_(Src[k], tau[:], bg[:])
 
         # l.tau0[i] = np.max(tau)
         # l.prof[i][:] = S[i] * (1. - np.exp(-tau[:]))

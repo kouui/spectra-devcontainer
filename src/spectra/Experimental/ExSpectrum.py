@@ -51,13 +51,18 @@ def init_spectrum_(atom: _Atom.Atom, Te: T_FLOAT, Vt: T_FLOAT, Vd_obs: T_FLOAT):
     _nRL = atom.nRL
     RL_coe = atom.RL.Coe
     RL_lineindex = RL_coe["lineIndex"].copy()
+    # inactive lines (degenerate levels, f0<=0, w0=inf): no finite wavelength
+    # mesh exists; leave them out of the spectrum like non-RL lines. Both the
+    # mesh-construction and belonging-line loops must use this same filtered
+    # list, since the latter reads line_mesh_cm filled by the former.
+    active_lineindex = [k for k in RL_lineindex if atom.Line["f0"][k] > 0.0]
 
     bias = 0
     line_mesh_dop = _numpy.empty((nSpec,), dtype=DT_NB_FLOAT)
     line_mesh_cm = _numpy.empty_like(Line_mesh)
     dop_width_cm = _numpy.empty((atom.nLine,), dtype=DT_NB_FLOAT)
 
-    for k in RL_coe["lineIndex"][:]:  ##: loop over b-b lines defined in RL
+    for k in active_lineindex:  ##: loop over b-b lines defined in RL
         w0 = atom.Line["w0"][k]
         dopWidth_cm = _BasicP.doppler_width_(w0, Te, Vt, mass)  ##: doppler width [cm] with typical Te and Vt
         i1, i2 = Line_mesh_idxs[k, :]
@@ -98,7 +103,7 @@ def init_spectrum_(atom: _Atom.Atom, Te: T_FLOAT, Vt: T_FLOAT, Vd_obs: T_FLOAT):
         (nSpectrum, _MAX_OVERLAP_LINE), dtype=DT_NB_INT
     )  ## value > -1 : overlapping line index
     ##    index_line = -1 * _numpy.ones((nSpectrum,nRL,2), dtype=DT_NB_INT)
-    for k in RL_coe["lineIndex"][:]:
+    for k in active_lineindex:
         i1, i2 = Line_mesh_idxs[k, :]
         blue = line_mesh_cm[i1]
         red = line_mesh_cm[i2 - 1]
