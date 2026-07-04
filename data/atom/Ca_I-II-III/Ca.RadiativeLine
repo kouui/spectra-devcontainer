@@ -28,7 +28,7 @@ prefix          3p6.
 # 8498
     3d          2D          3/2         4p          2P          3/2         Voigt       201         5.E+07            0           10.00       80.00       tmp.dat     
 # 8542
-    2d          2D          5/2         4p          2P          3/2         Voigt       201         5.E+07            0           10.00       80.00       tmp.dat     
+    3d          2D          5/2         4p          2P          3/2         Voigt       201         5.E+07            0           10.00       80.00       tmp.dat     
     3d          2D          3/2         5p          2P          1/2         Voigt       41          5.E+07            0           4.00        60.00       tmp.dat     
     3d          2D          3/2         5p          2P          3/2         Voigt       41          5.E+07            0           4.00        60.00       tmp.dat     
     3d          2D          3/2         4f          2F          5/2         Voigt       41          5.E+07            0           4.00        60.00       tmp.dat     
@@ -36,14 +36,14 @@ prefix          3p6.
     3d          2D          3/2         6p          2P          3/2         Voigt       41          5.E+07            0           4.00        60.00       tmp.dat     
     3d          2D          3/2         5f          2F          5/2         Voigt       41          5.E+07            0           4.00        60.00       tmp.dat     
     3d          2D          3/2         6f          2F          5/2         Voigt       41          5.E+07            0           4.00        60.00       tmp.dat     
-    2d          2D          5/2         5p          2P          3/2         Voigt       41          5.E+07            0           4.00        60.00       tmp.dat     
-    2d          2D          5/2         4f          2F          7/2         Voigt       41          5.E+07            0           4.00        60.00       tmp.dat     
-    2d          2D          5/2         4f          2F          5/2         Voigt       41          5.E+07            0           4.00        60.00       tmp.dat     
-    2d          2D          5/2         6p          2P          3/2         Voigt       41          5.E+07            0           4.00        60.00       tmp.dat     
-    2d          2D          5/2         5f          2F          5/2         Voigt       41          5.E+07            0           4.00        60.00       tmp.dat     
-    2d          2D          5/2         5f          2F          7/2         Voigt       41          5.E+07            0           4.00        60.00       tmp.dat     
-    2d          2D          5/2         6f          2F          5/2         Voigt       41          5.E+07            0           4.00        60.00       tmp.dat     
-    2d          2D          5/2         6f          2F          7/2         Voigt       41          5.E+07            0           4.00        60.00       tmp.dat     
+    3d          2D          5/2         5p          2P          3/2         Voigt       41          5.E+07            0           4.00        60.00       tmp.dat     
+    3d          2D          5/2         4f          2F          7/2         Voigt       41          5.E+07            0           4.00        60.00       tmp.dat     
+    3d          2D          5/2         4f          2F          5/2         Voigt       41          5.E+07            0           4.00        60.00       tmp.dat     
+    3d          2D          5/2         6p          2P          3/2         Voigt       41          5.E+07            0           4.00        60.00       tmp.dat     
+    3d          2D          5/2         5f          2F          5/2         Voigt       41          5.E+07            0           4.00        60.00       tmp.dat     
+    3d          2D          5/2         5f          2F          7/2         Voigt       41          5.E+07            0           4.00        60.00       tmp.dat     
+    3d          2D          5/2         6f          2F          5/2         Voigt       41          5.E+07            0           4.00        60.00       tmp.dat     
+    3d          2D          5/2         6f          2F          7/2         Voigt       41          5.E+07            0           4.00        60.00       tmp.dat     
     4p          2P          1/2         5s          2S          1/2         Voigt       41          5.E+07            0           4.00        60.00       tmp.dat     
     4p          2P          1/2         4d          2D          3/2         Voigt       41          5.E+07            0           4.00        60.00       tmp.dat     
     4p          2P          1/2         6s          2S          1/2         Voigt       41          5.E+07            0           2.50        10.00       tmp.dat     
