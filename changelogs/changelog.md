@@ -8,6 +8,16 @@ When this file approaches 300 lines (enforced by
 `changelogs/archives/changelog_<YYYYMMDD>.md` (filename uses the most
 recent date inside the file) and start a fresh entry below.
 
+## 2026-07-04
+
+### `Util/AtomUtils/AtomIO.py`, `Function/SEquil/SELib.py`, `Function/SlabModel/CloudModel.py`, `Experimental/ExSpectrum.py`, `tests/unittest/test.doppler_split.py`, `tests/regression/atom_reference_values.json` — YW.Huang
+
+lines between degenerate levels (f0 ≤ 0, e.g. the unresolved fine-structure pairs in Ca_I-II-III) carried `w0 = 0.0`, and `bb_extinction_` / `bb_emissivity_` divide by `c_/w0` — ZeroDivisionError in `SE_to_slab_0D_`. AtomIO now writes the sentinel `w0 = inf` instead (the physical limit of c/f0; `c_/w0 → 0.0`), and every w0-arithmetic consumer skips f0 ≤ 0 lines explicitly: `SELib._B_Jbar_` gets an early-skip (wavelength-like slices inf, radiation-like slices 0) replacing the fall-through arithmetic and late guard; `CloudModel._SE_to_slab_0D_bb_` merges its two per-line loops into one with a single skip block (background interpolation moves per-line); `ExSpectrum` gets the same skip. `test.doppler_split` filters inactive slices with `isfinite` instead of `> 0`; `atom_reference_values.json` regenerated (9 leaves: 3 Ca sentinel lines × {`Line.w0`, `Line.w0_AA`, `Line_Coe.w0`}, 0.0 → Infinity). Full suite 289 passed; H/He e2e goldens unchanged — active-line paths are computationally identical. Follow-up: the ExSpectrum skip left `line_mesh_cm` uninitialized for a skipped line while the belonging-line loop still iterated the full RL list and read those slices — the RL line indices are now prefiltered once and shared by both loops, so an RL-listed inactive line is consistently left out of the spectrum (`Spec.RL_lineindex` keeps the unfiltered copy, field semantics unchanged).
+
+### `data/atom/Ca_I-II-III/{Ca.Level, Ca.Aji, Ca.Alpha, Ca.CE.electron, Ca.CI.electron, Ca.RadiativeLine, CaI+II_45.RH.configuration-table.txt}`, `tests/regression/atom_reference_values.json` — YW.Huang
+
+correct the Ca II 3d 2D 5/2 level label typo `2d → 3d` (in `Ca.Level` also the principal quantum number column 2 → 3) and propagate the corrected configuration through every table that references the level by name (Aji, Alpha, CE, CI, RadiativeLine, RH configuration table). Energies and rate coefficients are untouched — only the label was wrong; `atom_reference_values.json` regenerated for the renamed ctj keys.
+
 ## 2026-07-01
 
 ### `notebooks/demo/rydberg_se_sensitivity/{build_notebook.py, rydberg_se_sensitivity.ipynb}` — YW.Huang
