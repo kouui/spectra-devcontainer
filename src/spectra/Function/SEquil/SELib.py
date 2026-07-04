@@ -591,8 +591,9 @@ def _B_Jbar_(
     # so the cloud model can build its observer-frame mesh without recomputing
     # dopWidth_cm (Te/Vt-dependent, identical to the value used here).
     wm_cm_all: T_ARRAY = _numpy.empty_like(Line_mesh)
-    # Shifted-mesh diagnostics. zeros so inactive-line (f0<=0) slices have a
-    # well-defined value when downstream consumers iterate over Line_mesh_idxs.
+    # Shifted-mesh diagnostics. Every slice is filled in the loop below:
+    # active lines with their shifted mesh/intensity, inactive (f0<=0) lines
+    # in the early-skip block (wavelength -> inf, intensity -> 0).
     wm_cm_shifted_all: T_ARRAY = _numpy.zeros_like(Line_mesh)
     solar_intensity_shifted_all: T_ARRAY = _numpy.zeros_like(Line_mesh)
     Jbar_all: T_ARRAY = _numpy.empty(nLine, dtype=DT_NB_FLOAT)
@@ -602,11 +603,21 @@ def _B_Jbar_(
 
     absorb_prof_cm: T_ARRAY
     for k in range(nLine):
+        i_start, i_end = Line_mesh_idxs[k, :]
+
         if Line["f0"][k] <= 0:
+            # inactive line (degenerate levels, w0=inf): wavelength-like
+            # slices are inf (no finite wavelength exists), radiation-like
+            # slices are physically 0. Downstream consumers must exclude
+            # these slices from arithmetic (label/diagnostic use only).
             Jbar_all[k] = 0.0
             Bij_Jbar[k] = 0.0
             Bji_Jbar[k] = 0.0
-            # continue
+            wm_cm_all[i_start:i_end] = _numpy.inf
+            wm_cm_shifted_all[i_start:i_end] = _numpy.inf
+            absorb_prof_cm_all[i_start:i_end] = 0.0
+            solar_intensity_shifted_all[i_start:i_end] = 0.0
+            continue
 
         ## collisional broadening line width
         gamma: T_FLOAT = Line["Gamma"][k]
@@ -621,7 +632,6 @@ def _B_Jbar_(
         f0 = Line["f0"][k]
         dopWidth_cm = _BasicP.doppler_width_(w0, Te, Vt, Mass)
 
-        i_start, i_end = Line_mesh_idxs[k, :]
         # Line_mesh[i_start:i_end]                                       ##: Line_mesh not used?
         proftype = Line_mesh_Coe["ProfileType"][k]
         nLambda = Line_mesh_Coe["nLambda"][k]
@@ -633,12 +643,7 @@ def _B_Jbar_(
         #         this line could be replaced by
         #         wm = Line_mesh[i_start:i_end]
         wm = _MeshUtil.make_full_line_mesh_(nLambda, qcore, qwing)
-        # Always export the sun-frame wavelength labels (even for f0<=0 lines)
-        # so the per-line slice is well-defined for any downstream consumer.
         wm_cm_all[i_start:i_end] = wm[:] * dopWidth_cm + w0
-        if Line["f0"][k] <= 0:
-            absorb_prof_cm_all[i_start:i_end] = 0.0
-            continue
 
         if proftype == E_ABSORPTION_PROFILE_TYPE.VOIGT:
             dopWidth_hz = dopWidth_cm * f0 / w0

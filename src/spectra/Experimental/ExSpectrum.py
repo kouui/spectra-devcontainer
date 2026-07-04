@@ -58,6 +58,10 @@ def init_spectrum_(atom: _Atom.Atom, Te: T_FLOAT, Vt: T_FLOAT, Vd_obs: T_FLOAT):
     dop_width_cm = _numpy.empty((atom.nLine,), dtype=DT_NB_FLOAT)
 
     for k in RL_coe["lineIndex"][:]:  ##: loop over b-b lines defined in RL
+        if atom.Line["f0"][k] <= 0.0:
+            # inactive line (degenerate levels, w0=inf): no finite wavelength
+            # mesh exists; leave it out of the spectrum like a non-RL line.
+            continue
         w0 = atom.Line["w0"][k]
         dopWidth_cm = _BasicP.doppler_width_(w0, Te, Vt, mass)  ##: doppler width [cm] with typical Te and Vt
         i1, i2 = Line_mesh_idxs[k, :]
