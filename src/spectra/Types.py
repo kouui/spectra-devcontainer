@@ -64,6 +64,7 @@ type T_E_ABSORPTION_PROFILE_TYPE = T_LITERAL[E_ABSORPTION_PROFILE_TYPE.VOIGT, E_
 type T_E_ATMOSPHERE_COORDINATE_TYPE = T_LITERAL[
     E_ATMOSPHERE_COORDINATE_TYPE.POINT, E_ATMOSPHERE_COORDINATE_TYPE.CARTESIAN
 ]
+type T_E_FEAUTRIER_ORDER = T_LITERAL[E_FEAUTRIER_ORDER.SECOND, E_FEAUTRIER_ORDER.HERMITE]
 # -------------------------------------------------------------------------------
 # numba types
 # -------------------------------------------------------------------------------
@@ -91,6 +92,7 @@ __all__ = [
     "T_E_COLLISIONAL_TRANSITION",
     "T_E_COLLISIONAL_TRANSITION_FORMULA",
     "T_E_COLLISIONAL_TRANSITION_SOURCE",
+    "T_E_FEAUTRIER_ORDER",
     "T_FLOAT",
     "T_IDX_PAIR_TABLE",
     "T_INT",
