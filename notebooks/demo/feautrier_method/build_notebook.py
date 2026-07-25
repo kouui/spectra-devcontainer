@@ -90,8 +90,8 @@ which covers every standard case with two numbers per boundary:
 """
     ),
     code(
-        r"""import numpy as np
-import matplotlib.pyplot as plt
+        r"""import matplotlib.pyplot as plt
+import numpy as np
 
 from spectra.Enums import E_FEAUTRIER_ORDER
 from spectra.Math import GaussLeg
@@ -141,7 +141,7 @@ fig, axes = plt.subplots(1, 3, figsize=(11, 3.2))
 # (a) constant source
 S0 = 2.5
 ax = axes[0]
-for mu, c in zip((1.0, 0.5, 0.2), ("C0", "C1", "C2")):
+for mu, c in zip((1.0, 0.5, 0.2), ("C0", "C1", "C2"), strict=True):
     res = Feautrier.formal_improved_RH_(tau, np.full(ND, S0), mu, 0., 0., 0., 0.)
     ax.plot(tau, j_const_source(tau, T, mu, S0), c, lw=3, alpha=0.35)
     ax.plot(tau, res.j, c + "--", lw=1.2, label=rf"$\mu$={mu}")
@@ -151,7 +151,7 @@ ax.legend()
 # (b) pure attenuation
 h0, hn = 1.3, 2.7
 ax = axes[1]
-for mu, c in zip((1.0, 0.5, 0.2), ("C0", "C1", "C2")):
+for mu, c in zip((1.0, 0.5, 0.2), ("C0", "C1", "C2"), strict=True):
     res = Feautrier.formal_improved_RH_(tau, np.zeros(ND), mu, 0., h0, 0., hn)
     ax.plot(tau, j_attenuation(tau, T, mu, h0, hn), c, lw=3, alpha=0.35)
     ax.plot(tau, res.j, c + "--", lw=1.2, label=rf"$\mu$={mu}")
@@ -270,7 +270,7 @@ for order, name, c in ((SECOND, "SECOND", "C0"), (HERMITE, "HERMITE", "C3")):
     errs = np.array(errs)
     slope = np.polyfit(np.log(hs), np.log(errs), 1)[0]
     ax.loglog(hs, errs, c + "o-", ms=4, label=f"{name}   measured slope {slope:.2f}")
-    print(f"{name:8s} slope = {slope:.3f}   errors = {['%.2e' % e for e in errs]}")
+    print(f"{name:8s} slope = {slope:.3f}   errors = {[f'{e:.2e}' for e in errs]}")
 
 for p, st in ((2, ":"), (3, "--"), (4, "-.")):
     ax.loglog(hs, errs[-1] * (hs / hs[-1]) ** p, "k" + st, lw=0.8, alpha=0.6,
