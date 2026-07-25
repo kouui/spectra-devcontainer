@@ -242,9 +242,8 @@ def direct_feautrier_(
                 B[i, :] = -(1 - eps[d]) * ws[:]
                 B[i, i] += 1 + 2 * mus[i] / dtau_m[d] + 2 * mus[i] * mus[i] / dtau_m[d] / dtau_m[d]
                 R[i] = eps[d] * planckB[d] + 2 * mus[i] / dtau_m[d] * I_upper[i]
-            Binv = _numpy.linalg.inv(B)
-            D[d, :, :] = Binv @ C
-            E[d, :] = Binv @ R
+            D[d, :, :] = _numpy.linalg.solve(B, C)
+            E[d, :] = _numpy.linalg.solve(B, R)
 
         elif d == (ND - 1):
             for i in range(n_angle):
@@ -252,9 +251,9 @@ def direct_feautrier_(
                 B[i, :] = -(1 - eps[d]) * ws[:]
                 B[i, i] += 1 + 2 * mus[i] / dtau_m[d - 1] + 2 * mus[i] * mus[i] / dtau_m[d - 1] / dtau_m[d - 1]
                 R[i] = eps[d] * planckB[d] + 2 * mus[i] / dtau_m[d - 1] * I_lower[i]
-            inv = _numpy.linalg.inv(B - A @ D[d - 1, :, :])
+            M = B - A @ D[d - 1, :, :]
             D[d, :, :] = 0
-            E[d, :] = inv @ (R + A @ E[d - 1, :])
+            E[d, :] = _numpy.linalg.solve(M, R + A @ E[d - 1, :])
 
         else:
             for i in range(n_angle):
@@ -263,9 +262,9 @@ def direct_feautrier_(
                 B[i, :] = -(1 - eps[d]) * ws[:]
                 B[i, i] += 1 + A[i, i] + C[i, i]
                 R[i] = eps[d] * planckB[d]
-            inv = _numpy.linalg.inv(B - A @ D[d - 1, :, :])
-            D[d, :, :] = inv @ C
-            E[d, :] = inv @ (R + A @ E[d - 1, :])
+            M = B - A @ D[d - 1, :, :]
+            D[d, :, :] = _numpy.linalg.solve(M, C)
+            E[d, :] = _numpy.linalg.solve(M, R + A @ E[d - 1, :])
 
     # -- backward-substitution
     d = ND - 1
@@ -273,7 +272,7 @@ def direct_feautrier_(
     for d in range(ND - 2, -1, -1):
         j[d, :] = D[d, :, :] @ j[d + 1, :] + E[d, :]
 
-    # -- compute sourece function
+    # -- compute source function
     S = _numpy.zeros(ND, dtype=DT_NB_FLOAT)
     for d in range(ND):
         S[d] = (1 - eps[d]) * (j[d, :] * ws[:]).sum() + eps[d] * planckB[d]
