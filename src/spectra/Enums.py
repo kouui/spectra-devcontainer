@@ -42,6 +42,13 @@ class E_ATMOSPHERE_COORDINATE_TYPE(_IntEnum):
     CARTESIAN = 1
 
 
+class E_FEAUTRIER_ORDER(_IntEnum):
+    # Values are the formal accuracy order of the scheme, so the member name and
+    # the numeric value cannot drift apart.
+    SECOND = 2
+    HERMITE = 4
+
+
 # import numba as _numba
 # T_DATA_MEMTYPE = _numba.typeof( T_DATA.CALCULATE )
 # T_ATOM_MEMTYPE = _numba.typeof( T_ATOM.HYDROGEN )
