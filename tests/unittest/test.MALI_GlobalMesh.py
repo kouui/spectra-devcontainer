@@ -102,6 +102,51 @@ class TestMerge:
         assert np.array_equal(mesh.wl, wl)
 
 
+class TestMergeWithContinua:
+    """The axis is transition-complete: merge_meshes_ is agnostic to what an
+    ascending wavelength array represents, so continuum meshes get (Nblue,
+    span) windows exactly like lines. A consumer may ignore windows (the MALI
+    toy keeps continua passive), but the builder must handle them all."""
+
+    def _cont_mesh(self, w0, nLambda=41):
+        # production convention: threshold times a descending template
+        return (w0 * MeshUtil.make_continuum_mesh_(nLambda))[::-1].copy()
+
+    def test_continuum_window_swallows_interleaved_lines(self):
+        cont = self._cont_mesh(5000.0e-8)
+        wl_a = _line_mesh(3000.0e-8)
+        wl_b = _line_mesh(4000.0e-8)
+        mesh = GlobalMesh.merge_meshes_([wl_a, wl_b, cont])
+        # every input point is present in its own window
+        for k, src in enumerate((wl_a, wl_b, cont)):
+            window = mesh.wl[mesh.Nblue[k] : mesh.Nblue[k] + mesh.span[k]]
+            assert np.all(np.isin(src, window))
+        # both lines sit inside the continuum's range: its window includes them
+        assert mesh.span[2] >= cont.shape[0] + wl_a.shape[0] + wl_b.shape[0]
+        # the narrow line windows contain no continuum points by accident here
+        assert np.all(np.diff(mesh.wl) > 0)
+
+    def test_exact_shared_point_deduplicates_across_types(self):
+        # a continuum-like coarse mesh sharing one point exactly with a line
+        wl_line = _line_mesh(5000.0e-8)
+        cont = np.array([wl_line[-1], 5100.0e-8, 5200.0e-8])
+        mesh = GlobalMesh.merge_meshes_([wl_line, cont])
+        assert mesh.wl.shape[0] == wl_line.shape[0] + cont.shape[0] - 1
+        got_line = mesh.wl[mesh.Nblue[0] : mesh.Nblue[0] + mesh.span[0]]
+        got_cont = mesh.wl[mesh.Nblue[1] : mesh.Nblue[1] + mesh.span[1]]
+        # both windows locate the one shared axis point
+        assert got_line[-1] == got_cont[0]
+
+    def test_mixed_scales_keep_distinct_points(self):
+        # eps comes from the finest intra-mesh spacing; a coarse-mesh point
+        # near (but beyond eps of) a line point must remain its own axis point
+        wl_line = _line_mesh(5000.0e-8)
+        eps = 1.0e-3 * np.min(np.diff(wl_line))
+        cont = np.array([wl_line[0] + 10.0 * eps, 5100.0e-8, 5200.0e-8])
+        mesh = GlobalMesh.merge_meshes_([wl_line, cont])
+        assert mesh.wl.shape[0] == wl_line.shape[0] + cont.shape[0]
+
+
 class TestTrapezoidalWeight:
     def test_matches_numpy_trapezoid(self):
         rng = np.random.default_rng(7)
