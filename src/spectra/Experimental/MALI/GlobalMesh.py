@@ -44,6 +44,39 @@ def anchor_line_mesh_(q: T_ARRAY, w0: T_FLOAT, xi_ref: T_FLOAT) -> T_ARRAY:
     return w0 * (1.0 + q[:] * xi_ref / CST.c_)
 
 
+def ruler_from_atmosphere_(temperature: T_VEC_FA, vturb: T_VEC_FA, mass: T_FLOAT, floor: T_FLOAT = 1.0e5) -> T_FLOAT:
+    """Per-species ruler xi_line from the atmosphere's width floor.
+
+    The mesh must resolve the smallest Doppler width the species exhibits,
+    so the ruler is the minimum of sqrt(2kT/m + vturb^2) over the supplied
+    cells -- the characteristic values are the model's floor (reached at
+    the temperature minimum), never a user guess. All lines of one element
+    share the mass, so this is one scalar per species, not per line.
+    Formation-region policy stays with the caller: mask the arrays before
+    passing them (for FALC-like models the unmasked floor is identical,
+    since the temperature minimum sits below the transition region).
+
+    The floor clip exists because heavy species in cold, quiescent models
+    drop below ~1 km/s, where core accuracy is capped by other broadening
+    mechanisms anyway while the window extent (qwing * xi_line with
+    data-file qwing) and any future velocity-band point count keep
+    shrinking/growing without benefit.
+
+    Input:
+        temperature: (...,), [K], any shape -- 0/1/2/3-D atmospheres alike
+        vturb: (...,), microturbulent velocity, [cm/s], broadcastable with temperature
+        mass: (,), atomic mass, [amu]
+        floor: (,), lower clip of the ruler, [cm/s]
+
+    Output:
+        xi_line: (,), scalar ruler, [cm/s]
+    """
+    T_arr = _numpy.asarray(temperature, dtype=DT_NB_FLOAT)
+    vt = _numpy.asarray(vturb, dtype=DT_NB_FLOAT)
+    width = _numpy.sqrt(2.0 * CST.k_ * T_arr / (mass * CST.mH_) + vt * vt)
+    return max(float(width.min()), float(floor))
+
+
 def merge_meshes_(line_meshes: T_LIST) -> Global_Mesh:
     """Merge per-line absolute-wavelength arrays into one sorted global axis.
 

@@ -128,6 +128,13 @@ matter for the mesh:
   Restricting the floor to the depths where the species actually exists
   (here $T \le 30$ kK, below the transition region) changes nothing for
   FALC because the minimum sits in the low atmosphere.
+
+This recipe is `GlobalMesh.ruler_from_atmosphere_(T, vturb, mass,
+floor=1 km/s)`: shape-agnostic (0/1/2/3-D arrays alike, formation-region
+masking is the caller's policy), one scalar per **species** (all lines of
+an element share the mass), clipped at 1 km/s below which core accuracy
+is capped by other broadening mechanisms while extent and point counts
+only degrade.
 """
     ),
     code(
@@ -175,11 +182,13 @@ axes[1].legend(fontsize=8)
 plt.tight_layout()
 plt.show()
 
-XI_FLOOR = {"H alpha": xi_line_kms_(1.008, T_z, vt_z)[low].min() * 1e5,
-            "Ca II K": xi_line_kms_(40.08, T_z, vt_z)[low].min() * 1e5}
+XI_FLOOR = {"H alpha": GlobalMesh.ruler_from_atmosphere_(T_z[low], vt_z[low], 1.008),
+            "Ca II K": GlobalMesh.ruler_from_atmosphere_(T_z[low], vt_z[low], 40.08)}
 print(f"FALC: T {T_z.min():.0f}..{T_z.max():.0f} K, vturb {vt_z.min() / 1e5:.2f}..{vt_z.max() / 1e5:.2f} km/s")
 for nm, xi in XI_FLOOR.items():
-    print(f"{nm}: ruler floor from the model = {xi / 1e5:.2f} km/s (at the temperature minimum)")
+    print(f"{nm}: ruler_from_atmosphere_ = {xi / 1e5:.2f} km/s (model floor at the temperature minimum; clip 1 km/s)")
+print(f"clip demonstration, Ba II in a cold quiescent model: "
+      f"{GlobalMesh.ruler_from_atmosphere_(4500.0, 0.0, 137.33) / 1e5:.2f} km/s")
 """
     ),
     md(
@@ -293,10 +302,13 @@ plt.show()
 """
     ),
     md(
-        r"""## 4. The decoupled recipe
+        r"""## 4. The decoupled recipe (follow-up, measured here)
 
-Give the generator two independent physical inputs per line and derive the
-template parameters from them:
+The wired-in generator keeps `qcore`/`qwing` from the atom data files (the
+RH convention), so extent stays the data file's responsibility for now —
+this section measures what the follow-up decoupling would buy, to size
+that decision. Give the generator two independent physical inputs per line
+and derive the template parameters from them:
 
 - **core spacing** from the line's own floor width: ruler
   $\xi_{\rm line}$, spacing target $\le \xi_{\rm line}/2$ in the core;
@@ -355,13 +367,16 @@ for nm in LINES:
    with a factor ~2 margin against truncation and ~4 against
    undersampling for the 41/2.5/10 template. It is *not* a safe shared
    default for heavy species.
-4. **Wire-in shape**: the generator takes, per line, the atmosphere-floor
-   ruler $\xi_{\rm line}$ and a species-independent extent, derives
-   `qwing = extent / xi_line` and the smallest `nLambda` meeting a core
-   spacing target — same 41-point budget for both benchmark lines, ~5x
-   accuracy for the narrow one, full coverage for both. The dynamic
-   (velocity-band) merge then densifies the log wing where shifted cores
-   will actually land.
+4. **Wired in now vs deferred**: the per-species ruler is
+   `GlobalMesh.ruler_from_atmosphere_(T, vturb, mass, floor=1 km/s)`;
+   `qcore`/`qwing` keep coming from the atom data files, which therefore
+   retain responsibility for extent (a scaled-down ruler shrinks
+   $\pm q_{\rm wing}\,\xi_{\rm line}$ — data files of narrow-species
+   lines must carry correspondingly larger `qwing`, as RH atom files do).
+   The extent decoupling measured in section 4 (`qwing = extent /
+   xi_line` at unchanged `nLambda`) is tracked as a follow-up issue, and
+   the dynamic (velocity-band) merge then densifies the log wing where
+   shifted cores actually land.
 """
     ),
 ]

@@ -147,6 +147,46 @@ class TestMergeWithContinua:
         assert mesh.wl.shape[0] == wl_line.shape[0] + cont.shape[0]
 
 
+class TestRulerFromAtmosphere:
+    def test_exact_value_scalar_atmosphere(self):
+        # 0-D atmosphere: plain scalars in, sqrt(2kT/m + vt^2) out
+        T, vt, mass = 6000.0, 5.0e5, 1.008
+        expect = np.sqrt(2.0 * CST.k_ * T / (mass * CST.mH_) + vt * vt)
+        got = GlobalMesh.ruler_from_atmosphere_(T, vt, mass, floor=0.0)
+        assert got == pytest.approx(expect, rel=1e-14)
+
+    def test_minimum_over_cells_any_shape(self):
+        # the floor cell sits inside a 2-D block: shape must not matter
+        T = np.full((4, 5), 5.0e4)
+        vt = np.full((4, 5), 5.0e5)
+        T[2, 3], vt[2, 3] = 4500.0, 0.5e5  # the temperature-minimum cell
+        got = GlobalMesh.ruler_from_atmosphere_(T, vt, 1.008, floor=0.0)
+        expect = GlobalMesh.ruler_from_atmosphere_(4500.0, 0.5e5, 1.008, floor=0.0)
+        assert got == pytest.approx(expect, rel=1e-14)
+        flat = GlobalMesh.ruler_from_atmosphere_(T.ravel(), vt.ravel(), 1.008, floor=0.0)
+        assert got == flat
+
+    def test_mass_scaling_order(self):
+        # heavier species -> smaller ruler at identical (T, vt): the 1/sqrt(m) law
+        args = (6000.0, 0.0)
+        xi_H = GlobalMesh.ruler_from_atmosphere_(*args, 1.008, floor=0.0)
+        xi_Ca = GlobalMesh.ruler_from_atmosphere_(*args, 40.08, floor=0.0)
+        assert xi_Ca < xi_H
+        assert xi_H / xi_Ca == pytest.approx(np.sqrt(40.08 / 1.008), rel=1e-12)
+
+    def test_turbulence_floor_dominates_heavy_species(self):
+        # vturb >> thermal: the ruler rides on vturb, mass barely matters
+        xi = GlobalMesh.ruler_from_atmosphere_(4500.0, 5.0e5, 55.85, floor=0.0)
+        assert xi == pytest.approx(5.0e5, rel=0.05)
+
+    def test_floor_clip(self):
+        # cold heavy quiescent case drops below 1 km/s and must clip
+        raw = GlobalMesh.ruler_from_atmosphere_(4500.0, 0.0, 137.33, floor=0.0)
+        assert raw < 1.0e5
+        assert GlobalMesh.ruler_from_atmosphere_(4500.0, 0.0, 137.33) == 1.0e5
+        assert GlobalMesh.ruler_from_atmosphere_(4500.0, 0.0, 137.33, floor=2.0e5) == 2.0e5
+
+
 class TestTrapezoidalWeight:
     def test_matches_numpy_trapezoid(self):
         rng = np.random.default_rng(7)
