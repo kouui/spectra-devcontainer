@@ -16,13 +16,8 @@ from ...ImportAll import *
 from ...RadiativeTransfer import Profile as _Profile
 
 # per-iteration-tier kernels are compiled unconditionally; a jitted caller needs
-# a jitted callee. production ships voigt_ as numba-vectorize under CFG._IS_JIT
-# (njit-callable as is) but as numpy.vectorize otherwise -- compile its raw
-# python function (.pyfunc) in that case.
-if CFG._IS_JIT:
-    _voigt_ = _Profile.voigt_
-else:
-    _voigt_ = nb_njit(**NB_NJIT_KWGS)(_Profile.voigt_.pyfunc)  # type: ignore[attr-defined]
+# a jitted callee -- the always-compiled scalar binding, independent of CFG._IS_JIT
+_voigt_ = _Profile.voigt_nb_
 
 
 def line_profile_table_(

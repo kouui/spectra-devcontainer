@@ -250,6 +250,14 @@ def hf_(a: T_FLOAT, x: T_ARRAY) -> T_TUPLE[T_ARRAY, T_ARRAY]:
 # numba optimization
 # -----------------------------------------------------------------------------
 
+# always-compiled scalar voigt, independent of CFG._IS_JIT: unconditionally
+# jitted kernels need a compilable scalar callee, and the vectorized voigt_
+# below only exposes one under CFG._IS_JIT (a DUFunc; numpy.vectorize is not
+# njit-callable). must be bound BEFORE voigt_ is rebound to its vectorized
+# form. njit without a signature compiles lazily, so sessions that never call
+# it pay no import cost.
+voigt_nb_ = nb_njit(**NB_NJIT_KWGS)(voigt_)
+
 if CFG._IS_JIT:
     voigt_ = nb_vec(**NB_VEC_KWGS)(voigt_)
     gaussian_ = nb_vec(**NB_VEC_KWGS)(gaussian_)

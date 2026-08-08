@@ -26,6 +26,13 @@ class Test_Profile(unittest.TestCase):
         voigt = _Profile.voigt_(a, x)
         self.assertTrue(_ALLCLOSE(voigt, h, rtol=1.0e-03, atol=1.0e-20))
 
+    def test_voigt_nb_matches_voigt(self):
+
+        # both polynomial branches (a < 0.01 and a >= 0.01)
+        for a in (0.0, 1.0e-3, 0.1, 1.0):
+            for x in _numpy.linspace(-5, 5, 21):
+                self.assertEqual(_Profile.voigt_nb_(a, x), _Profile.voigt_(a, x))
+
 
 if __name__ == "__main__":
     unittest.main()
