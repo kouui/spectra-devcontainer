@@ -13,9 +13,13 @@ from collections import namedtuple as _namedtuple
 import numpy as _numpy
 
 from ...Atomic import SEsolver as _SEsolver
+from ...Atomic import emisivity as _emisivity
+from ...Atomic import extinction as _extinction
 from ...ImportAll import *
 from ...Math import GaussLeg as _GaussLeg
 from ...RadiativeTransfer import Feautrier as _Feautrier
+from . import GlobalMesh as _GlobalMesh
+from . import Structs as _Structs
 
 # jitted callers need jitted callees; production compiles these only under
 # CFG._IS_JIT, so bind compiled references here otherwise.
@@ -29,6 +33,12 @@ else:
     _set_matrixR_ = nb_njit(**NB_NJIT_KWGS)(_SEsolver.set_matrixR_)
     _set_matrixC_ = nb_njit(**NB_NJIT_KWGS)(_SEsolver.set_matrixC_)
     _solve_SE_ = nb_njit(**NB_NJIT_KWGS)(_SEsolver.solve_SE_)
+
+# the production b-b opacity/emissivity conventions, compiled from the raw
+# python functions behind their numpy.vectorize wrappers -- reused rather than
+# re-derived so the convention cannot drift from Atomic/{extinction,emisivity}.
+_bb_extinction_ = nb_njit(**NB_NJIT_KWGS)(_extinction.bb_extinction_.pyfunc)  # type: ignore[attr-defined]
+_bb_emissivity_ = nb_njit(**NB_NJIT_KWGS)(_emisivity.bb_emissivity_.pyfunc)  # type: ignore[attr-defined]
 
 
 def two_level_sweep_(
@@ -190,14 +200,14 @@ def multilevel_sweep_(
     """One formal sweep over every active line: Jbar, Lstar, and the line
     source function from the CURRENT populations.
 
-    Opacity and emissivity follow the production convention
-    (Atomic/extinction.py, Atomic/emisivity.py):
-        chi = h*nu/(4*pi) * (ni*Bij - nj*Bji) * phi,   nu = c/wl per column
-        eta = h*nu/(4*pi) * nj*Aji * phi
-    under CRD (emission profile = absorption profile) their ratio is
-    wavelength-independent inside a window, so the line source function is the
-    per-depth scalar
-        S_line = Aji*nj / (Bij*ni - Bji*nj).
+    Opacity and emissivity are the production formulas themselves --
+    bb_extinction_ / bb_emissivity_ (compiled bindings of
+    Atomic/extinction.py, Atomic/emisivity.py):
+        chi = h*nu/(4*pi) * (ni*Bij*phi - nj*Bji*psi),   psi = phi (CRD)
+        eta = h*nu/(4*pi) * nj*Aji * psi
+    under CRD their ratio is wavelength-independent inside a window, so the
+    line source function is the per-depth scalar eta/chi evaluated with the
+    profile-integrated coefficients (psi = phi = 1) at the line center.
     the toys carry no background continuum, and the toy windows are disjoint:
     each column belongs to exactly one line (overlap handling is full-MALI work).
 
@@ -229,16 +239,19 @@ def multilevel_sweep_(
         for k in range(ND):
             ni = Nt[k] * n_pop[k, idxI[kL]]
             nj = Nt[k] * n_pop[k, idxJ[kL]]
-            chi_int[k] = Bij[kL] * ni - Bji[kL] * nj
-            S_line[kL, k] = Aji[kL] * nj / chi_int[k]
+            # profile-integrated (psi = phi = 1) coefficients at line center;
+            # the spectral values are these times phi at each column
+            chi_int[k] = _bb_extinction_(w0[kL], Bji[kL], Bij[kL], nj, ni, 1.0, 1.0)
+            S_line[kL, k] = _bb_emissivity_(w0[kL], Aji[kL], nj) / chi_int[k]
         hn = planck_w0[ND - 1, kL]
         for iw in range(span[kL]):
             row = win_off[kL, 0] + iw
-            nu = CST.c_ / wl[Nblue[kL] + iw]
-            hnu_4pi = CST.h_ * nu / (4.0 * CST.pi_)
+            # nu = c/wl of THIS column, mirroring the production per-wavelength
+            # convention: rescale the line-center h*nu factor inside chi_int
+            nu_ratio = w0[kL] / wl[Nblue[kL] + iw]
             tau[0] = 0.0
             for k in range(1, ND):
-                chi_m = 0.5 * hnu_4pi * (chi_int[k - 1] * phi[row, k - 1] + chi_int[k] * phi[row, k])
+                chi_m = 0.5 * nu_ratio * (chi_int[k - 1] * phi[row, k - 1] + chi_int[k] * phi[row, k])
                 tau[k] = tau[k - 1] + chi_m * (Z[k] - Z[k - 1])
             for im in range(n_mu):
                 res = _formal_rh_(tau, S_line[kL, :], mus[im], 0.0, 0.0, 0.0, hn, E_FEAUTRIER_ORDER.SECOND, True)
@@ -324,10 +337,10 @@ MALIml_Result = _namedtuple("MALIml_Result", ["n", "S_line", "Jbar", "Lstar", "n
 
 
 def mali_multilevel_(
-    atom,
-    atmos,
-    mesh,
-    pre,
+    atom: _Structs.Toy_Atom,
+    atmos: _Structs.Atmos1D,
+    mesh: _GlobalMesh.Global_Mesh,
+    pre: _Structs.MALI_Precompute,
     n_angle: T_INT = 4,
     tol: T_FLOAT = 1.0e-8,
     itmax: T_INT = 2000,
