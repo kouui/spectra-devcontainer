@@ -18,6 +18,7 @@ from ...Atomic import extinction as _extinction
 from ...ImportAll import *
 from ...Math import GaussLeg as _GaussLeg
 from ...RadiativeTransfer import Feautrier as _Feautrier
+from . import ContinuumRT as _ContinuumRT
 from . import GlobalMesh as _GlobalMesh
 from . import Structs as _Structs
 
@@ -376,6 +377,7 @@ def mali_multilevel_(
     use_lstar: T_BOOL = True,
     lstar_scale: T_FLOAT = 1.0,
     n_init: T_ARRAY | None = None,
+    cont_rt: _ContinuumRT.Cont_RT | None = None,
 ) -> MALIml_Result:
     """Multilevel MALI driver on the toy pipeline.
 
@@ -393,6 +395,10 @@ def mali_multilevel_(
         pre: Structs.MALI_Precompute
         use_lstar: (,), False -> plain (preconditioner-free) iteration
         lstar_scale: (,), deliberate operator mis-scaling (tests only)
+        cont_rt: active continua -- per iteration the b-f rates are recomputed
+            from a continuum-axis RT solve on the CURRENT populations
+            (ContinuumRT.bf_rates_, unpreconditioned) instead of the
+            loop-invariant prescribed-radiation rates in `pre`
 
     Output: MALIml_Result(n, S_line, Jbar, Lstar, niter, dn_history)
     """
@@ -425,9 +431,15 @@ def mali_multilevel_(
             pre.phi, pre.weight, pre.wphi, w0, Aji, Bji, Bij, idxI[: atom.nLine], idxJ[: atom.nLine],
             pre.planck_w0, mus, wmus, pre.bg_chi, pre.bg_eta,
         )  # fmt: skip
+        if cont_rt is None:
+            Rik, Rki_stim, Rki_spon = pre.Rik, pre.Rki_stim, pre.Rki_spon
+        else:
+            Rik, Rki_stim, Rki_spon = _ContinuumRT.bf_rates_(
+                cont_rt, atom, atmos, pre.nj_by_ni[:, atom.nLine :], n, mus, wmus
+            )
         n_new = update_populations_(
             Jbar, Lstar, S_line, Aji, Bji, Bij, idxI, idxJ,
-            pre.Cij_coe, pre.Cji_coe, pre.Rik, pre.Rki_stim, pre.Rki_spon,
+            pre.Cij_coe, pre.Cji_coe, Rik, Rki_stim, Rki_spon,
             atmos.Ne, atom.nLevel, scale,
         )  # fmt: skip
         dn = float(_numpy.abs(n_new - n).max())
