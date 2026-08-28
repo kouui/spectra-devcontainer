@@ -11,6 +11,7 @@
 # failure modes (IO, continua, damping) without adding verification power.
 # -------------------------------------------------------------------------------
 
+from collections.abc import Callable as _Callable
 from dataclasses import dataclass as _dataclass
 
 import numpy as _numpy
@@ -274,6 +275,7 @@ class MALI_Precompute:
 
     n_LTE: T_ARRAY  # (ND, nLevel), normalized LTE populations
     nj_by_ni: T_ARRAY  # (ND, nTran), LTE ratio per transition (lines then continua)
+    Cij_coe: T_ARRAY  # (ND, nTran), upward collisional coefficient [cm^3 s^-1]
     Cji_coe: T_ARRAY  # (ND, nTran), downward collisional coefficient [cm^3 s^-1]
     dopWidth_cm: T_ARRAY  # (ND, nLine), [cm]
     adamp: T_ARRAY  # (ND, nLine), Voigt damping parameter (0 for Gaussian toys)
@@ -285,19 +287,38 @@ class MALI_Precompute:
     wphi: T_ARRAY  # (ND, nLine), numerical profile norm on the window quadrature
     weight: T_ARRAY  # (nWin_total,), per-window trapezoidal weights, [cm]
     win_off: T_ARRAY  # (nLine, 2), [start, stop) row range of each line in `phi`
-    # passive b-f rates from PRESCRIBED radiation (Planck at the local Te here),
-    # therefore loop-invariant; (ND, 0) for line-only toys
+    # passive b-f rates from PRESCRIBED radiation (Planck at the local Te by
+    # default, any caller-supplied field otherwise), therefore loop-invariant;
+    # (ND, 0) for line-only toys
     Rik: T_ARRAY  # (ND, nCont), radiative ionization rate
     Rki_stim: T_ARRAY  # (ND, nCont), stimulated radiative recombination rate
     Rki_spon: T_ARRAY  # (ND, nCont), spontaneous radiative recombination rate
+    # background continuum on the line windows, row-aligned with `phi`;
+    # (0, ND) when absent -- the sweep then runs the line-only path bit for bit
+    bg_chi: T_ARRAY  # (nWin_total, ND), background extinction, [cm^-1]
+    bg_eta: T_ARRAY  # (nWin_total, ND), background emissivity (thermal), cm-base
 
 
-def precompute_(
+def precompute_(  # noqa: C901
     atom: Toy_Atom,
     atmos: Atmos1D,
     mesh: _GlobalMesh.Global_Mesh,
     adamp_const: T_FLOAT = 0.0,
+    Cij_dep: T_ARRAY | None = None,
+    adamp_dep: T_ARRAY | None = None,
+    cont_intensity: T_ARRAY | None = None,
+    bg_chi_fn: _Callable[[float], T_ARRAY] | None = None,
 ) -> MALI_Precompute:
+    """Optional real-atom inputs (defaults reproduce the toy behavior):
+    Cij_dep: (ND, nTran), per-depth upward collisional coefficients
+        (temperature-dependent tables); None broadcasts atom.Cij_coe
+    adamp_dep: (ND, nLine), per-depth Voigt damping; None uses adamp_const
+    cont_intensity: (ND, nCont, nContMesh), prescribed radiation driving
+        the passive b-f rates; None uses Planck at the local Te
+    bg_chi_fn: wl_cm -> (ND,) background extinction on the line windows;
+        the thermal emissivity chi * planck is filled alongside.
+        None leaves bg_chi/bg_eta empty (line-only radiative transfer)
+    """
     ND = atmos.ND
     nLine = atom.nLine
     nCont = atom.nCont
@@ -311,21 +332,31 @@ def precompute_(
     Rik = _numpy.zeros((ND, nCont), dtype=DT_NB_FLOAT)
     Rki_stim = _numpy.zeros((ND, nCont), dtype=DT_NB_FLOAT)
     Rki_spon = _numpy.zeros((ND, nCont), dtype=DT_NB_FLOAT)
+    if Cij_dep is None:
+        Cij_coe = _numpy.broadcast_to(atom.Cij_coe[:], (ND, nTran)).copy()
+    else:
+        Cij_coe = _numpy.ascontiguousarray(Cij_dep, dtype=DT_NB_FLOAT)
     for k in range(ND):
         ni, ratio = _SELib._ni_nj_LTE_(atom.Level, atom.Line, atom.Cont, atmos.Te[k], atmos.Ne[k])
         n_LTE[k, :] = ni
         nj_by_ni[k, :] = ratio
-        Cji_coe[k, :] = _Collision.Cij_to_Cji_(atom.Cij_coe[:], ratio[:])
+        Cji_coe[k, :] = _Collision.Cij_to_Cji_(Cij_coe[k, :], ratio[:])
         dopWidth_cm[k, :] = _BasicP.doppler_width_(atom.Line["w0"][:], atmos.Te[k], atmos.Vt[k], atom.am)
         planck_w0[k, :] = _LTELib.planck_cm_(atom.Line["w0"][:], atmos.Te[k])
         if nCont > 0:
-            # prescribed thermal radiation drives the passive b-f transitions
-            PI_intensity = _LTELib.planck_cm_(atom.Cont_mesh[:, :], atmos.Te[k])
+            # prescribed radiation drives the passive b-f transitions
+            if cont_intensity is None:
+                PI_intensity = _LTELib.planck_cm_(atom.Cont_mesh[:, :], atmos.Te[k])
+            else:
+                PI_intensity = cont_intensity[k, :, :]
             Rik[k, :], Rki_stim[k, :], Rki_spon[k, :] = _SELib._bf_R_rate_(
                 atom.Cont, atom.Cont_mesh, atmos.Te[k], nj_by_ni[k, nLine:], atom.alpha, PI_intensity
             )
 
-    adamp = _numpy.full((ND, nLine), adamp_const, dtype=DT_NB_FLOAT)
+    if adamp_dep is None:
+        adamp = _numpy.full((ND, nLine), adamp_const, dtype=DT_NB_FLOAT)
+    else:
+        adamp = _numpy.ascontiguousarray(adamp_dep, dtype=DT_NB_FLOAT)
 
     win_off = _numpy.empty((nLine, 2), dtype=DT_NB_INT)
     stop = 0
@@ -352,9 +383,23 @@ def precompute_(
         weight[win_off[kL, 0] : win_off[kL, 1]] = weight_win
         wphi[:, kL] = wphi_line
 
+    if bg_chi_fn is None:
+        bg_chi = _numpy.empty((0, ND), dtype=DT_NB_FLOAT)
+        bg_eta = _numpy.empty((0, ND), dtype=DT_NB_FLOAT)
+    else:
+        bg_chi = _numpy.empty((stop, ND), dtype=DT_NB_FLOAT)
+        bg_eta = _numpy.empty((stop, ND), dtype=DT_NB_FLOAT)
+        for kL in range(nLine):
+            wl_win = mesh.wl[mesh.Nblue[kL] : mesh.Nblue[kL] + mesh.span[kL]]
+            for iw in range(int(mesh.span[kL])):
+                row = win_off[kL, 0] + iw
+                bg_chi[row, :] = bg_chi_fn(float(wl_win[iw]))
+                bg_eta[row, :] = bg_chi[row, :] * _LTELib.planck_cm_(float(wl_win[iw]), atmos.Te[:])
+
     return MALI_Precompute(
         n_LTE=n_LTE,
         nj_by_ni=nj_by_ni,
+        Cij_coe=Cij_coe,
         Cji_coe=Cji_coe,
         dopWidth_cm=dopWidth_cm,
         adamp=adamp,
@@ -366,4 +411,6 @@ def precompute_(
         Rik=Rik,
         Rki_stim=Rki_stim,
         Rki_spon=Rki_spon,
+        bg_chi=bg_chi,
+        bg_eta=bg_eta,
     )

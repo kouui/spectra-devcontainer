@@ -176,7 +176,7 @@ def mali_two_level_(
     return MALI2lv_Result(S=S, Jbar=Jbar, Lstar=Lstar, niter=niter, dS_history=_numpy.asarray(dS_history))
 
 
-def multilevel_sweep_(
+def multilevel_sweep_(  # noqa: C901
     Z: T_ARRAY,
     n_pop: T_ARRAY,
     Nt: T_ARRAY,
@@ -196,6 +196,8 @@ def multilevel_sweep_(
     planck_w0: T_ARRAY,
     mus: T_ARRAY,
     wmus: T_ARRAY,
+    bg_chi: T_ARRAY,
+    bg_eta: T_ARRAY,
 ) -> T_TUPLE[T_ARRAY, T_ARRAY, T_ARRAY]:
     """One formal sweep over every active line: Jbar, Lstar, and the line
     source function from the CURRENT populations.
@@ -208,8 +210,15 @@ def multilevel_sweep_(
     under CRD their ratio is wavelength-independent inside a window, so the
     line source function is the per-depth scalar eta/chi evaluated with the
     profile-integrated coefficients (psi = phi = 1) at the line center.
-    the toys carry no background continuum, and the toy windows are disjoint:
-    each column belongs to exactly one line (overlap handling is full-MALI work).
+    windows are disjoint: each column belongs to exactly one line (overlap
+    handling is full-MALI work).
+
+    background continuum (bg_chi/bg_eta non-empty): the column solves the
+    combined problem chi_tot = chi_line + chi_bg with the mixed source
+        S_col = (chi_line * S_line + eta_bg) / chi_tot,
+    and the Lstar accumulation carries the extra factor chi_line/chi_tot --
+    the exact d S_col / d S_line -- so Lstar stays d Jbar / d S_line of the
+    discrete system. empty bg arrays reproduce the line-only path bit for bit.
 
     Input:
         Z: (ND,), depth, [cm], ascending, Z[0] = 0
@@ -229,12 +238,16 @@ def multilevel_sweep_(
     nLine = w0.shape[0]
     ND = Z.shape[0]
     n_mu = mus.shape[0]
+    use_bg = bg_chi.shape[0] > 0
 
     Jbar = _numpy.zeros((nLine, ND), dtype=DT_NB_FLOAT)
     Lstar = _numpy.zeros((nLine, ND), dtype=DT_NB_FLOAT)
     S_line = _numpy.empty((nLine, ND), dtype=DT_NB_FLOAT)
     chi_int = _numpy.empty(ND, dtype=DT_NB_FLOAT)
     tau = _numpy.empty(ND, dtype=DT_NB_FLOAT)
+    S_col = _numpy.empty(ND, dtype=DT_NB_FLOAT)
+    r_line = _numpy.empty(ND, dtype=DT_NB_FLOAT)
+    chi_col = _numpy.empty(ND, dtype=DT_NB_FLOAT)
     for kL in range(nLine):
         for k in range(ND):
             ni = Nt[k] * n_pop[k, idxI[kL]]
@@ -249,16 +262,32 @@ def multilevel_sweep_(
             # nu = c/wl of THIS column, mirroring the production per-wavelength
             # convention: rescale the line-center h*nu factor inside chi_int
             nu_ratio = w0[kL] / wl[Nblue[kL] + iw]
-            tau[0] = 0.0
-            for k in range(1, ND):
-                chi_m = 0.5 * nu_ratio * (chi_int[k - 1] * phi[row, k - 1] + chi_int[k] * phi[row, k])
-                tau[k] = tau[k - 1] + chi_m * (Z[k] - Z[k - 1])
-            for im in range(n_mu):
-                res = _formal_rh_(tau, S_line[kL, :], mus[im], 0.0, 0.0, 0.0, hn, E_FEAUTRIER_ORDER.SECOND, True)
+            if use_bg:
                 for k in range(ND):
-                    coe = wmus[im] * weight[row] * phi[row, k] / wphi[k, kL]
-                    Jbar[kL, k] += coe * res.j[k]
-                    Lstar[kL, k] += coe * res.Psi[k]
+                    chi_l = nu_ratio * chi_int[k] * phi[row, k]
+                    chi_col[k] = chi_l + bg_chi[row, k]
+                    r_line[k] = chi_l / chi_col[k]
+                    S_col[k] = (chi_l * S_line[kL, k] + bg_eta[row, k]) / chi_col[k]
+                tau[0] = 0.0
+                for k in range(1, ND):
+                    tau[k] = tau[k - 1] + 0.5 * (chi_col[k - 1] + chi_col[k]) * (Z[k] - Z[k - 1])
+                for im in range(n_mu):
+                    res = _formal_rh_(tau, S_col, mus[im], 0.0, 0.0, 0.0, hn, E_FEAUTRIER_ORDER.SECOND, True)
+                    for k in range(ND):
+                        coe = wmus[im] * weight[row] * phi[row, k] / wphi[k, kL]
+                        Jbar[kL, k] += coe * res.j[k]
+                        Lstar[kL, k] += coe * res.Psi[k] * r_line[k]
+            else:
+                tau[0] = 0.0
+                for k in range(1, ND):
+                    chi_m = 0.5 * nu_ratio * (chi_int[k - 1] * phi[row, k - 1] + chi_int[k] * phi[row, k])
+                    tau[k] = tau[k - 1] + chi_m * (Z[k] - Z[k - 1])
+                for im in range(n_mu):
+                    res = _formal_rh_(tau, S_line[kL, :], mus[im], 0.0, 0.0, 0.0, hn, E_FEAUTRIER_ORDER.SECOND, True)
+                    for k in range(ND):
+                        coe = wmus[im] * weight[row] * phi[row, k] / wphi[k, kL]
+                        Jbar[kL, k] += coe * res.j[k]
+                        Lstar[kL, k] += coe * res.Psi[k]
     return Jbar, Lstar, S_line
 
 
@@ -297,7 +326,7 @@ def update_populations_(
     Input:
         Jbar, Lstar, S_line: (nLine, ND), from multilevel_sweep_
         Aji, Bji, Bij: (nLine,); idxI, idxJ: (nTran,), lines then continua
-        Cij_coe: (nTran,); Cji_coe: (ND, nTran), collisional coefficients
+        Cij_coe, Cji_coe: (ND, nTran), collisional coefficients
         Rik, Rki_stim, Rki_spon: (ND, nCont), passive b-f rates
         Ne: (ND,); nLevel: (,)
         lstar_scale: (,), deliberate operator mis-scaling (tests only; 1.0 normally)
@@ -328,7 +357,7 @@ def update_populations_(
         Rmat = _numpy.zeros((nLevel, nLevel), dtype=DT_NB_FLOAT)
         Cmat = _numpy.zeros((nLevel, nLevel), dtype=DT_NB_FLOAT)
         _set_matrixR_(Rmat, Rji_spon, Rji_stim, Rij, idxI, idxJ)
-        _set_matrixC_(Cmat, Cji_coe[k, :], Cij_coe, idxI, idxJ, Ne[k])
+        _set_matrixC_(Cmat, Cji_coe[k, :], Cij_coe[k, :], idxI, idxJ, Ne[k])
         n_new[k, :] = _solve_SE_(Rmat, Cmat)
     return n_new
 
@@ -346,11 +375,14 @@ def mali_multilevel_(
     itmax: T_INT = 2000,
     use_lstar: T_BOOL = True,
     lstar_scale: T_FLOAT = 1.0,
+    n_init: T_ARRAY | None = None,
 ) -> MALIml_Result:
     """Multilevel MALI driver on the toy pipeline.
 
     interpreted orchestration: unpacks the structs into the plain arrays the
-    jitted kernels take, starts from LTE populations, and iterates
+    jitted kernels take, starts from LTE populations (or n_init, (ND, nLevel)
+    normalized -- e.g. a reference solution for a fixed-point check), and
+    iterates
         sweep -> preconditioned per-depth SE -> convergence check
     until max|dn| < tol (populations are normalized to 1 per depth).
 
@@ -380,7 +412,7 @@ def mali_multilevel_(
     Bij = _numpy.ascontiguousarray(atom.Line["BIJ"][:])
 
     scale = lstar_scale if use_lstar else 0.0
-    n = pre.n_LTE.copy()
+    n = pre.n_LTE.copy() if n_init is None else _numpy.ascontiguousarray(n_init, dtype=DT_NB_FLOAT).copy()
     S_line = _numpy.zeros((atom.nLine, atmos.ND), dtype=DT_NB_FLOAT)
     Jbar = _numpy.zeros_like(S_line)
     Lstar = _numpy.zeros_like(S_line)
@@ -391,11 +423,11 @@ def mali_multilevel_(
         Jbar, Lstar, S_line = multilevel_sweep_(
             atmos.Z, n, atmos.Nt, mesh.wl, mesh.Nblue, mesh.span, pre.win_off,
             pre.phi, pre.weight, pre.wphi, w0, Aji, Bji, Bij, idxI[: atom.nLine], idxJ[: atom.nLine],
-            pre.planck_w0, mus, wmus,
+            pre.planck_w0, mus, wmus, pre.bg_chi, pre.bg_eta,
         )  # fmt: skip
         n_new = update_populations_(
             Jbar, Lstar, S_line, Aji, Bji, Bij, idxI, idxJ,
-            atom.Cij_coe, pre.Cji_coe, pre.Rik, pre.Rki_stim, pre.Rki_spon,
+            pre.Cij_coe, pre.Cji_coe, pre.Rik, pre.Rki_stim, pre.Rki_spon,
             atmos.Ne, atom.nLevel, scale,
         )  # fmt: skip
         dn = float(_numpy.abs(n_new - n).max())
