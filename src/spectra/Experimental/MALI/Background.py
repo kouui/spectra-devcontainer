@@ -3,13 +3,17 @@
 #
 # ported from RH (hydrogen.c, thomson.c, chemequil.c) so that a comparison run
 # against RH sees the same background physics. everything is CGS and
-# wavelength-base; every source here is treated as a THERMAL absorber:
+# wavelength-base; every source assembled by background_chi_ is a THERMAL
+# absorber, so the caller pairs
 #     eta_bg = chi_bg * B_lambda(Te)
 # which is exact for the stimulated-emission-corrected chi returned by each
-# function (Kirchhoff), except Thomson scattering, whose true emissivity is
-# sigma*ne*J -- prescribing B instead of J overcouples it to the thermal pool.
-# it is included because its opacity is negligible against H-minus below the
-# transition region; treat chi_thomson separately if that ever stops holding.
+# function (Kirchhoff). Thomson scattering is deliberately NOT part of that
+# sum: its emissivity is sigma*ne*J, and pairing it with B turns it into a
+# thermal emitter -- at a 1e5 K transition-region top that is a phantom EUV
+# source inside the Lyman line windows, strong enough to displace the whole
+# FALC hydrogen solution (measured: 4x at the temperature minimum, 6.6x for
+# n = 4,5 in the transition region, both vanishing once it is removed).
+# thomson_ stays available for a proper coherent-scattering treatment.
 #
 # build-once tier: evaluated per (window column, depth) at setup, so plain
 # interpreted numpy is fine.
@@ -582,7 +586,8 @@ def background_chi_(
     """Total background extinction at one wavelength, [cm^-1].
 
     H-minus b-f/f-f + H f-f + H b-f (every level whose edge lies redward of
-    wl_cm) + Thomson. eta_bg = chi * planck_cm_ is the caller's job.
+    wl_cm). eta_bg = chi * planck_cm_ is the caller's job, which is why
+    Thomson scattering is excluded (see the module note).
 
     Input:
         nH_level: (ND, nLevelBound), bound-level H populations, [cm^-3]
@@ -594,5 +599,4 @@ def background_chi_(
     chi += hydrogen_ff_(wl_cm, Te, Ne, Np)
     for i in range(nH_level.shape[1]):
         chi += hydrogen_bf_(wl_cm, Te, nH_level[:, i], float(erg_level[i]), erg_cont)
-    chi += thomson_(Ne)
     return chi

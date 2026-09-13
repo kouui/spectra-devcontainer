@@ -8,6 +8,12 @@ When this file approaches 300 lines (enforced by
 `changelogs/archives/changelog_<YYYYMMDD>.md` (filename uses the most
 recent date inside the file) and start a fresh entry below.
 
+## 2026-09-13
+
+### `Experimental/MALI/Background.py`, `tests/unittest/test.MALI_Background.py` — YW.Huang
+
+`background_chi_` no longer includes Thomson scattering. The assembled background is paired by every caller with `eta = chi·B(Te)`, which turns a scatterer into a thermal emitter; at the 1e5 K top of FALC that is a phantom EUV source inside the Lyman LINE windows, and it displaced the whole hydrogen solution: measured against RH, 4× for excited levels and protons at the temperature minimum and 6.6× for n = 4,5 in the transition region — both previously misattributed (to line-opacity/scattering gaps in the continuum RT, and to damping/collision-table details). Removing it brings the standalone active-continua run (`experiments/003-…`) to ≤1.10 everywhere against RH (top 1.00, TR 1.04, chromosphere 1.10, photosphere 1.04; surface b(2p) 11.45 vs 11.47). The root-cause hunt (`experiments/004-scattering-ablation/`, local-only) excluded along the way: H Rayleigh and Thomson on the continuum axis (RH ablation with env switches patched into the local RH copy: J at 150 nm moves 3.6×, populations <3%), false convergence of the continuum Λ-iteration (RH-initialized run reaches the same fixed point), and the formal-solver order (RH 1D is second-order Feautrier). Method finding worth keeping: prescribing RH's J inside a thermalized continuum (002's variant B) PINS the ionization there — the huge n(1s) makes the Lyman b-f channel a hair trigger that drives n_p to whatever satisfies S_local = J_prescribed — so agreement in such a region is tautological; only a standalone solve is a test. The 2026-08-28 entry's "≤6.6× residual for n = 4,5" and the chromosphere reading of variant B are superseded by this. Module note rewritten to record the trap; test asserts the assembled background stays ≪ σ_T·n_e on a 1e5 K column.
+
 ## 2026-08-28
 
 ### `Experimental/MALI/{ContinuumRT.py, Loop.py}`, `tests/unittest/test.MALI_ContinuumRT.py` — YW.Huang

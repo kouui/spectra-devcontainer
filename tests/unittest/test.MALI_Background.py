@@ -62,6 +62,12 @@ def test_background_assembly_positive():
     assert np.all(chi > 0.0)
     # H-minus dominates over Thomson at photospheric conditions
     assert chi[0] > 10.0 * BG.thomson_(Ne)[0]
+    # Thomson is a scatterer, never part of the thermal-absorber sum: at a
+    # 1e5 K, ne = 1e10 column the sum must be far below sigma_T * ne
+    Te_hot, Ne_hot = np.array([1.0e5]), np.array([1.0e10])
+    nH_hot = np.array([[1.0e4, 1.0, 1.0, 1.0, 1.0]])
+    chi_hot = BG.background_chi_(1.0e-5, Te_hot, Ne_hot, nH_hot, Ne_hot, erg, CST.E_Rydberg_H_)
+    assert chi_hot[0] < 0.01 * BG.thomson_(Ne_hot)[0]
 
 
 def test_sweep_empty_background_is_line_only():
