@@ -1,6 +1,6 @@
 """Build mali_global_mesh.ipynb.
 
-The global wavelength axis of `spectra.Experimental.MALI` demonstrated on a
+The global wavelength axis of `spectra.Experimental.MALI.v1` demonstrated on a
 real atom: theoretical hydrogen (`init_theoretical_hydrogen_atom_`, no data
 files). Self-contained: only the GlobalMesh geometry and production atomic
 functions are used. The notebook answers three design questions:
@@ -48,7 +48,7 @@ CELLS = [
     md(
         r"""# The global wavelength mesh on real hydrogen
 
-`spectra.Experimental.MALI.GlobalMesh` anchors every transition's
+`spectra.Experimental.MALI.v1.GlobalMesh` anchors every transition's
 dimensionless template with one scalar ruler,
 $\lambda = \lambda_0(1 + q\,\xi_{\rm ref}/c)$, and merges all transitions
 into a single depth-independent axis with per-transition `(Nblue, span)`
@@ -90,7 +90,7 @@ import numpy as np
 from spectra import Configurations as CFG
 from spectra import Constants as CST
 from spectra.Atomic import BasicP, Hydrogen, LTELib
-from spectra.Experimental.MALI import GlobalMesh
+from spectra.Experimental.MALI.v1 import GlobalMesh
 from spectra.Struct.Atom import init_theoretical_hydrogen_atom_
 from spectra.Util import MeshUtil
 

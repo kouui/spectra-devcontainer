@@ -12,8 +12,8 @@
 
 import numpy as _numpy
 
-from ...ImportAll import *
-from ...RadiativeTransfer import Profile as _Profile
+from ....ImportAll import *
+from ....RadiativeTransfer import Profile as _Profile
 
 # per-iteration-tier kernels are compiled unconditionally; a jitted caller needs
 # a jitted callee -- the always-compiled scalar binding, independent of CFG._IS_JIT

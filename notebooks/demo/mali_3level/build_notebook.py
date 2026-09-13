@@ -1,6 +1,6 @@
 """Build mali_3level.ipynb.
 
-Demo + verification of `spectra.Experimental.MALI` -- the toy-scale MALI
+Demo + verification of `spectra.Experimental.MALI.v1` -- the toy-scale MALI
 prototype: a global wavelength axis shared by all depths (RH-style scalar
 ruler), per-depth profile tables with wphi renormalization, a jitted formal
 sweep accumulating Jbar and the diagonal operator Lambda_star, and the
@@ -43,7 +43,7 @@ CELLS = [
     md(
         r"""# MALI on toy atoms
 
-`spectra.Experimental.MALI` is the prototype of the MALI loop
+`spectra.Experimental.MALI.v1` is the prototype of the MALI loop
 (Multilevel Accelerated Lambda Iteration, Rybicki & Hummer 1991, 1992):
 
 ```
@@ -80,7 +80,7 @@ iteration never recomputes them.
 import numpy as np
 
 from spectra import Constants as CST
-from spectra.Experimental.MALI import GlobalMesh, Loop, Structs
+from spectra.Experimental.MALI.v1 import GlobalMesh, Loop, Structs
 from spectra.Util import MeshUtil
 
 XI_REF = 2.5e5  # scalar ruler: 2.5 km/s in cm/s

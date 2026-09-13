@@ -1,4 +1,4 @@
-"""Unit tests for spectra.Experimental.MALI.Structs (toys + loop-invariant tier).
+"""Unit tests for spectra.Experimental.MALI.v1.Structs (toys + loop-invariant tier).
 
 The precompute tier depends only on (Te, Ne, Vt) per depth -- never on
 populations -- so it must be bit-reproducible and consistent with the LTE
@@ -10,7 +10,7 @@ import pytest
 
 from spectra import Constants as CST
 from spectra.Atomic import LTELib
-from spectra.Experimental.MALI import GlobalMesh, Structs
+from spectra.Experimental.MALI.v1 import GlobalMesh, Structs
 from spectra.Util import MeshUtil
 
 XI_REF = 2.5e5

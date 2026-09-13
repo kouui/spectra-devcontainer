@@ -1,4 +1,4 @@
-"""Unit tests for the two-level MALI loop (spectra.Experimental.MALI.Loop).
+"""Unit tests for the two-level MALI loop (spectra.Experimental.MALI.v1.Loop).
 
 Oracles are analytic or structural:
 - eps = 1 needs exactly one iteration (S = B, no scattering feedback)
@@ -13,7 +13,7 @@ Oracles are analytic or structural:
 import numpy as np
 import pytest
 
-from spectra.Experimental.MALI import GlobalMesh, Loop, Structs
+from spectra.Experimental.MALI.v1 import GlobalMesh, Loop, Structs
 from spectra.Util import MeshUtil
 
 

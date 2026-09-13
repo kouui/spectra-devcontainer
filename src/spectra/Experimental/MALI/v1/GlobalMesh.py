@@ -15,7 +15,7 @@ from dataclasses import dataclass as _dataclass
 
 import numpy as _numpy
 
-from ...ImportAll import *
+from ....ImportAll import *
 
 
 @_dataclass(**STRUCT_KWGS_UNFROZEN)

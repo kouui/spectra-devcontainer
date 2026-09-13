@@ -1,15 +1,16 @@
-"""Unit tests for spectra.Experimental.MALI.GlobalMesh (RH stages B+C).
+"""Unit tests for spectra.Experimental.MALI.v2.GlobalMesh (RH stages B+C).
 
 The global axis is pure geometry: anchoring a dimensionless template with a
-scalar ruler, merging per-line arrays into one sorted deduplicated axis, and
-locating each line as an (offset, span) window. No atmosphere physics enters.
+scalar ruler, merging per-transition arrays into one sorted deduplicated axis,
+locating each transition as an (offset, span) window, and the CSR reverse map
+from column to covering transitions. No atmosphere physics enters.
 """
 
 import numpy as np
 import pytest
 
 from spectra import Constants as CST
-from spectra.Experimental.MALI import GlobalMesh
+from spectra.Experimental.MALI.v2 import GlobalMesh
 from spectra.Util import MeshUtil
 
 XI_REF = 2.5e5  # 2.5 km/s in cm/s
@@ -145,6 +146,124 @@ class TestMergeWithContinua:
         cont = np.array([wl_line[0] + 10.0 * eps, 5100.0e-8, 5200.0e-8])
         mesh = GlobalMesh.merge_meshes_([wl_line, cont])
         assert mesh.wl.shape[0] == wl_line.shape[0] + cont.shape[0]
+
+
+class TestInputContract:
+    def test_descending_mesh_rejected(self):
+        cont = 5000.0e-8 * MeshUtil.make_continuum_mesh_(41)  # production: descending
+        with pytest.raises(ValueError, match="ascending"):
+            GlobalMesh.merge_meshes_([_line_mesh(3000.0e-8), cont])
+
+    def test_empty_or_nonfinite_rejected(self):
+        with pytest.raises(ValueError, match="finite"):
+            GlobalMesh.merge_meshes_([np.empty(0)])
+        with pytest.raises(ValueError, match="finite"):
+            GlobalMesh.merge_meshes_([np.array([1.0, np.nan, 2.0])])
+
+
+def _membership_reference(wl, meshes):
+    """Independent oracle from the RAW input meshes: column iw belongs to
+    transition t iff its wavelength lies inside t's closed range (to the merge
+    tolerance); rows count that transition's columns from its bluest one."""
+    eps = 1.0e-3 * min(np.min(np.diff(m)) for m in meshes if m.shape[0] > 1)
+    ref = [[] for _ in range(wl.shape[0])]
+    row = 0
+    for t, m in enumerate(meshes):
+        for iw in range(wl.shape[0]):
+            if m[0] - eps <= wl[iw] <= m[-1] + eps:
+                ref[iw].append((t, row))
+                row += 1
+    return ref
+
+
+def _assert_csr_matches(mesh, meshes):
+    ref = _membership_reference(mesh.wl, meshes)
+    for iw in range(mesh.wl.shape[0]):
+        lo, hi = mesh.col_ptr[iw], mesh.col_ptr[iw + 1]
+        got = list(zip(mesh.col_tran[lo:hi], mesh.col_row[lo:hi], strict=True))
+        assert got == ref[iw], iw
+    assert mesh.col_ptr[-1] == sum(len(r) for r in ref)
+
+
+def _cont_mesh(w_edge, nLambda=41):
+    return (w_edge * MeshUtil.make_continuum_mesh_(nLambda))[::-1].copy()
+
+
+def _hydrogen_like_meshes(n_max=5):
+    """Rydberg ladder: lines from levels 1..n_max-1 to every higher level, then
+    one continuum per level -- the FALC 6-level hydrogen axis layout without
+    the data files (Ly-alpha inside the Balmer range, Balmer inside Paschen)."""
+    w_edge = [CST.h_ * CST.c_ / (CST.E_Rydberg_H_ / n**2) for n in range(1, n_max + 1)]
+    lines = []
+    for i in range(1, n_max):
+        for j in range(i + 1, n_max + 1):
+            lines.append(_line_mesh(1.0 / (1.0 / w_edge[i - 1] - 1.0 / w_edge[j - 1]), nLambda=31, qwing=50.0))
+    conts = [_cont_mesh(w) for w in w_edge]
+    return lines, conts
+
+
+class TestWindowsAndMembership:
+    def _mesh(self):
+        # line inside continuum B; continuum A's range partly inside B's;
+        # a second line redward of B's edge so the edge has a red neighbour
+        cont_a, cont_b = _cont_mesh(3333.0e-8), _cont_mesh(10000.0e-8)
+        meshes = [_line_mesh(5000.0e-8), _line_mesh(10020.0e-8), cont_a, cont_b]
+        return GlobalMesh.merge_meshes_(meshes), meshes
+
+    def test_win_off_is_prefix_sum_of_span(self):
+        mesh, _ = self._mesh()
+        assert mesh.win_off[0, 0] == 0
+        for t in range(mesh.span.shape[0]):
+            assert mesh.win_off[t, 1] - mesh.win_off[t, 0] == mesh.span[t]
+            if t > 0:
+                assert mesh.win_off[t, 0] == mesh.win_off[t - 1, 1]
+
+    def test_csr_matches_independent_oracle(self):
+        mesh, meshes = self._mesh()
+        _assert_csr_matches(mesh, meshes)
+
+    def test_csr_matches_oracle_on_hydrogen_like_axis(self):
+        lines, conts = _hydrogen_like_meshes()
+        meshes = lines + conts
+        mesh = GlobalMesh.merge_meshes_(meshes)
+        _assert_csr_matches(mesh, meshes)
+        nL = len(lines)
+
+        def members(wl_value):
+            iw = int(np.argmin(np.abs(mesh.wl - wl_value)))
+            return set(mesh.col_tran[mesh.col_ptr[iw] : mesh.col_ptr[iw + 1]].tolist())
+
+        # Ly-alpha (line 0) center, 121.6 nm: the line + the Balmer continuum
+        # only -- the Lyman edge is at 91.2 nm and the production continuum
+        # mesh reaches down to ~0.16 x edge, so Paschen starts at ~128 nm
+        assert conts[2][0] > lines[0][-1]
+        assert members(lines[0][15]) == {0, nL + 1}
+        # Balmer edge column (364.6 nm): Balmer (closed interval) + Paschen,
+        # Brackett, Pfund whose ranges contain it; no Lyman, no line
+        assert members(conts[1][-1]) == {nL + n for n in range(1, 5)}
+
+    def test_overlap_cases(self):
+        mesh, meshes = self._mesh()
+        line_red, cont_a, cont_b = meshes[1], meshes[2], meshes[3]
+
+        def members(wl_value):
+            iw = int(np.argmin(np.abs(mesh.wl - wl_value)))
+            return set(mesh.col_tran[mesh.col_ptr[iw] : mesh.col_ptr[iw + 1]].tolist())
+
+        assert members(5000.0e-8) == {0, 3}  # line inside continuum B only
+        assert members(2000.0e-8) == {2, 3}  # A's point inside B's range
+        assert members(600.0e-8) == {2}  # A alone below B's range
+        assert members(cont_a[-1]) == {2, 3}  # A's edge: closed interval, inside B
+        # B's edge column is B's (closed interval); the next column redward --
+        # the bluest point of the red line -- is not
+        iw_edge = int(np.argmin(np.abs(mesh.wl - cont_b[-1])))
+        assert members(cont_b[-1]) == {3}
+        assert mesh.wl[iw_edge + 1] == line_red[0]
+        assert members(line_red[0]) == {1}
+
+    def test_line_only_columns_belong_to_exactly_one(self):
+        mesh = GlobalMesh.merge_meshes_([_line_mesh(4000.0e-8), _line_mesh(6000.0e-8)])
+        assert np.all(np.diff(mesh.col_ptr) == 1)
 
 
 class TestTrapezoidalWeight:

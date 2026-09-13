@@ -1,26 +1,34 @@
 # -------------------------------------------------------------------------------
-# containers and toy builders for the MALI prototype
+# containers and toy builders for the MALI prototype (unified-axis version)
 #
 # build-once tier: everything here runs a single time per model configuration,
 # so it stays interpreted and is free to use dataclasses and python loops. the
 # per-iteration tier (ProfileTable.py, Loop.py kernels) receives only the plain
 # arrays stored here.
 #
+# every transition -- line or continuum -- is ACTIVE: its opacity comes from the
+# populations inside the sweep, and its rates from the radiation field solved
+# on the one global axis. there are no prescribed-radiation rate tables here.
+# the background (H-minus, H f-f, ...) is what the active atom does NOT
+# provide: it is thermal (eta = chi*B) plus a separate coherent-scattering
+# extinction sigma that the sweep pairs with sigma*J, never with B.
+#
 # the toy atoms are fabricated instead of loaded from data/atom/** : every
 # oracle in the tests is analytic or structural, and real atomic data would add
 # failure modes (IO, continua, damping) without adding verification power.
 # -------------------------------------------------------------------------------
 
+from collections.abc import Callable as _Callable
 from dataclasses import dataclass as _dataclass
 
 import numpy as _numpy
 
-from ...Atomic import BasicP as _BasicP
-from ...Atomic import Collision as _Collision
-from ...Atomic import LTELib as _LTELib
-from ...Function.SEquil import SELib as _SELib
-from ...ImportAll import *
-from ...Util import MeshUtil as _MeshUtil
+from ....Atomic import BasicP as _BasicP
+from ....Atomic import Collision as _Collision
+from ....Atomic import LTELib as _LTELib
+from ....Function.SEquil import SELib as _SELib
+from ....ImportAll import *
+from ....Util import MeshUtil as _MeshUtil
 from . import GlobalMesh as _GlobalMesh
 from . import ProfileTable as _ProfileTable
 
@@ -58,9 +66,8 @@ class Toy_Atom:
     # here: it rejects atoms without continuum, and the toys must stay free to
     # be line-only. detailed balance still uses the real Collision.Cij_to_Cji_.
     Cij_coe: T_ARRAY  # (nTran,), [cm^3 s^-1]
-    # passive-continuum machinery (empty for line-only toys): the b-f
-    # transitions contribute RATES to the SE (from prescribed radiation), never
-    # opacity to the RT -- RH's PASSIVE transitions.
+    # continuum meshes and cross sections (empty for line-only toys); the
+    # sweep assembles NLTE b-f opacity from these and the current populations
     Cont_mesh: T_ARRAY  # (nCont, nContMesh), [cm], descending from the threshold
     alpha: T_ARRAY  # (nCont, nContMesh), photoionization cross section, [cm^2]
     am: T_FLOAT  # atomic mass relative to hydrogen
@@ -185,11 +192,10 @@ def make_toy_atom_2lv_cont_(
 ) -> Toy_Atom:
     """2 bound levels + 1 continuum level (the ion ground).
 
-    The line (0,1) is the active transition; the two b-f transitions (0,k) and
-    (1,k) are passive: their rates come from a prescribed radiation field via
-    SELib._bf_R_rate_ and enter Gamma unpreconditioned -- the active/passive
-    seam of full MALI, at toy scale. cross sections are hydrogenic-shaped,
-    alpha = alpha0 * (wl/w0_threshold)^3.
+    The line (0,1) and the two b-f transitions (0,k), (1,k) are all active on
+    the shared axis; the (1,k) continuum range contains the line, so this toy
+    exercises the line-inside-continuum overlap. cross sections are
+    hydrogenic-shaped, alpha = alpha0 * (wl/w0_threshold)^3.
     """
     E1 = CST.h_ * CST.c_ / w0_cm
     E_ion = E_ion_over_E1 * E1
@@ -226,6 +232,64 @@ def make_toy_atom_2lv_cont_(
     atom.Cont_mesh = Cont_mesh
     atom.alpha = alpha
     atom.Cij_coe = _numpy.concatenate([atom.Cij_coe, _numpy.asarray(CI_coe, dtype=DT_NB_FLOAT)])
+    atom.nCont = nCont
+    return atom
+
+
+def make_toy_atom_overlap_(
+    w0_cm: T_FLOAT = 5000.0e-8,
+    split: T_FLOAT = 3.0e-5,
+    Aji: T_ARRAY | None = None,  # (A10, A20)
+    Cij_coe: T_ARRAY | None = None,  # (C01, C02, C0k, C1k, C2k)
+    alpha0: T_FLOAT = 1.0e-18,
+    E_ion_over_E1: T_FLOAT = 1.5,
+    am: T_FLOAT = 1.0,
+) -> Toy_Atom:
+    """A resonance doublet under continua: lines (0,1) and (0,2) share their
+    LOWER level and their upper levels are split by `split` (relative to E1),
+    so the two windows overlap on the axis for the usual +-10 ruler units at
+    2.5 km/s (8e-5); the ion level 3 carries three b-f transitions. this is
+    the strong-overlap case the self-term operator is weakest on. (the shared
+    level must be the ground: the production LTE builder chains populations
+    from ground levels only.)
+    """
+    E1 = CST.h_ * CST.c_ / w0_cm
+    E2 = E1 * (1.0 + split)
+    E_ion = E_ion_over_E1 * E1
+    if Aji is None:
+        Aji = _numpy.array([1.0e8, 5.0e7])
+    if Cij_coe is None:
+        Cij_coe = _numpy.array([1.0e-8, 1.0e-8, 1.0e-9, 1.0e-9, 1.0e-9])
+
+    atom = make_toy_atom_(
+        level_g=_numpy.array([1.0, 3.0, 5.0, 1.0]),
+        level_erg=_numpy.array([0.0, E1, E2, E_ion]),
+        line_pairs=[(0, 1), (0, 2)],
+        line_Aji=_numpy.asarray(Aji, dtype=DT_NB_FLOAT),
+        line_Cij_coe=_numpy.asarray(Cij_coe[:2], dtype=DT_NB_FLOAT),
+        am=am,
+    )
+    atom.Level["isGround"][3] = True
+
+    nCont = 3
+    Cont = _numpy.zeros(nCont, dtype=_CONT_DTYPE)
+    Cont_mesh = _numpy.empty((nCont, _N_CONT_MESH), dtype=DT_NB_FLOAT)
+    alpha = _numpy.empty((nCont, _N_CONT_MESH), dtype=DT_NB_FLOAT)
+    for kC, i in enumerate((0, 1, 2)):
+        chi_ion = E_ion - float(atom.Level["erg"][i])
+        w_threshold = CST.h_ * CST.c_ / chi_ion
+        Cont["idxI"][kC] = i
+        Cont["idxJ"][kC] = 3
+        Cont["gi"][kC] = atom.Level["g"][i]
+        Cont["gj"][kC] = atom.Level["g"][3]
+        Cont["f0"][kC] = chi_ion / CST.h_
+        Cont_mesh[kC, :] = w_threshold * _MeshUtil.make_continuum_mesh_(_N_CONT_MESH)
+        alpha[kC, :] = alpha0 * (Cont_mesh[kC, :] / w_threshold) ** 3
+
+    atom.Cont = Cont
+    atom.Cont_mesh = Cont_mesh
+    atom.alpha = alpha
+    atom.Cij_coe = _numpy.concatenate([atom.Cij_coe, _numpy.asarray(Cij_coe[2:], dtype=DT_NB_FLOAT)])
     atom.nCont = nCont
     return atom
 
@@ -274,22 +338,28 @@ class MALI_Precompute:
 
     n_LTE: T_ARRAY  # (ND, nLevel), normalized LTE populations
     nj_by_ni: T_ARRAY  # (ND, nTran), LTE ratio per transition (lines then continua)
+    Cij_coe: T_ARRAY  # (ND, nTran), upward collisional coefficient [cm^3 s^-1]
     Cji_coe: T_ARRAY  # (ND, nTran), downward collisional coefficient [cm^3 s^-1]
     dopWidth_cm: T_ARRAY  # (ND, nLine), [cm]
     adamp: T_ARRAY  # (ND, nLine), Voigt damping parameter (0 for Gaussian toys)
-    planck_w0: T_ARRAY  # (ND, nLine), Planck function at line center, cm-base
-    # profile tables, flattened over the per-line windows of the global mesh:
-    # rows win_off[kL,0]:win_off[kL,1] of `phi` belong to line kL and align with
-    # global wavelength indices Nblue[kL] : Nblue[kL]+span[kL].
-    phi: T_ARRAY  # (nWin_total, ND), [cm^-1]
+    # line profile tables, flattened over the line windows of the global mesh:
+    # rows mesh.win_off[kL,0]:mesh.win_off[kL,1] belong to line kL (lines come
+    # first in win_off, so these rows start at 0)
+    phi: T_ARRAY  # (nWinLine, ND), [cm^-1]
     wphi: T_ARRAY  # (ND, nLine), numerical profile norm on the window quadrature
-    weight: T_ARRAY  # (nWin_total,), per-window trapezoidal weights, [cm]
-    win_off: T_ARRAY  # (nLine, 2), [start, stop) row range of each line in `phi`
-    # passive b-f rates from PRESCRIBED radiation (Planck at the local Te here),
-    # therefore loop-invariant; (ND, 0) for line-only toys
-    Rik: T_ARRAY  # (ND, nCont), radiative ionization rate
-    Rki_stim: T_ARRAY  # (ND, nCont), stimulated radiative recombination rate
-    Rki_spon: T_ARRAY  # (ND, nCont), spontaneous radiative recombination rate
+    weight: T_ARRAY  # (nWinLine,), per-window trapezoidal weights, [cm]
+    # continuum cross sections on the continuum windows: row r of the global
+    # window tables (r >= row_cont0) maps to alpha_win[r - row_cont0]
+    alpha_win: T_ARRAY  # (nWinCont,), [cm^2]
+    row_cont0: T_INT  # first continuum row = mesh.win_off[nLine, 0] (nWinLine)
+    # per axis column, populations never touch these
+    exp_hnu_kT: T_ARRAY  # (Nspect, ND), exp(-h nu/kT), stimulated factor
+    twohc2_wl5: T_ARRAY  # (Nspect,), 2 h c^2 / wl^5, cm-base emission factor
+    hn_bottom: T_ARRAY  # (Nspect,), Planck at the lower boundary, per column
+    # background of everything the active atom does not provide
+    bg_chi: T_ARRAY  # (Nspect, ND), THERMAL extinction, [cm^-1]
+    bg_eta: T_ARRAY  # (Nspect, ND), bg_chi * B_lambda(Te)
+    bg_sca: T_ARRAY  # (Nspect, ND), coherent-scattering extinction, [cm^-1]
 
 
 def precompute_(
@@ -297,45 +367,52 @@ def precompute_(
     atmos: Atmos1D,
     mesh: _GlobalMesh.Global_Mesh,
     adamp_const: T_FLOAT = 0.0,
+    Cij_dep: T_ARRAY | None = None,
+    adamp_dep: T_ARRAY | None = None,
+    bg_fn: _Callable[[float], T_TUPLE[T_ARRAY, T_ARRAY]] | None = None,
 ) -> MALI_Precompute:
+    """Optional real-atom inputs (defaults reproduce the toy behavior):
+    Cij_dep: (ND, nTran), per-depth upward collisional coefficients
+        (temperature-dependent tables); None broadcasts atom.Cij_coe
+    adamp_dep: (ND, nLine), per-depth Voigt damping; None uses adamp_const
+    bg_fn: wl_cm -> (chi_thermal (ND,), sigma (ND,)); the thermal part must
+        EXCLUDE this atom's own b-f (that opacity comes from the populations
+        in the sweep) and must not contain scattering (which goes in sigma:
+        Thomson, and Rayleigh off the ground level -- RH multiplies the
+        Rayleigh cross section by the atmosphere file's ground population
+        once, before iterating, so it is build-once here as well).
+        None leaves every background table at zero.
+    """
     ND = atmos.ND
     nLine = atom.nLine
     nCont = atom.nCont
     nTran = nLine + nCont
+    if mesh.Nblue.shape[0] != nTran:
+        raise ValueError(f"mesh has {mesh.Nblue.shape[0]} windows, atom has {nTran} transitions")
 
     n_LTE = _numpy.empty((ND, atom.nLevel), dtype=DT_NB_FLOAT)
     nj_by_ni = _numpy.empty((ND, nTran), dtype=DT_NB_FLOAT)
     Cji_coe = _numpy.empty((ND, nTran), dtype=DT_NB_FLOAT)
     dopWidth_cm = _numpy.empty((ND, nLine), dtype=DT_NB_FLOAT)
-    planck_w0 = _numpy.empty((ND, nLine), dtype=DT_NB_FLOAT)
-    Rik = _numpy.zeros((ND, nCont), dtype=DT_NB_FLOAT)
-    Rki_stim = _numpy.zeros((ND, nCont), dtype=DT_NB_FLOAT)
-    Rki_spon = _numpy.zeros((ND, nCont), dtype=DT_NB_FLOAT)
+    if Cij_dep is None:
+        Cij_coe = _numpy.broadcast_to(atom.Cij_coe[:], (ND, nTran)).copy()
+    else:
+        Cij_coe = _numpy.ascontiguousarray(Cij_dep, dtype=DT_NB_FLOAT)
     for k in range(ND):
         ni, ratio = _SELib._ni_nj_LTE_(atom.Level, atom.Line, atom.Cont, atmos.Te[k], atmos.Ne[k])
         n_LTE[k, :] = ni
         nj_by_ni[k, :] = ratio
-        Cji_coe[k, :] = _Collision.Cij_to_Cji_(atom.Cij_coe[:], ratio[:])
+        Cji_coe[k, :] = _Collision.Cij_to_Cji_(Cij_coe[k, :], ratio[:])
         dopWidth_cm[k, :] = _BasicP.doppler_width_(atom.Line["w0"][:], atmos.Te[k], atmos.Vt[k], atom.am)
-        planck_w0[k, :] = _LTELib.planck_cm_(atom.Line["w0"][:], atmos.Te[k])
-        if nCont > 0:
-            # prescribed thermal radiation drives the passive b-f transitions
-            PI_intensity = _LTELib.planck_cm_(atom.Cont_mesh[:, :], atmos.Te[k])
-            Rik[k, :], Rki_stim[k, :], Rki_spon[k, :] = _SELib._bf_R_rate_(
-                atom.Cont, atom.Cont_mesh, atmos.Te[k], nj_by_ni[k, nLine:], atom.alpha, PI_intensity
-            )
 
-    adamp = _numpy.full((ND, nLine), adamp_const, dtype=DT_NB_FLOAT)
+    if adamp_dep is None:
+        adamp = _numpy.full((ND, nLine), adamp_const, dtype=DT_NB_FLOAT)
+    else:
+        adamp = _numpy.ascontiguousarray(adamp_dep, dtype=DT_NB_FLOAT)
 
-    win_off = _numpy.empty((nLine, 2), dtype=DT_NB_INT)
-    stop = 0
-    for kL in range(nLine):
-        win_off[kL, 0] = stop
-        stop += int(mesh.span[kL])
-        win_off[kL, 1] = stop
-
-    phi = _numpy.empty((stop, ND), dtype=DT_NB_FLOAT)
-    weight = _numpy.empty(stop, dtype=DT_NB_FLOAT)
+    nWinLine = int(mesh.win_off[nLine - 1, 1]) if nLine > 0 else 0
+    phi = _numpy.empty((nWinLine, ND), dtype=DT_NB_FLOAT)
+    weight = _numpy.empty(nWinLine, dtype=DT_NB_FLOAT)
     wphi = _numpy.empty((ND, nLine), dtype=DT_NB_FLOAT)
     for kL in range(nLine):
         wl_win = mesh.wl[mesh.Nblue[kL] : mesh.Nblue[kL] + mesh.span[kL]]
@@ -348,22 +425,75 @@ def precompute_(
             adamp[:, kL].copy(),
             atom.Line["ProfileType"][kL],
         )
-        phi[win_off[kL, 0] : win_off[kL, 1], :] = phi_win
-        weight[win_off[kL, 0] : win_off[kL, 1]] = weight_win
+        phi[mesh.win_off[kL, 0] : mesh.win_off[kL, 1], :] = phi_win
+        weight[mesh.win_off[kL, 0] : mesh.win_off[kL, 1]] = weight_win
         wphi[:, kL] = wphi_line
+
+    row_cont0 = nWinLine
+    # the b-f rate trapezoid needs at least two window points per continuum
+    if nCont > 0 and int(mesh.span[nLine:].min()) < 2:
+        raise ValueError("every continuum window must carry at least two axis points")
+    nWinCont = int(mesh.win_off[nTran - 1, 1]) - row_cont0 if nCont > 0 else 0
+    alpha_win = _numpy.empty(nWinCont, dtype=DT_NB_FLOAT)
+    for kC in range(nCont):
+        t = nLine + kC
+        wl_win = mesh.wl[mesh.Nblue[t] : mesh.Nblue[t] + mesh.span[t]]
+        order = _numpy.argsort(atom.Cont_mesh[kC, :])
+        # log-log interpolation: alpha spans decades over a continuum range;
+        # the window is exactly the mesh's closed range, so no extrapolation
+        alpha_win[mesh.win_off[t, 0] - row_cont0 : mesh.win_off[t, 1] - row_cont0] = _numpy.exp(
+            _numpy.interp(_numpy.log(wl_win), _numpy.log(atom.Cont_mesh[kC, order]), _numpy.log(atom.alpha[kC, order]))
+        )
+
+    hnu_k = CST.h_ * CST.c_ / (mesh.wl * CST.k_)
+    exp_hnu_kT = _numpy.ascontiguousarray(_numpy.exp(-hnu_k[:, None] / atmos.Te[None, :]), dtype=DT_NB_FLOAT)
+    twohc2_wl5 = _numpy.asarray(2.0 * CST.h_ * CST.c_**2 / mesh.wl**5, dtype=DT_NB_FLOAT)
+    hn_bottom = _numpy.asarray(_LTELib.planck_cm_(mesh.wl[:], atmos.Te[ND - 1]), dtype=DT_NB_FLOAT)
+
+    bg_chi, bg_eta, bg_sca = _background_tables_(mesh.wl, atmos.Te, bg_fn)
 
     return MALI_Precompute(
         n_LTE=n_LTE,
         nj_by_ni=nj_by_ni,
+        Cij_coe=Cij_coe,
         Cji_coe=Cji_coe,
         dopWidth_cm=dopWidth_cm,
         adamp=adamp,
-        planck_w0=planck_w0,
         phi=phi,
         wphi=wphi,
         weight=weight,
-        win_off=win_off,
-        Rik=Rik,
-        Rki_stim=Rki_stim,
-        Rki_spon=Rki_spon,
+        alpha_win=alpha_win,
+        row_cont0=row_cont0,
+        exp_hnu_kT=exp_hnu_kT,
+        twohc2_wl5=twohc2_wl5,
+        hn_bottom=hn_bottom,
+        bg_chi=bg_chi,
+        bg_eta=bg_eta,
+        bg_sca=bg_sca,
     )
+
+
+def _background_tables_(
+    wl: T_ARRAY, Te: T_ARRAY, bg_fn: _Callable[[float], T_TUPLE[T_ARRAY, T_ARRAY]] | None
+) -> T_TUPLE[T_ARRAY, T_ARRAY, T_ARRAY]:
+    """Thermal background chi/eta and scattering sigma on every axis column."""
+    Nspect = wl.shape[0]
+    ND = Te.shape[0]
+    bg_chi = _numpy.zeros((Nspect, ND), dtype=DT_NB_FLOAT)
+    bg_eta = _numpy.zeros((Nspect, ND), dtype=DT_NB_FLOAT)
+    bg_sca = _numpy.zeros((Nspect, ND), dtype=DT_NB_FLOAT)
+    if bg_fn is None:
+        return bg_chi, bg_eta, bg_sca
+    for iw in range(Nspect):
+        chi_th, sigma = bg_fn(float(wl[iw]))
+        chi_th = _numpy.asarray(chi_th, dtype=DT_NB_FLOAT)
+        sigma = _numpy.asarray(sigma, dtype=DT_NB_FLOAT)
+        # a scalar or a (1,) array would broadcast silently into a "valid" table
+        if chi_th.shape != (ND,) or sigma.shape != (ND,):
+            raise ValueError(f"bg_fn at wl={wl[iw]:.6e} cm must return two ({ND},) arrays")
+        if not (_numpy.all(_numpy.isfinite(chi_th)) and _numpy.all(_numpy.isfinite(sigma))):
+            raise ValueError(f"bg_fn at wl={wl[iw]:.6e} cm returned non-finite values")
+        bg_chi[iw, :] = chi_th
+        bg_eta[iw, :] = chi_th * _LTELib.planck_cm_(float(wl[iw]), Te[:])
+        bg_sca[iw, :] = sigma
+    return bg_chi, bg_eta, bg_sca
