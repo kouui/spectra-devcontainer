@@ -236,6 +236,64 @@ def make_toy_atom_2lv_cont_(
     return atom
 
 
+def make_toy_atom_overlap_(
+    w0_cm: T_FLOAT = 5000.0e-8,
+    split: T_FLOAT = 3.0e-5,
+    Aji: T_ARRAY | None = None,  # (A10, A20)
+    Cij_coe: T_ARRAY | None = None,  # (C01, C02, C0k, C1k, C2k)
+    alpha0: T_FLOAT = 1.0e-18,
+    E_ion_over_E1: T_FLOAT = 1.5,
+    am: T_FLOAT = 1.0,
+) -> Toy_Atom:
+    """A resonance doublet under continua: lines (0,1) and (0,2) share their
+    LOWER level and their upper levels are split by `split` (relative to E1),
+    so the two windows overlap on the axis for the usual +-10 ruler units at
+    2.5 km/s (8e-5); the ion level 3 carries three b-f transitions. this is
+    the strong-overlap case the self-term operator is weakest on. (the shared
+    level must be the ground: the production LTE builder chains populations
+    from ground levels only.)
+    """
+    E1 = CST.h_ * CST.c_ / w0_cm
+    E2 = E1 * (1.0 + split)
+    E_ion = E_ion_over_E1 * E1
+    if Aji is None:
+        Aji = _numpy.array([1.0e8, 5.0e7])
+    if Cij_coe is None:
+        Cij_coe = _numpy.array([1.0e-8, 1.0e-8, 1.0e-9, 1.0e-9, 1.0e-9])
+
+    atom = make_toy_atom_(
+        level_g=_numpy.array([1.0, 3.0, 5.0, 1.0]),
+        level_erg=_numpy.array([0.0, E1, E2, E_ion]),
+        line_pairs=[(0, 1), (0, 2)],
+        line_Aji=_numpy.asarray(Aji, dtype=DT_NB_FLOAT),
+        line_Cij_coe=_numpy.asarray(Cij_coe[:2], dtype=DT_NB_FLOAT),
+        am=am,
+    )
+    atom.Level["isGround"][3] = True
+
+    nCont = 3
+    Cont = _numpy.zeros(nCont, dtype=_CONT_DTYPE)
+    Cont_mesh = _numpy.empty((nCont, _N_CONT_MESH), dtype=DT_NB_FLOAT)
+    alpha = _numpy.empty((nCont, _N_CONT_MESH), dtype=DT_NB_FLOAT)
+    for kC, i in enumerate((0, 1, 2)):
+        chi_ion = E_ion - float(atom.Level["erg"][i])
+        w_threshold = CST.h_ * CST.c_ / chi_ion
+        Cont["idxI"][kC] = i
+        Cont["idxJ"][kC] = 3
+        Cont["gi"][kC] = atom.Level["g"][i]
+        Cont["gj"][kC] = atom.Level["g"][3]
+        Cont["f0"][kC] = chi_ion / CST.h_
+        Cont_mesh[kC, :] = w_threshold * _MeshUtil.make_continuum_mesh_(_N_CONT_MESH)
+        alpha[kC, :] = alpha0 * (Cont_mesh[kC, :] / w_threshold) ** 3
+
+    atom.Cont = Cont
+    atom.Cont_mesh = Cont_mesh
+    atom.alpha = alpha
+    atom.Cij_coe = _numpy.concatenate([atom.Cij_coe, _numpy.asarray(Cij_coe[2:], dtype=DT_NB_FLOAT)])
+    atom.nCont = nCont
+    return atom
+
+
 @_dataclass(**STRUCT_KWGS_UNFROZEN)
 class Atmos1D:
     Z: T_ARRAY  # (ND,), depth below the upper surface, [cm], Z[0] = 0, ascending
@@ -369,6 +427,9 @@ def precompute_(
         wphi[:, kL] = wphi_line
 
     row_cont0 = nWinLine
+    # the b-f rate trapezoid needs at least two window points per continuum
+    if nCont > 0 and int(mesh.span[nLine:].min()) < 2:
+        raise ValueError("every continuum window must carry at least two axis points")
     nWinCont = int(mesh.win_off[nTran - 1, 1]) - row_cont0 if nCont > 0 else 0
     alpha_win = _numpy.empty(nWinCont, dtype=DT_NB_FLOAT)
     for kC in range(nCont):

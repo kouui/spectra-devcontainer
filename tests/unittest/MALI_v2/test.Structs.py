@@ -182,3 +182,12 @@ class TestPrecomputeContinua:
             Structs.precompute_(atom, atmos, mesh, bg_fn=lambda wl_cm: (np.zeros(atmos.ND + 1), np.zeros(atmos.ND)))
         with pytest.raises(ValueError, match="finite"):
             Structs.precompute_(atom, atmos, mesh, bg_fn=lambda wl_cm: (np.full(atmos.ND, np.nan), np.zeros(atmos.ND)))
+
+    def test_single_point_continuum_window_rejected(self):
+        atom = Structs.make_toy_atom_2lv_cont_()
+        atmos = Structs.make_toy_atmos_(5, 1.0e8)
+        q = MeshUtil.make_full_line_mesh_(21, 2.5, 10.0)
+        meshes = [GlobalMesh.anchor_line_mesh_(q, atom.Line["w0"][0], XI_REF)]
+        meshes += [atom.Cont_mesh[0, ::-1].copy(), np.array([atom.Cont_mesh[1, 0]])]
+        with pytest.raises(ValueError, match="two axis points"):
+            Structs.precompute_(atom, atmos, GlobalMesh.merge_meshes_(meshes))
