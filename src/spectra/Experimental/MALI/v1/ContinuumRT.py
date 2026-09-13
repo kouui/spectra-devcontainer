@@ -23,10 +23,10 @@ from dataclasses import dataclass as _dataclass
 
 import numpy as _numpy
 
-from ...Atomic import LTELib as _LTELib
-from ...Atomic import PhotoIonize as _PhotoIonize
-from ...ImportAll import *
-from ...RadiativeTransfer import Feautrier as _Feautrier
+from ....Atomic import LTELib as _LTELib
+from ....Atomic import PhotoIonize as _PhotoIonize
+from ....ImportAll import *
+from ....RadiativeTransfer import Feautrier as _Feautrier
 from . import Structs as _Structs
 
 if CFG._IS_JIT:

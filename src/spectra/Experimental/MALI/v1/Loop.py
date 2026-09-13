@@ -12,12 +12,12 @@ from collections import namedtuple as _namedtuple
 
 import numpy as _numpy
 
-from ...Atomic import SEsolver as _SEsolver
-from ...Atomic import emisivity as _emisivity
-from ...Atomic import extinction as _extinction
-from ...ImportAll import *
-from ...Math import GaussLeg as _GaussLeg
-from ...RadiativeTransfer import Feautrier as _Feautrier
+from ....Atomic import SEsolver as _SEsolver
+from ....Atomic import emisivity as _emisivity
+from ....Atomic import extinction as _extinction
+from ....ImportAll import *
+from ....Math import GaussLeg as _GaussLeg
+from ....RadiativeTransfer import Feautrier as _Feautrier
 from . import ContinuumRT as _ContinuumRT
 from . import GlobalMesh as _GlobalMesh
 from . import Structs as _Structs

@@ -1,4 +1,4 @@
-"""Unit tests for spectra.Experimental.MALI.GlobalMesh (RH stages B+C).
+"""Unit tests for spectra.Experimental.MALI.v1.GlobalMesh (RH stages B+C).
 
 The global axis is pure geometry: anchoring a dimensionless template with a
 scalar ruler, merging per-line arrays into one sorted deduplicated axis, and
@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 
 from spectra import Constants as CST
-from spectra.Experimental.MALI import GlobalMesh
+from spectra.Experimental.MALI.v1 import GlobalMesh
 from spectra.Util import MeshUtil
 
 XI_REF = 2.5e5  # 2.5 km/s in cm/s

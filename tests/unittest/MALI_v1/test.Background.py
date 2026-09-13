@@ -15,8 +15,8 @@ Oracles:
 import numpy as np
 
 from spectra import Constants as CST
-from spectra.Experimental.MALI import Background as BG
-from spectra.Experimental.MALI import GlobalMesh, Loop, Structs
+from spectra.Experimental.MALI.v1 import Background as BG
+from spectra.Experimental.MALI.v1 import GlobalMesh, Loop, Structs
 from spectra.Util import MeshUtil
 
 

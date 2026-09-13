@@ -13,7 +13,7 @@ Oracles:
 import numpy as np
 
 from spectra.Atomic import LTELib
-from spectra.Experimental.MALI import ContinuumRT, GlobalMesh, Loop, Structs
+from spectra.Experimental.MALI.v1 import ContinuumRT, GlobalMesh, Loop, Structs
 from spectra.Math import GaussLeg
 from spectra.Util import MeshUtil
 

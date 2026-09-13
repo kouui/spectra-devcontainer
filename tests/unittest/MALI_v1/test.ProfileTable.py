@@ -1,4 +1,4 @@
-"""Unit tests for spectra.Experimental.MALI.ProfileTable (RH stage D).
+"""Unit tests for spectra.Experimental.MALI.v1.ProfileTable (RH stage D).
 
 The axis is frozen; every profile value is exact (analytic function of the
 coordinate transform). What CAN degrade is the quadrature of integrals over
@@ -10,7 +10,7 @@ import pytest
 
 from spectra import Constants as CST
 from spectra.Enums import E_ABSORPTION_PROFILE_TYPE
-from spectra.Experimental.MALI import GlobalMesh, ProfileTable
+from spectra.Experimental.MALI.v1 import GlobalMesh, ProfileTable
 from spectra.RadiativeTransfer import Profile
 from spectra.Util import MeshUtil
 

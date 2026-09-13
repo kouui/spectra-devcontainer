@@ -21,7 +21,7 @@
 
 import numpy as _numpy
 
-from ...ImportAll import *
+from ....ImportAll import *
 
 # --- constants derived once, mirroring the RH expressions in CGS ------------
 
