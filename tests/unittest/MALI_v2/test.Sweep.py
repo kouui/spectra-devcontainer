@@ -1,17 +1,19 @@
 """Unit tests for the unified formal sweep (v2.Loop.unified_sweep_).
 
 Oracle: an independent pure-Python per-column implementation on the
-2-level + continuum toy with a thermal background -- membership decided from
-the raw meshes' wavelength ranges, opacity/emissivity written out from the
-formulas, the production Feautrier solver called per angle. The kernel must
-reproduce J, Psi and chi_tot column by column, with every axis wavelength
-solved exactly once.
+2-level + continuum toy with a thermal background and coherent scattering --
+membership decided from the raw meshes' wavelength ranges,
+opacity/emissivity written out from the formulas, the production Feautrier
+solver called per angle. The kernel must reproduce J, Psi and chi_tot column
+by column, with every axis wavelength solved exactly once; with sigma = 0 the
+scattering slot must leave every number untouched.
 """
 
 import numpy as np
 import pytest
 
 from spectra import Constants as CST
+from spectra.Atomic import LTELib
 from spectra.Enums import E_FEAUTRIER_ORDER
 from spectra.Experimental.MALI.v2 import GlobalMesh, Loop, Structs
 from spectra.Math import GaussLeg
@@ -21,7 +23,7 @@ from spectra.Util import MeshUtil
 XI_REF = 2.5e5
 
 
-def _setup(ND=9, with_bg=True):
+def _setup(ND=9, with_bg=True, with_sca=False):
     atom = Structs.make_toy_atom_2lv_cont_()
     atmos = Structs.make_toy_atmos_(ND, 1.0e9, Te_top=6.0e3, Te_bottom=9.0e3, Ne=1.0e12, Nt=1.0e12)
     q = MeshUtil.make_full_line_mesh_(21, 2.5, 10.0)
@@ -30,7 +32,9 @@ def _setup(ND=9, with_bg=True):
     mesh = GlobalMesh.merge_meshes_(meshes)
 
     def bg_fn(wl_cm):
-        return 1.0e-14 * (wl_cm / 5000.0e-8) ** 2 * np.linspace(1.0, 3.0, ND), np.zeros(ND)
+        chi = 1.0e-14 * (wl_cm / 5000.0e-8) ** 2 * np.linspace(1.0, 3.0, ND)
+        sigma = 3.0e-14 * np.linspace(2.0, 0.5, ND) if with_sca else np.zeros(ND)
+        return chi, sigma
 
     pre = Structs.precompute_(atom, atmos, mesh, bg_fn=bg_fn if with_bg else None)
     # a non-LTE population state so nothing cancels by accident
@@ -39,8 +43,16 @@ def _setup(ND=9, with_bg=True):
     return atom, atmos, mesh, meshes, pre, n
 
 
-def _run_kernel(atom, atmos, mesh, pre, n, n_angle=3):
+def _arbitrary_field(mesh, atmos, seed=0):
+    """A field that is neither B nor zero, so sigma * J_dag cannot cancel."""
+    B = np.array([LTELib.planck_cm_(mesh.wl[:], atmos.Te[k]) for k in range(atmos.ND)]).T
+    return B * np.random.default_rng(seed).uniform(0.2, 1.8, B.shape)
+
+
+def _run_kernel(atom, atmos, mesh, pre, n, n_angle=3, J_dag=None):
     mus, wmus = GaussLeg.gauss_quad_coe_(0.0, 1.0, n_angle)
+    if J_dag is None:
+        J_dag = np.zeros_like(pre.bg_sca)
     n_abs = n * atmos.Nt[:, None]
     chi_int, S_line = Loop.line_coefficients_(
         n_abs, atom.Line["w0"].copy(), atom.Line["AJI"].copy(), atom.Line["BJI"].copy(), atom.Line["BIJ"].copy(),
@@ -52,13 +64,15 @@ def _run_kernel(atom, atmos, mesh, pre, n, n_angle=3):
     return Loop.unified_sweep_(
         atmos.Z, mesh.wl, mesh.col_ptr, mesh.col_tran, mesh.col_row, atom.nLine,
         atom.Line["w0"].copy(), pre.phi, chi_int, S_line, pre.alpha_win, pre.row_cont0, n_low, n_dag,
-        pre.exp_hnu_kT, pre.twohc2_wl5, pre.bg_chi, pre.bg_eta, pre.hn_bottom, mus, wmus,
+        pre.exp_hnu_kT, pre.twohc2_wl5, pre.bg_chi, pre.bg_eta, pre.bg_sca, J_dag, pre.hn_bottom, mus, wmus,
     ), (mus, wmus)  # fmt: skip
 
 
-def _reference(atom, atmos, mesh, meshes, pre, n, mus, wmus):
+def _reference(atom, atmos, mesh, meshes, pre, n, mus, wmus, J_dag=None):
     """Everything spelled out; membership from the raw wavelength ranges."""
     ND = atmos.ND
+    if J_dag is None:
+        J_dag = np.zeros_like(pre.bg_sca)
     n_abs = n * atmos.Nt[:, None]
     hnu4pi = lambda wl: CST.h_ * (CST.c_ / wl) / (4.0 * CST.pi_)  # noqa: E731
     J = np.zeros((mesh.wl.shape[0], ND))
@@ -66,8 +80,8 @@ def _reference(atom, atmos, mesh, meshes, pre, n, mus, wmus):
     chi_tot = np.zeros_like(J)
     eps = 1.0e-3 * min(np.min(np.diff(m)) for m in meshes)
     for iw, wl in enumerate(mesh.wl):
-        chi = pre.bg_chi[iw].copy()
-        eta = pre.bg_eta[iw].copy()
+        chi = pre.bg_chi[iw] + pre.bg_sca[iw]
+        eta = pre.bg_eta[iw] + pre.bg_sca[iw] * J_dag[iw]
         for t, m in enumerate(meshes):
             if not (m[0] - eps <= wl <= m[-1] + eps):
                 continue
@@ -117,6 +131,35 @@ class TestUnifiedSweep:
         assert np.allclose(chi_tot, chi_ref, rtol=1e-13, atol=0.0)
         assert np.allclose(J, J_ref, rtol=1e-12, atol=0.0)
         assert np.allclose(Psi, Psi_ref, rtol=1e-12, atol=0.0)
+
+    def test_matches_reference_with_scattering(self):
+        atom, atmos, mesh, meshes, pre, n = _setup(with_sca=True)
+        assert pre.bg_sca.max() > 0.0
+        J_dag = _arbitrary_field(mesh, atmos)
+        (J, Psi, chi_tot), (mus, wmus) = _run_kernel(atom, atmos, mesh, pre, n, J_dag=J_dag)
+        J_ref, Psi_ref, chi_ref = _reference(atom, atmos, mesh, meshes, pre, n, mus, wmus, J_dag=J_dag)
+        assert np.allclose(chi_tot, chi_ref, rtol=1e-13, atol=0.0)
+        assert np.allclose(J, J_ref, rtol=1e-12, atol=0.0)
+        assert np.allclose(Psi, Psi_ref, rtol=1e-12, atol=0.0)
+
+    def test_zero_sigma_ignores_j_dag_bit_for_bit(self):
+        atom, atmos, mesh, _, pre, n = _setup()
+        assert pre.bg_sca.max() == 0.0
+        (J0, Psi0, chi0), _ = _run_kernel(atom, atmos, mesh, pre, n)
+        (J1, Psi1, chi1), _ = _run_kernel(atom, atmos, mesh, pre, n, J_dag=_arbitrary_field(mesh, atmos))
+        assert np.array_equal(J0, J1)
+        assert np.array_equal(Psi0, Psi1)
+        assert np.array_equal(chi0, chi1)
+
+    def test_scattering_enters_chi_and_dilutes_source(self):
+        # with J_dag = 0 the scattering is a pure sink: chi grows by exactly
+        # sigma and the emergent field (top depth, every column) drops
+        atom, atmos, mesh, _, pre, n = _setup()
+        pre_s = _setup(with_sca=True)[4]
+        (J0, _, chi0), _ = _run_kernel(atom, atmos, mesh, pre, n)
+        (J1, _, chi1), _ = _run_kernel(atom, atmos, mesh, pre_s, n)
+        assert np.allclose(chi1, chi0 + pre_s.bg_sca, rtol=1e-13, atol=0.0)
+        assert np.all(J1[:, 0] < J0[:, 0])
 
     def test_every_column_has_opacity_and_bounded_operator(self):
         atom, atmos, mesh, _, pre, n = _setup()

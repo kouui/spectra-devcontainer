@@ -151,7 +151,7 @@ class TestMultilevelMALI:
         J, Psi, chi_tot = Loop.unified_sweep_(
             atmos.Z, mesh.wl, mesh.col_ptr, mesh.col_tran, mesh.col_row, atom.nLine, atom.Line["w0"].copy(),
             pre.phi, chi_int, S_line, pre.alpha_win, pre.row_cont0, n_low, n_dag, pre.exp_hnu_kT,
-            pre.twohc2_wl5, pre.bg_chi, pre.bg_eta, pre.hn_bottom, mus, wmus,
+            pre.twohc2_wl5, pre.bg_chi, pre.bg_eta, pre.bg_sca, r.J, pre.hn_bottom, mus, wmus,
         )  # fmt: skip
         Jbar, Lstar = Loop.line_rates_(
             J, Psi, chi_tot, mesh.wl, mesh.Nblue, mesh.span, mesh.win_off, pre.phi, pre.weight, pre.wphi,

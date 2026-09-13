@@ -46,7 +46,8 @@ def _sweep(atom, atmos, mesh, pre, n, n_angle=4):
     J, Psi, chi_tot = Loop.unified_sweep_(
         atmos.Z, mesh.wl, mesh.col_ptr, mesh.col_tran, mesh.col_row, atom.nLine,
         atom.Line["w0"].copy(), pre.phi, chi_int, S_line, pre.alpha_win, pre.row_cont0, n_low, n_dag,
-        pre.exp_hnu_kT, pre.twohc2_wl5, pre.bg_chi, pre.bg_eta, pre.hn_bottom, mus, wmus,
+        pre.exp_hnu_kT, pre.twohc2_wl5, pre.bg_chi, pre.bg_eta, pre.bg_sca, np.zeros_like(pre.bg_sca),
+        pre.hn_bottom, mus, wmus,
     )  # fmt: skip
     return J, Psi, chi_tot, chi_int, S_line, (mus, wmus)
 

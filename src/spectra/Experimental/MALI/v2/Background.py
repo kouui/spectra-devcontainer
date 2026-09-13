@@ -1,7 +1,7 @@
 # -------------------------------------------------------------------------------
 # background continuum opacity for the MALI line windows
 #
-# ported from RH (hydrogen.c, thomson.c, chemequil.c) so that a comparison run
+# ported from RH (hydrogen.c, thomson.c, rayleigh.c, chemequil.c) so that a comparison run
 # against RH sees the same background physics. everything is CGS and
 # wavelength-base; every source assembled by background_chi_ is a THERMAL
 # absorber, so the caller pairs
@@ -13,7 +13,8 @@
 # source inside the Lyman line windows, strong enough to displace the whole
 # FALC hydrogen solution (measured: 4x at the temperature minimum, 6.6x for
 # n = 4,5 in the transition region, both vanishing once it is removed).
-# thomson_ stays available for a proper coherent-scattering treatment.
+# thomson_ and rayleigh_ feed the coherent-scattering slot of the sweep
+# (chi += sigma, eta += sigma * J of the previous iteration) instead.
 #
 # build-once tier: evaluated per (window column, depth) at setup, so plain
 # interpreted numpy is fine.
@@ -27,6 +28,9 @@ from ....ImportAll import *
 
 # Thomson cross section, [cm^2]
 _SIGMA_THOMSON: T_FLOAT = (8.0 * CST.pi_ / 3.0) * (CST.e_**2 / (CST.me_ * CST.c_**2)) ** 2
+
+# Einstein A -> absorption oscillator strength: f = A * (gj/gi) * w0^2 / C, [cm^2 s^-1]
+_C_A_TO_F: T_FLOAT = 8.0 * CST.pi_**2 * CST.e_**2 / (CST.me_ * CST.c_)
 
 # hydrogenic b-f cross section scale (Mihalas 1978 p.99), [cm^2]
 _SIGMA0_H_BF: T_FLOAT = (
@@ -572,6 +576,49 @@ def hydrogen_bf_(
 def thomson_(Ne: T_ARRAY) -> T_ARRAY:
     """Thomson scattering extinction, [cm^-1] (see module note on its emissivity)."""
     return _SIGMA_THOMSON * Ne
+
+
+def rayleigh_(
+    wl_cm: T_ARRAY,
+    w0: T_ARRAY,
+    Aji: T_ARRAY,
+    gi: T_ARRAY,
+    gj: T_ARRAY,
+    wl_red: T_ARRAY,
+) -> T_ARRAY:
+    """Rayleigh scattering cross section per ground-state atom, [cm^2]
+    (RH's rayleigh.c, Mihalas 1978 p.106):
+
+        sigma(wl) = sigma_T * sum_lines f_ij * (1 / ((wl/w0)^2 - 1))^2
+
+    summed over the lines from the ground level whose red window edge lies
+    at or blueward of wl: inside a line's own window the line itself carries
+    the opacity, so the far-wing Rayleigh tail starts only at that edge. RH
+    draws the edge at w0*(1 + qwing*vmicro_char/c); a mesh anchored with
+    xi_ref = vmicro_char has exactly that red edge, so the caller passes the
+    mesh's own window edges. the edge column itself COUNTS: RH tests
+    lambda > lambda_red, but its last window point is generated on a
+    different rounding path and lands a few ulp above lambda_red, so RH
+    scatters there (measured on FALC: J at the Ly-alpha edge column agrees
+    with RH to 3% inclusive, 11% exclusive). no depth dependence: the
+    caller multiplies by the ground level population -- RH uses the
+    atmosphere file's hydrogen populations, set once before iterating and
+    never updated, so a comparison run passes those, not the NLTE solution.
+
+    Input:
+        wl_cm: (Nspect,), [cm]
+        w0, Aji, gi, gj, wl_red: (nGroundLine,), line center, Einstein A,
+            statistical weights, red window edge, [cm], [s^-1], -, -, [cm]
+
+    Output:
+        sigma: (Nspect,), [cm^2]
+    """
+    fomega = _numpy.zeros_like(wl_cm)
+    for kL in range(w0.shape[0]):
+        f = Aji[kL] * (gj[kL] / gi[kL]) * w0[kL] ** 2 / _C_A_TO_F
+        mask = wl_cm >= wl_red[kL]
+        fomega[mask] += f / ((wl_cm[mask] / w0[kL]) ** 2 - 1.0) ** 2
+    return _SIGMA_THOMSON * fomega
 
 
 def background_chi_(

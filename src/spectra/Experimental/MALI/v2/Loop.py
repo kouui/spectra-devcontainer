@@ -19,6 +19,7 @@ from collections import namedtuple as _namedtuple
 
 import numpy as _numpy
 
+from ....Atomic import LTELib as _LTELib
 from ....Atomic import SEsolver as _SEsolver
 from ....Atomic import emisivity as _emisivity
 from ....Atomic import extinction as _extinction
@@ -27,6 +28,10 @@ from ....Math import GaussLeg as _GaussLeg
 from ....RadiativeTransfer import Feautrier as _Feautrier
 from . import GlobalMesh as _GlobalMesh
 from . import Structs as _Structs
+
+# cap on the diagonal scattering-operator weight Psi*sigma/chi (see
+# mali_multilevel_): 1e3 overrelaxation at most, rounding amplified by 1e3
+_W_SCA_MAX: T_FLOAT = 1.0 - 1.0e-3
 
 # jitted callers need jitted callees; production compiles these only under
 # CFG._IS_JIT, so bind compiled references here otherwise.
@@ -134,12 +139,15 @@ def unified_sweep_(  # noqa: C901
     twohc2_wl5: T_ARRAY,
     bg_chi: T_ARRAY,
     bg_eta: T_ARRAY,
+    sigma: T_ARRAY,
+    J_dag: T_ARRAY,
     hn_bottom: T_ARRAY,
     mus: T_ARRAY,
     wmus: T_ARRAY,
 ) -> T_TUPLE[T_ARRAY, T_ARRAY, T_ARRAY]:
     """One formal sweep over the whole axis: every column assembled from ALL
-    transitions covering it plus the thermal background, solved once per angle.
+    transitions covering it plus the thermal background and the coherent
+    scattering, solved once per angle.
 
     Per column iw and depth k:
         line t (CRD):  chi_l = (w0/wl) * chi_int[t,k] * phi[row,k]
@@ -147,9 +155,14 @@ def unified_sweep_(  # noqa: C901
         continuum c:   stim  = n_dag[c,k] * exp(-h nu/kT)
                        chi_c = alpha * (n_low[c,k] - stim)
                        eta_c = alpha * 2hc^2/wl^5 * stim
-        chi_tot = sum + bg_chi,   S_col = (sum eta + bg_eta) / chi_tot
+        chi_tot = sum + bg_chi + sigma
+        S_col   = (sum eta + bg_eta + sigma * J_dag) / chi_tot
     the (w0/wl) factor mirrors the production per-wavelength h*nu convention
-    for a coefficient evaluated at line center.
+    for a coefficient evaluated at line center. the scattering emissivity
+    uses the PREVIOUS iteration's field J_dag (RH's treatment): it enters as
+    a fixed source, so Psi stays the derivative with respect to the thermal
+    part of S_col only and the caller must not put sigma*J_dag into any
+    operator correction. sigma is counted once, here -- bg_chi is thermal.
 
     Input:
         Z: (ND,), depth, [cm], ascending, Z[0] = 0
@@ -160,6 +173,8 @@ def unified_sweep_(  # noqa: C901
         n_low, n_dag: (nCont, ND)
         exp_hnu_kT: (Nspect, ND); twohc2_wl5, hn_bottom: (Nspect,)
         bg_chi, bg_eta: (Nspect, ND), thermal background
+        sigma: (Nspect, ND), coherent-scattering extinction, [cm^-1]
+        J_dag: (Nspect, ND), mean intensity the scattering re-emits
         mus, wmus: angle quadrature on (0, 1), weights sum to 1
 
     Output:
@@ -179,8 +194,8 @@ def unified_sweep_(  # noqa: C901
     tau = _numpy.empty(ND, dtype=DT_NB_FLOAT)
     for iw in range(Nspect):
         for k in range(ND):
-            chi_tot[iw, k] = bg_chi[iw, k]
-            eta[k] = bg_eta[iw, k]
+            chi_tot[iw, k] = bg_chi[iw, k] + sigma[iw, k]
+            eta[k] = bg_eta[iw, k] + sigma[iw, k] * J_dag[iw, k]
         for m in range(col_ptr[iw], col_ptr[iw + 1]):
             t = col_tran[m]
             row = col_row[m]
@@ -439,6 +454,7 @@ def mali_multilevel_(
     lstar_scale: T_FLOAT = 1.0,
     n_init: T_ARRAY | None = None,
     tol_J: T_FLOAT = 1.0e-6,
+    J_init: T_ARRAY | None = None,
 ) -> MALIml_Result:
     """Multilevel MALI driver on the unified axis.
 
@@ -456,6 +472,28 @@ def mali_multilevel_(
     loop one more sweep is run on the FINAL populations (no SE update, not
     counted in niter) so that the returned J, Jbar, Lstar and S_line are the
     radiation field OF the returned n, not of the state one update earlier.
+    coherent scattering (the build-once background sigma) re-emits the
+    field of the previous sweep, J_dag, which starts at B_lambda(Te) (or
+    J_init). the sweep's J is then corrected with the diagonal operator for
+    the scattering source,
+        J = (J_sweep - Psi*(sigma/chi)*J_dag) / (1 - Psi*sigma/chi),
+    the local ALI of Olson, Auer & Buchler for a linear scattering term.
+    RH Lambda-iterates that term instead and stops on the populations;
+    on FALC that leaves its 122-160 nm field a factor 2 short of the fixed
+    point, and plain Lambda-iteration here reported converged=True at
+    tol_J = 1e-6 with J 36% short at 128 nm (sigma/chi = 0.9998, tau = 75).
+    the fixed point does not depend on the start or the operator, only the
+    iteration count does; dJ < tol_J then certifies J_dag has stopped
+    moving. the corrected J feeds the rates: at the fixed point it equals
+    the sweep's J, and on the way it is the better estimate; its derivative
+    with respect to the thermal source is Psi/(1 - Psi*sigma/chi), which is
+    what the line operator Lstar is built from, so Lstar stays the exact
+    diagonal of the corrected system. the weight is capped below 1: an
+    operator smaller than the true diagonal only slows the acceleration,
+    while the uncapped division amplifies rounding by 1/(1 - w) and hits
+    0/0 where Psi rounds to 1 (a thick pure-scattering column); the weight
+    is also floored at 0 for a column whose net extinction went negative
+    (population inversion), where no acceleration is attempted.
 
     Input:
         atom: Structs.Toy_Atom
@@ -465,6 +503,8 @@ def mali_multilevel_(
         use_lstar: (,), False -> plain (preconditioner-free) iteration
         lstar_scale: (,), deliberate operator mis-scaling (tests only)
         tol_J: (,), relative tolerance on the per-column change of J
+        J_init: (Nspect, ND), starting field for the scattering emissivity
+            (e.g. a warm start); None uses B_lambda(Te)
 
     Output: MALIml_Result(n, S_line, Jbar, Lstar, J, niter, converged, dn_history, dJ_history)
     """
@@ -489,7 +529,12 @@ def mali_multilevel_(
 
     scale = lstar_scale if use_lstar else 0.0
     n = pre.n_LTE.copy() if n_init is None else _numpy.ascontiguousarray(n_init, dtype=DT_NB_FLOAT).copy()
-    J = _numpy.zeros((mesh.wl.shape[0], atmos.ND), dtype=DT_NB_FLOAT)
+    if J_init is None:
+        J = _numpy.empty((mesh.wl.shape[0], atmos.ND), dtype=DT_NB_FLOAT)
+        for k in range(atmos.ND):
+            J[:, k] = _LTELib.planck_cm_(mesh.wl[:], atmos.Te[k])
+    else:
+        J = _numpy.ascontiguousarray(J_init, dtype=DT_NB_FLOAT).copy()
     S_line = _numpy.zeros((nLine, atmos.ND), dtype=DT_NB_FLOAT)
     Jbar = _numpy.zeros_like(S_line)
     Lstar = _numpy.zeros_like(S_line)
@@ -498,24 +543,26 @@ def mali_multilevel_(
     niter = 0
     converged = False
 
-    def radiation_step(n_cur):
+    def radiation_step(n_cur, J_dag):
         n_abs = n_cur * atmos.Nt[:, None]
         chi_int, S_cur = line_coefficients_(n_abs, w0, Aji, Bji, Bij, idxI[:nLine], idxJ[:nLine])
         n_low, n_dag = continuum_coefficients_(n_abs, nj_by_ni_c, idxI_c, idxJ_c)
         J_cur, Psi, chi_tot = unified_sweep_(
             atmos.Z, mesh.wl, mesh.col_ptr, mesh.col_tran, mesh.col_row, nLine,
             w0, pre.phi, chi_int, S_cur, pre.alpha_win, pre.row_cont0, n_low, n_dag,
-            pre.exp_hnu_kT, pre.twohc2_wl5, pre.bg_chi, pre.bg_eta, pre.hn_bottom, mus, wmus,
+            pre.exp_hnu_kT, pre.twohc2_wl5, pre.bg_chi, pre.bg_eta, pre.bg_sca, J_dag, pre.hn_bottom, mus, wmus,
         )  # fmt: skip
+        w_sca = _numpy.clip(Psi * pre.bg_sca / chi_tot, 0.0, _W_SCA_MAX)
+        J_cur = (J_cur - w_sca * J_dag) / (1.0 - w_sca)
         Jbar_cur, Lstar_cur = line_rates_(
-            J_cur, Psi, chi_tot, mesh.wl, mesh.Nblue, mesh.span, mesh.win_off,
+            J_cur, Psi / (1.0 - w_sca), chi_tot, mesh.wl, mesh.Nblue, mesh.span, mesh.win_off,
             pre.phi, pre.weight, pre.wphi, w0, chi_int,
         )  # fmt: skip
         return J_cur, S_cur, Jbar_cur, Lstar_cur, bf_rates_(J_cur, mesh, pre, atom, atmos)
 
     for it in range(1, itmax + 1):
         niter = it
-        J_new, S_line, Jbar, Lstar, (Rik, Rki_stim, Rki_spon) = radiation_step(n)
+        J_new, S_line, Jbar, Lstar, (Rik, Rki_stim, Rki_spon) = radiation_step(n, J)
         n_new = update_populations_(
             Jbar, Lstar, S_line, Aji, Bji, Bij, idxI, idxJ,
             pre.Cij_coe, pre.Cji_coe, Rik, Rki_stim, Rki_spon,
@@ -534,8 +581,9 @@ def mali_multilevel_(
         if dn < tol and dJ < tol_J:
             converged = True
             break
-    # diagnostics consistent with the returned populations
-    J, S_line, Jbar, Lstar, _ = radiation_step(n)
+    # diagnostics consistent with the returned populations (and with the
+    # last field as J_dag, which dJ < tol_J has certified stationary)
+    J, S_line, Jbar, Lstar, _ = radiation_step(n, J)
     return MALIml_Result(
         n=n, S_line=S_line, Jbar=Jbar, Lstar=Lstar, J=J, niter=niter, converged=converged,
         dn_history=_numpy.asarray(dn_history), dJ_history=_numpy.asarray(dJ_history),
@@ -561,7 +609,8 @@ def mali_two_level_(
     lstar_scale: T_FLOAT = 1.0,
 ) -> MALI2lv_Result:
     """Two-level-atom MALI in (eps, B) form, run through the unified sweep:
-    one line, no continua, no background, the whole axis = the line window.
+    one line, no continua, no background, no scattering, the whole axis =
+    the line window.
 
         S = (1 - eps) * Jbar + eps * B,
     every oracle (sqrt(eps) law, Lambda-iteration fixed point) is analytic.
@@ -616,7 +665,7 @@ def mali_two_level_(
         S_line = _numpy.ascontiguousarray(S_cur[None, :])
         J, Psi, chi_tot = unified_sweep_(
             Z, wl_win, col_ptr, col_tran, col_row, 1, w0, phi_win, chi_int, S_line, alpha_win, nw,
-            n_c, n_c, ones, zeros_ax, zeros_bg, zeros_bg, hn_bottom, mus, wmus,
+            n_c, n_c, ones, zeros_ax, zeros_bg, zeros_bg, zeros_bg, zeros_bg, hn_bottom, mus, wmus,
         )  # fmt: skip
         Jbar2, Lstar2 = line_rates_(
             J, Psi, chi_tot, wl_win, Nblue, span, win_off, phi_win, weight_win, wphi, w0, chi_int

@@ -377,7 +377,10 @@ def precompute_(
     adamp_dep: (ND, nLine), per-depth Voigt damping; None uses adamp_const
     bg_fn: wl_cm -> (chi_thermal (ND,), sigma (ND,)); the thermal part must
         EXCLUDE this atom's own b-f (that opacity comes from the populations
-        in the sweep) and must not contain scattering (which goes in sigma).
+        in the sweep) and must not contain scattering (which goes in sigma:
+        Thomson, and Rayleigh off the ground level -- RH multiplies the
+        Rayleigh cross section by the atmosphere file's ground population
+        once, before iterating, so it is build-once here as well).
         None leaves every background table at zero.
     """
     ND = atmos.ND
