@@ -40,6 +40,11 @@ import numpy as _numpy
 from ....ImportAll import *
 
 # --- RH constant.h (SI) -------------------------------------------------------
+# TODO: rewrite the formulas in CGS and take the constants from spectra.Constants
+# (adding the hydrogen polarizability there). kept as RH's SI values for now so
+# that adamp matches RH's damping output to rounding; the production constants
+# are newer CODATA values (h differs from RH's by ~1e-6 relative), so after the
+# migration the RH parity test must loosen from 1e-12 to the ~1e-6 level.
 _HPLANCK: T_FLOAT = 6.6260755e-34  # [J s]
 _KBOLTZMANN: T_FLOAT = 1.380658e-23  # [J/K]
 _AMU: T_FLOAT = 1.6605402e-27  # [kg]
