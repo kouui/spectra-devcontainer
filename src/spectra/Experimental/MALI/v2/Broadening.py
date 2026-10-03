@@ -9,6 +9,30 @@
 # output needs no unit bookkeeping beyond that. outputs are per depth and
 # depend only on the atmosphere (and, for van der Waals, on the hydrogen
 # ground population the caller decides to use): build-once tier, plain numpy.
+#
+# which term applies to which line -- the caller's job, following RH's
+# Damping() dispatch:
+#
+#     term             radiator      perturber                 RH switch
+#     van der Waals    any atom      neutral H(1s) (+ He)      cvdWaals[0] > 0 or cvdWaals[2] > 0
+#     quadratic Stark  any atom      electrons (+ ions, 28 u)  cStark != 0
+#     linear Stark     hydrogen only electrons                 atom ID is "H "
+#
+# linear Stark is hydrogen's alone because only its n-levels are degenerate in
+# l, so a static field shifts them at first order; every other atom responds
+# at second order (quadratic Stark). the van der Waals density is that of the
+# PERTURBER, so a Ca II or Mg II line is broadened in proportion to n_H(1s)
+# as well.
+#
+# van der Waals comes in three flavours in RH (the atom file's vdWaals field):
+# UNSOLD (ported here), BARKLEM (Anstee-Barklem-O'Mara cross sections from
+# RH's Barklem_*.dat tables, used by e.g. CaII_medium, CaI+II, NaI_fine,
+# BaII) and RIDDER_RENSBERGEN; the latter two are not ported, so a caller
+# must reject them rather than substitute UNSOLD.
+#
+# only hydrogen (Z = 1) has been checked against RH; for an ion, E_ion and Z
+# follow RH: vdW keys on the upper level's continuum and stage, Stark on the
+# lower level's.
 # -------------------------------------------------------------------------------
 
 import numpy as _numpy
