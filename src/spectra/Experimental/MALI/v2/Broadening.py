@@ -34,7 +34,11 @@
 # BARKLEM line of Ca II or Mg II (e.g. RH's CaII_medium) is UNSOLD here as in
 # RH; a BARKLEM line of a neutral atom (Ca I, Na I, Fe I), ABO_EXPL and
 # PARAMTR are not ported, and a caller must reject them rather than
-# substitute UNSOLD.
+# substitute UNSOLD. references for the unported flavours, as cited in broad.c:
+# BARKLEM / ABO_EXPL -- Anstee & O'Mara 1995, MNRAS 276, 859-866;
+# Barklem & O'Mara 1998, MNRAS 300, 863-871. PARAMTR -- DeRidder &
+# van Rensbergen 1976, A&A Suppl. 23, 147-165. the references of the ported
+# terms are in the function docstrings.
 #
 # only hydrogen (Z = 1) has been checked against RH; for an ion, E_ion and Z
 # follow RH: vdW keys on the upper level's continuum and stage, Stark on the
@@ -102,6 +106,17 @@ def van_der_waals_unsold_(
 
     Output:
         Gamma: (ND,), [s^-1]
+
+    Notes
+    ------
+    port of RH broad.c VanderWaals(), case UNSOLD; references as cited there [1]_ [2]_
+
+    References
+    ------------
+    .. [1] H. Traving, "Über die Theorie der Druckverbreiterung von
+           Spektrallinien", 1960, p. 91-97
+    .. [2] D. Mihalas, "Stellar Atmospheres", 2nd ed., 1978,
+           p. 282ff and Table 9-1
     """
     # RH has no guard here; with E_ion at or below a level the C6 difference
     # divides by zero or turns negative and **0.4 of a python float goes complex
@@ -153,6 +168,20 @@ def stark_quadratic_(
 
     Output:
         Gamma: (ND,), [s^-1]
+
+    Notes
+    ------
+    port of RH broad.c Stark(); references as cited there: C4 from [1]_,
+    the 11.37 formula from [2]_, nion = ne from [3]_
+
+    References
+    ------------
+    .. [1] H. Traving, "Über die Theorie der Druckverbreiterung von
+           Spektrallinien", 1960, p. 93
+    .. [2] D. Mihalas, "Stellar Atmospheres", 2nd ed., 1978,
+           p. 282ff and Table 9-1
+    .. [3] D. F. Gray, "The Observation and Analysis of Stellar
+           Photospheres", 2nd ed., 1992, p. 216, eq. 11.33
     """
     ne_si = Ne * _CM3_TO_M3
     if cStark < 0.0:
@@ -192,6 +221,16 @@ def stark_linear_hydrogen_(Ne: T_ARRAY, n_lower: T_INT, n_upper: T_INT) -> T_ARR
 
     Output:
         Gamma: (ND,), [s^-1]
+
+    Notes
+    ------
+    port of RH broad.c StarkLinear(), which cites [1]_. production
+    Atomic/Hydrogen.py cites the same paper with 0.255 in place of 0.6.
+
+    References
+    ------------
+    .. [1] K. Sutton, "Approximate line shapes for hydrogen",
+           J. Quant. Spectrosc. Radiat. Transfer, Vol. 20, pp. 333-343, 1978
     """
     a1 = 0.642 if (n_upper - n_lower) == 1 else 1.0
     C = a1 * 0.6 * (n_upper**2 - n_lower**2) * 1.0e-4
@@ -204,11 +243,20 @@ def damping_parameter_(Gamma: T_ARRAY, w0_cm: T_FLOAT, vbroad_cm: T_ARRAY) -> T_
     Input:
         Gamma: (ND,), total damping rate (radiative + collisional) [s^-1]
         w0_cm: line center [cm]; vbroad_cm: (ND,), sqrt(2kT/m + vturb^2) [cm/s]
+
+    Notes
+    ------
+    port of the last loop of RH broad.c Damping(); RH cites no reference
     """
     return Gamma * w0_cm / (4.0 * _PI * vbroad_cm)
 
 
 def broadening_velocity_(Te: T_ARRAY, vturb_cm: T_ARRAY, weight: T_FLOAT) -> T_ARRAY:
-    """RH's vbroad = sqrt(2kT/(m_amu*weight) + vturb^2), returned in [cm/s]."""
+    """RH's vbroad = sqrt(2kT/(m_amu*weight) + vturb^2), returned in [cm/s].
+
+    Notes
+    ------
+    the atom's vbroad in RH; RH cites no reference
+    """
     v_si = _numpy.sqrt(2.0 * _KBOLTZMANN / (_AMU * weight) * Te + (vturb_cm * 1.0e-2) ** 2)
     return v_si * 1.0e2
