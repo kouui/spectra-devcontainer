@@ -24,11 +24,17 @@
 # PERTURBER, so a Ca II or Mg II line is broadened in proportion to n_H(1s)
 # as well.
 #
-# van der Waals comes in three flavours in RH (the atom file's vdWaals field):
-# UNSOLD (ported here), BARKLEM (Anstee-Barklem-O'Mara cross sections from
-# RH's Barklem_*.dat tables, used by e.g. CaII_medium, CaI+II, NaI_fine,
-# BaII) and RIDDER_RENSBERGEN; the latter two are not ported, so a caller
-# must reject them rather than substitute UNSOLD.
+# van der Waals flavours in RH (the atom file's vdWaals field): UNSOLD (ported
+# here), BARKLEM (Anstee-Barklem-O'Mara cross sections interpolated from RH's
+# Barklem_*.dat tables), ABO_EXPL (the same with sigma, alpha given in the
+# file) and PARAMTR (Ridder-Rensbergen fit). RH's ABO tables cover NEUTRAL
+# radiators only: on an ion, and on a neutral line whose l pair is not s-p,
+# p-d or d-f or whose n* falls outside the table, RH itself falls back to
+# UNSOLD at read time, keeping cvdWaals[0], [2] and zeroing [1], [3]. so a
+# BARKLEM line of Ca II or Mg II (e.g. RH's CaII_medium) is UNSOLD here as in
+# RH; a BARKLEM line of a neutral atom (Ca I, Na I, Fe I), ABO_EXPL and
+# PARAMTR are not ported, and a caller must reject them rather than
+# substitute UNSOLD.
 #
 # only hydrogen (Z = 1) has been checked against RH; for an ion, E_ion and Z
 # follow RH: vdW keys on the upper level's continuum and stage, Stark on the
