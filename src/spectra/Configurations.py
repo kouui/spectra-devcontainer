@@ -3,6 +3,7 @@
 # -------------------------------------------------------------------------------
 
 
+import os as _os
 from pathlib import Path
 
 from numba.core import config as nb_config
@@ -19,7 +20,24 @@ _ROOT_DIR: Path = Path(__file__).resolve().parent.parent.parent
 # -------------------------------------------------------------------------------
 
 
-_IS_JIT: T_BOOL = False
+_JIT_ENV_VAR: T_STR = "SPECTRA_JIT"
+
+
+def _jit_from_env_(value: T_STR | None) -> T_BOOL:
+    r"""Parse the SPECTRA_JIT environment variable.
+
+    Unrecognised values raise instead of falling back to off: a typo such as
+    ``SPECTRA_JIT=true`` would otherwise silently run the whole suite without JIT
+    and make a JIT-on test run look green.
+    """
+    if value is None or value == "0":
+        return False
+    if value == "1":
+        return True
+    raise ValueError(f"{_JIT_ENV_VAR} must be '0' or '1' (or unset), got {value!r}")
+
+
+_IS_JIT: T_BOOL = _jit_from_env_(_os.environ.get(_JIT_ENV_VAR))
 
 _IS_NOGIL: T_BOOL = True
 
@@ -36,10 +54,13 @@ _VEC_TARGET: T_STR = "cpu"
 """whether to turn on the JIT compilation in all *.py files,
 since sphinx does no understand numba thus can not generate documentation for numba jitted functions.
 
-set to
-    True  : before simulation; before pushing to github
+controlled by the environment variable SPECTRA_JIT, read once at import time:
 
-    False : before generating documentation using sphinx
+    unset or 0 : JIT off (default); use this before generating documentation using sphinx
+
+    1          : JIT on; use this before simulation and before pushing to github
+
+any other value raises ValueError.
 """
 
 

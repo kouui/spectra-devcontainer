@@ -47,12 +47,15 @@ repos:
       #   pass_filenames: false
       #   always_run: true
 
+      # commit-only: the pre-push pytest-jit hook runs the same suites, so repeating the
+      # default-mode run at push is redundant.
       - id: pytest-regression
         name: pytest regression + unit tests
-        entry: uv run --extra dev python -m pytest tests/regression/ tests/unittest/ -q
+        entry: uv run --extra dev python -m pytest tests/regression/ tests/unittest/ tests/numba/test_Feautrier_jit.py -q
         language: system
         pass_filenames: false
         always_run: true
+        stages: [pre-commit]
 
       - id: check-changelogs-size
         name: changelog file size guard (<=300 lines)
@@ -60,3 +63,13 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+
+      # Fresh NUMBA_CACHE_DIR: numba's cache=True keys on the caller's source file only,
+      # so a changed callee in another file can be masked by a stale cache entry.
+      - id: pytest-jit
+        name: pytest regression + unit tests (SPECTRA_JIT=1, fresh numba cache)
+        entry: bash scripts/run_tests_jit.sh
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]

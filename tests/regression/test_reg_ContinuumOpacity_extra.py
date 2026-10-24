@@ -7,7 +7,9 @@ from .conftest import assert_close
 
 class TestHpFfCrossSec:
     def test_scalar(self, ref):
-        assert_close(ContinuumOpacity.Hp_ff_cross_sec_(7000.0, 5000e-8, 1e11), ref["COpac.Hp_ff_Te7000_w5000AA_Ne1e11"])
+        assert_close(
+            ContinuumOpacity.Hp_ff_cross_sec_(7000.0, 5000e-8, 1e11, 1), ref["COpac.Hp_ff_Te7000_w5000AA_Ne1e11"]
+        )
 
 
 class TestH2pCrossSec:
