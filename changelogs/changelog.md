@@ -8,6 +8,12 @@ When this file approaches 300 lines (enforced by
 `changelogs/archives/changelog_<YYYYMMDD>.md` (filename uses the most
 recent date inside the file) and start a fresh entry below.
 
+## 2026-10-24
+
+### `Configurations.py`, `Atomic/ContinuumOpacity.py`, `RadiativeTransfer/Profile.py`, `.pre-commit-config.yaml`, `scripts/run_tests_jit.sh`, `tests/` — YW.Huang
+
+The optional numba switch is now testable and green in both modes. `CFG._IS_JIT` comes from the environment variable `SPECTRA_JIT` (unset or `0`: off, the default as before; `1`: on; any other value raises, so a typo cannot silently run a "JIT" check without JIT). Forcing it on had never been tested and exposed two defects, both fixed: `Hp_ff_cross_sec_` had a default `Z`, which `numba.vectorize` rejects (callers now pass `Z`; pinned values unchanged); and `Profile.voigt_` segfaulted because the always-njit `voigt_nb_` and the vectorized `voigt_` are compilations of the same python function — numba names the cache index after module file, qualified name and source line and leaves compilation flags out of the lookup key, so with `cache=True` on both the second loaded the first's ufunc artifact as a plain function; `voigt_nb_` is now uncached (cached jitted callers, e.g. MALI's ProfileTable, still cache and load correctly across processes). `tests/numba/test_Feautrier_jit.py` now compares against the interpreted `py_func` in both modes. Pre-push runs `scripts/run_tests_jit.sh`: the regression, unit and Feautrier JIT suites with `SPECTRA_JIT=1` and a fresh `NUMBA_CACHE_DIR` (numba's cache tracks only the caller's file, so a stale entry could hide a callee change); the default-mode pytest is commit-only, the other hooks run at both stages as before. Default mode: 500 passed, 1 skipped (≈9 s); JIT mode with a cold cache: 501 passed (≈40 s).
+
 ## 2026-10-03
 
 ### `Experimental/MALI/v2/Broadening.py`, `tests/unittest/MALI_v2/test.Broadening.py` — YW.Huang
