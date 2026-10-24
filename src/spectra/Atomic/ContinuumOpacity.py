@@ -248,14 +248,16 @@ def gaunt_factor_ff_(Te: T_VEC_FA, w: T_VEC_FA) -> T_VEC_FA:
 
 
 @OVERLOAD
-def Hp_ff_cross_sec_(Te: T_FLOAT, w: T_FLOAT, Ne: T_FLOAT, Z: T_INT = 1) -> T_FLOAT: ...
+def Hp_ff_cross_sec_(Te: T_FLOAT, w: T_FLOAT, Ne: T_FLOAT, Z: T_INT) -> T_FLOAT: ...
 @OVERLOAD
-def Hp_ff_cross_sec_(Te: T_FLOAT, w: T_ARRAY, Ne: T_FLOAT, Z: T_INT = 1) -> T_ARRAY: ...
+def Hp_ff_cross_sec_(Te: T_FLOAT, w: T_ARRAY, Ne: T_FLOAT, Z: T_INT) -> T_ARRAY: ...
 @OVERLOAD
-def Hp_ff_cross_sec_(Te: T_ARRAY, w: T_FLOAT, Ne: T_ARRAY, Z: T_INT = 1) -> T_ARRAY: ...
+def Hp_ff_cross_sec_(Te: T_ARRAY, w: T_FLOAT, Ne: T_ARRAY, Z: T_INT) -> T_ARRAY: ...
 
 
-def Hp_ff_cross_sec_(Te: T_VEC_FA, w: T_VEC_FA, Ne: T_VEC_FA, Z: T_INT = 1) -> T_VEC_FA:
+# Z has no default: numba.vectorize rejects default arguments, so under
+# SPECTRA_JIT=1 a call omitting Z fails. Callers pass the ion charge (1 for H+).
+def Hp_ff_cross_sec_(Te: T_VEC_FA, w: T_VEC_FA, Ne: T_VEC_FA, Z: T_INT) -> T_VEC_FA:
 
     # if Te > 2E4:
     # WARN_("partition function of HI is assumed to be 2.0, which is only valid for T < 2E4 [K]")
