@@ -255,8 +255,8 @@ def Hp_ff_cross_sec_(Te: T_FLOAT, w: T_ARRAY, Ne: T_FLOAT, Z: T_INT) -> T_ARRAY:
 def Hp_ff_cross_sec_(Te: T_ARRAY, w: T_FLOAT, Ne: T_ARRAY, Z: T_INT) -> T_ARRAY: ...
 
 
-# Z has no default: numba.vectorize rejects default arguments, so under
-# SPECTRA_JIT=1 a call omitting Z fails. Callers pass the ion charge (1 for H+).
+# No default for Z: numba.vectorize rejects default arguments, so a default would
+# break the SPECTRA_JIT=1 path.
 def Hp_ff_cross_sec_(Te: T_VEC_FA, w: T_VEC_FA, Ne: T_VEC_FA, Z: T_INT) -> T_VEC_FA:
 
     # if Te > 2E4:

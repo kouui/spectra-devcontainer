@@ -23,7 +23,7 @@ _ROOT_DIR: Path = Path(__file__).resolve().parent.parent.parent
 _JIT_ENV_VAR: T_STR = "SPECTRA_JIT"
 
 
-def _jit_from_env_(value: str | None) -> bool:
+def _jit_from_env_(value: T_STR | None) -> T_BOOL:
     r"""Parse the SPECTRA_JIT environment variable.
 
     Unrecognised values raise instead of falling back to off: a typo such as

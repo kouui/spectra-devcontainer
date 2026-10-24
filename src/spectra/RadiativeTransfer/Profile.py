@@ -257,12 +257,12 @@ def hf_(a: T_FLOAT, x: T_ARRAY) -> T_TUPLE[T_ARRAY, T_ARRAY]:
 # form. njit without a signature compiles lazily, so sessions that never call
 # it pay no import cost.
 #
-# cache=False: numba keys the on-disk cache by source file and function
-# location only, so with cache=True the njit and the vectorize compilation of
-# this same python function share one cache index. whichever compiles first is
-# then loaded by the other as if it were its own; loading a ufunc kernel as a
-# plain function segfaults. jitted callers still cache; they link this callee
-# in at compile time.
+# cache=False: numba names the cache index after the module file, the function's
+# qualified name and its source line, and the lookup key leaves out compilation
+# flags and target. the njit and the vectorize compilation of this same python
+# function therefore share one index, and the second loads the first's artifact;
+# loading a ufunc kernel as a plain function segfaults. jitted callers still
+# cache; they link this callee in at compile time.
 voigt_nb_ = nb_njit(**{**NB_NJIT_KWGS, "cache": False})(voigt_)
 
 if CFG._IS_JIT:
