@@ -125,11 +125,7 @@ def hydrogenic_bf_cross_sec_n_(ni: T_VEC_IA, w: T_VEC_IFA, Z: T_INT) -> T_VEC_FA
     """
 
     ## ionization wavelength limit
-    # Principal quantum numbers arrive as int64, and integer powers and products such as ni * ni
-    # wrap around int64 for large ni, so arithmetic uses the float copy `ni_f`; `ni` stays for the
-    # integer-signature Gaunt factor kernel. This kernel did not wrap (`CST.ni2cm_ * ni * ni` is
-    # float from the first product and `ni / Z / Z` is true division); it is converted so that
-    # it follows the same rule as the kernels in Hydrogen.py.
+    # float copy for arithmetic, integer `ni` for the Gaunt kernel: see the module comment in Hydrogen.py
     ni_f = float(ni)
     w_ni = CST.ni2cm_ * ni_f * ni_f
 
