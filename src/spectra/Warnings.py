@@ -24,5 +24,9 @@ _NB_NJIT_KWGS: T_DICT[T_STR, T_BOOL] = {
 def WARN_(text: T_STR):
     # objmode: python's warnings module is not available in nopython mode, and
     # WARN_ must be callable from other compiled functions as well as from python.
+    # stacklevel=2 only locates the caller when the python function runs
+    # (NUMBA_DISABLE_JIT=1). Compiled, the objmode block has no python caller
+    # frame, so the warning is reported at "<sys>:0" and the call site is lost;
+    # put the context in `text`.
     with objmode():
         WARNINGS.warn(text, stacklevel=2)
