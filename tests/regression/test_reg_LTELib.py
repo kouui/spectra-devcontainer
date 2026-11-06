@@ -1,6 +1,7 @@
 """Regression tests for spectra.Atomic.LTELib"""
 
 import numpy as np
+import pytest
 
 from spectra.Atomic import LTELib
 from spectra.ImportAll import *
@@ -51,3 +52,31 @@ class TestLTERatio:
         g = np.array([2, 8, 18, 32, 50])
         stage = np.array([1, 1, 1, 1, 1])
         assert_close(LTELib.LTE_ratio_(erg, g, stage, 7000.0, 1e11), ref["LTELib.LTE_ratio"])
+
+    def test_LTE_ratio_ignores_allocator_content(self, ref):
+        # numpy.empty may return non-zero memory; the result must not depend on it
+        from unittest.mock import patch
+
+        erg = np.array([0.0, 1.63e-11, 1.94e-11, 2.04e-11, 2.09e-11])
+        g = np.array([2, 8, 18, 32, 50])
+        stage = np.array([1, 1, 1, 1, 1])
+        with patch.object(LTELib._numpy, "empty", side_effect=lambda shape, dtype: np.full(shape, np.nan, dtype)):
+            nRatio = LTELib.LTE_ratio_(erg, g, stage, 7000.0, 1e11)
+        assert_close(nRatio, ref["LTELib.LTE_ratio"])
+
+    def test_LTE_ratio_saha_step(self):
+        # a stage step of 1 uses Saha; the ratio chain is normalized to 1
+        erg = np.array([0.0, 2.18e-11])
+        g = np.array([2, 1])
+        stage = np.array([0, 1])
+        nRatio = LTELib.LTE_ratio_(erg, g, stage, 7000.0, 1e11)
+        expected = LTELib.saha_distribution_(2, 1, 2.18e-11, 1e11, 7000.0)
+        assert_close(nRatio[1] / nRatio[0], expected)
+        assert_close(nRatio.sum(), 1.0)
+
+    def test_LTE_ratio_rejects_stage_jump(self):
+        erg = np.array([0.0, 1.0e-11, 3.0e-11])
+        g = np.array([2, 1, 1])
+        stage = np.array([0, 0, 2])
+        with pytest.raises(ValueError, match="stages differing by 1"):
+            LTELib.LTE_ratio_(erg, g, stage, 7000.0, 1e11)
