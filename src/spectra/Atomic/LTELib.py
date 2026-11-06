@@ -233,8 +233,10 @@ def LTE_ratio_(erg: T_ARRAY, g: T_ARRAY, stage: T_ARRAY, Te: T_FLOAT | T_INT, Ne
             # ordered by ionization stage without skipping a stage
             raise ValueError("consecutive levels must have equal stages or stages differing by 1")
 
-    # normalize once, after every entry is set: the array starts uninitialized
-    nRatio[:] /= nRatio.sum()
+        # rescale at every step so that a long chain of large Saha factors cannot
+        # overflow; only the prefix that is already set, because the array starts
+        # uninitialized
+        nRatio[: i + 1] /= nRatio[: i + 1].sum()
 
     return nRatio
 

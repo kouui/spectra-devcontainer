@@ -60,19 +60,42 @@ class TestLTERatio:
         erg = np.array([0.0, 1.63e-11, 1.94e-11, 2.04e-11, 2.09e-11])
         g = np.array([2, 8, 18, 32, 50])
         stage = np.array([1, 1, 1, 1, 1])
-        with patch.object(LTELib._numpy, "empty", side_effect=lambda shape, dtype: np.full(shape, np.nan, dtype)):
+        # NaN is the strictest poison: any read of an unset entry propagates to every output.
+        # LTE_ratio_ is plain python; if it is ever compiled, this patch stops having an effect.
+        with patch.object(
+            LTELib._numpy, "empty", side_effect=lambda shape, dtype=float, **k: np.full(shape, np.nan, dtype=dtype, **k)
+        ):
             nRatio = LTELib.LTE_ratio_(erg, g, stage, 7000.0, 1e11)
         assert_close(nRatio, ref["LTELib.LTE_ratio"])
 
     def test_LTE_ratio_saha_step(self):
-        # a stage step of 1 uses Saha; the ratio chain is normalized to 1
+        # a stage step of 1 uses the Saha equation (written out here, independent of
+        # saha_distribution_), with (g_lower, g_upper) in that order
         erg = np.array([0.0, 2.18e-11])
         g = np.array([2, 1])
         stage = np.array([0, 1])
-        nRatio = LTELib.LTE_ratio_(erg, g, stage, 7000.0, 1e11)
-        expected = LTELib.saha_distribution_(2, 1, 2.18e-11, 1e11, 7000.0)
+        Te, Ne = 7000.0, 1e11
+        nRatio = LTELib.LTE_ratio_(erg, g, stage, Te, Ne)
+        expected = CST.saha_ * Te**1.5 / Ne * (1 / 2) * np.exp(-2.18e-11 / (CST.k_ * Te))
         assert_close(nRatio[1] / nRatio[0], expected)
         assert_close(nRatio.sum(), 1.0)
+
+    def test_LTE_ratio_long_chain_does_not_overflow(self):
+        # 27 stages with Saha factors of ~7e15 each: the unscaled product (~1e412)
+        # overflows, so the chain must be rescaled while it is built
+        n = 27
+        erg = np.arange(n, dtype=float) * 1e-9
+        g = np.ones(n, dtype=np.int64)
+        stage = np.arange(1, n + 1)
+        Te, Ne = 1e7, 1e10
+        nRatio = LTELib.LTE_ratio_(erg, g, stage, Te, Ne)
+        assert np.isfinite(nRatio).all()
+        # reference in log space
+        log_f = np.log(CST.saha_ * Te**1.5 / Ne) - 1e-9 / (CST.k_ * Te)
+        log_n = np.arange(n) * log_f
+        ref_n = np.exp(log_n - log_n.max())
+        ref_n /= ref_n.sum()
+        np.testing.assert_allclose(nRatio, ref_n, rtol=1e-10, atol=1e-300)
 
     def test_LTE_ratio_rejects_stage_jump(self):
         erg = np.array([0.0, 1.0e-11, 3.0e-11])
