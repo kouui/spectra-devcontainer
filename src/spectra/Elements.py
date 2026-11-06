@@ -12,10 +12,12 @@ import numpy as _numpy
 from .Types import *
 
 # abun ref.  allen 1973, 'astr.quantity' p.31
+# IonizeEV: first and second ionization energies [eV], NIST Atomic Spectra Database
+# (ver. 5.12, Kramida et al. 2024), rounded half up to 3 decimals
 
 ELEMENT_DICT: T_DICT = _OrderedDict()
-ELEMENT_DICT["H"] = {"Z": 1, "Mass": 1.0080, "Abundance": 12.00, "IonizeEV": [13.508]}
-ELEMENT_DICT["He"] = {"Z": 2, "Mass": 4.0026, "Abundance": 10.99, "IonizeEV": [24.587, 54.416]}
+ELEMENT_DICT["H"] = {"Z": 1, "Mass": 1.0080, "Abundance": 12.00, "IonizeEV": [13.598]}
+ELEMENT_DICT["He"] = {"Z": 2, "Mass": 4.0026, "Abundance": 10.99, "IonizeEV": [24.587, 54.418]}
 ELEMENT_DICT["Li"] = {"Z": 3, "Mass": 6.9410, "Abundance": 1.16, "IonizeEV": []}
 ELEMENT_DICT["Be"] = {"Z": 4, "Mass": 9.0112, "Abundance": 1.15, "IonizeEV": []}
 ELEMENT_DICT["B"] = {"Z": 5, "Mass": 10.811, "Abundance": 2.6, "IonizeEV": []}
@@ -26,25 +28,25 @@ ELEMENT_DICT["N"] = {"Z": 7, "Mass": 14.0067, "Abundance": 8.00, "IonizeEV": []}
 ELEMENT_DICT["O"] = {"Z": 8, "Mass": 15.9994, "Abundance": 8.66, "IonizeEV": []}
 ELEMENT_DICT["F"] = {"Z": 9, "Mass": 18.9984, "Abundance": 4.56, "IonizeEV": []}
 ELEMENT_DICT["Ne"] = {"Z": 10, "Mass": 20.1790, "Abundance": 8.09, "IonizeEV": []}
-ELEMENT_DICT["Na"] = {"Z": 11, "Mass": 22.9898, "Abundance": 6.33, "IonizeEV": [5.139, 47.269]}
+ELEMENT_DICT["Na"] = {"Z": 11, "Mass": 22.9898, "Abundance": 6.33, "IonizeEV": [5.139, 47.286]}
 ELEMENT_DICT["Mg"] = {"Z": 12, "Mass": 24.3050, "Abundance": 7.58, "IonizeEV": [7.646, 15.035]}
-ELEMENT_DICT["Al"] = {"Z": 13, "Mass": 26.9815, "Abundance": 6.47, "IonizeEV": [5.986, 18.826]}
-ELEMENT_DICT["Si"] = {"Z": 14, "Mass": 28.0860, "Abundance": 7.55, "IonizeEV": [8.151, 16.345]}
+ELEMENT_DICT["Al"] = {"Z": 13, "Mass": 26.9815, "Abundance": 6.47, "IonizeEV": [5.986, 18.829]}
+ELEMENT_DICT["Si"] = {"Z": 14, "Mass": 28.0860, "Abundance": 7.55, "IonizeEV": [8.152, 16.346]}
 ELEMENT_DICT["P"] = {"Z": 15, "Mass": 30.9738, "Abundance": 5.45, "IonizeEV": []}
 ELEMENT_DICT["S"] = {"Z": 16, "Mass": 32.0600, "Abundance": 7.21, "IonizeEV": []}
 ELEMENT_DICT["Cl"] = {"Z": 17, "Mass": 35.4530, "Abundance": 5.50, "IonizeEV": []}
 ELEMENT_DICT["Ar"] = {"Z": 18, "Mass": 39.9480, "Abundance": 6.56, "IonizeEV": []}
 ELEMENT_DICT["K"] = {"Z": 19, "Mass": 39.1020, "Abundance": 5.12, "IonizeEV": []}
-ELEMENT_DICT["Ca"] = {"Z": 20, "Mass": 40.0800, "Abundance": 6.36, "IonizeEV": [6.113, 11.871]}
+ELEMENT_DICT["Ca"] = {"Z": 20, "Mass": 40.0800, "Abundance": 6.36, "IonizeEV": [6.113, 11.872]}
 ELEMENT_DICT["Sc"] = {"Z": 21, "Mass": 44.9560, "Abundance": 3.10, "IonizeEV": []}
-ELEMENT_DICT["Ti"] = {"Z": 22, "Mass": 47.9000, "Abundance": 4.99, "IonizeEV": [6.82, 13.58]}
+ELEMENT_DICT["Ti"] = {"Z": 22, "Mass": 47.9000, "Abundance": 4.99, "IonizeEV": [6.828, 13.576]}
 ELEMENT_DICT["V"] = {"Z": 23, "Mass": 50.9414, "Abundance": 4.00, "IonizeEV": []}
-ELEMENT_DICT["Cr"] = {"Z": 24, "Mass": 51.9960, "Abundance": 5.67, "IonizeEV": [6.766, 16.50]}
-ELEMENT_DICT["Mn"] = {"Z": 25, "Mass": 54.9380, "Abundance": 5.39, "IonizeEV": [7.435, 15.640]}
+ELEMENT_DICT["Cr"] = {"Z": 24, "Mass": 51.9960, "Abundance": 5.67, "IonizeEV": [6.767, 16.486]}
+ELEMENT_DICT["Mn"] = {"Z": 25, "Mass": 54.9380, "Abundance": 5.39, "IonizeEV": [7.434, 15.640]}
 # Fe abun : Asplund et al 2000, A&A, 359, 743
-ELEMENT_DICT["Fe"] = {"Z": 26, "Mass": 55.8470, "Abundance": 7.44, "IonizeEV": [7.870, 16.16]}
+ELEMENT_DICT["Fe"] = {"Z": 26, "Mass": 55.8470, "Abundance": 7.44, "IonizeEV": [7.902, 16.199]}
 ELEMENT_DICT["Co"] = {"Z": 27, "Mass": 58.9332, "Abundance": 4.92, "IonizeEV": []}
-ELEMENT_DICT["Ni"] = {"Z": 28, "Mass": 58.7100, "Abundance": 6.25, "IonizeEV": [7.635, 18.168]}
+ELEMENT_DICT["Ni"] = {"Z": 28, "Mass": 58.7100, "Abundance": 6.25, "IonizeEV": [7.640, 18.169]}
 ELEMENT_DICT["Cu"] = {"Z": 29, "Mass": 63.5460, "Abundance": 4.21, "IonizeEV": []}
 ELEMENT_DICT["Zn"] = {"Z": 30, "Mass": 65.3700, "Abundance": 4.60, "IonizeEV": []}
 ELEMENT_DICT["Ga"] = {"Z": 31, "Mass": 69.7200, "Abundance": 2.88, "IonizeEV": []}

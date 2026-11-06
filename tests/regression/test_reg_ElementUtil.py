@@ -1,5 +1,6 @@
 """Regression tests for spectra.Util.ElementUtil"""
 
+from spectra import Constants as CST
 from spectra.Util import ElementUtil
 
 from .conftest import assert_close
@@ -64,6 +65,12 @@ class TestIonConversion:
 class TestIonizPotential:
     def test_Ca_II(self, ref):
         assert_close(ElementUtil.ion_to_ioniz_potential_("Ca_II"), ref["ElementUtil.ion_to_ioniz_potential_Ca_II"])
+
+    def test_H_I_matches_rydberg(self):
+        # the table keeps 3 decimals in eV; hydrogen's ionization energy is the
+        # Rydberg energy of hydrogen (13.5984 eV), so the two must agree to that precision
+        ip = ElementUtil.ion_to_ioniz_potential_("H_I")
+        assert abs(ip - CST.E_Rydberg_H_) / CST.eV2erg_ < 1.0e-3
 
 
 class TestShiftIon:
