@@ -23,3 +23,13 @@ class TestMakeTau:
     def test_monotonic(self):
         tau = Tau.make_tau_(21, 2.0, 0.0)
         assert np.all(np.diff(tau) > 0)
+
+
+class TestZToTau:
+    def test_constant_opacity(self):
+        # trapezoid rule is exact for a constant opacity; the surface point
+        # carries half of the last interval
+        Z = np.array([0.0, 1.0, 3.0, 4.0])
+        xi = np.full(4, 2.0)
+        tau = Tau.z_to_tau_(Z, xi)
+        np.testing.assert_allclose(tau, [9.0, 7.0, 3.0, 1.0], rtol=1e-14)
