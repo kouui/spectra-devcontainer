@@ -42,10 +42,12 @@ def interp_omega_(
         CE/CI coefficient
     """
     if table[0] == 0.0:
-        omega = 0.0
-        return omega
+        # derived from Te so the return type matches the interpolation branch
+        # (float for scalar Te, array for array Te); numba cannot unify the two
+        return Te * 0.0
     omega = _numpy.interp(Te, Te_table[:], table[:]) * f1 / f2
-    if not (omega > 0):
+    # `not (omega > 0)` is ambiguous for an array omega; all() works for both
+    if not _numpy.all(omega > 0):
         print(Te, Te_table[:], table[:])
     return omega
 
