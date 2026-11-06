@@ -16,7 +16,10 @@ from ..Math import Special
 # its arithmetic on float copies (`ni_f`, `nj_f`). The integer stays for indexes, branches and
 # kernels with integer signatures (e.g. `gaunt_factor_`). Some kernels (`ratio_Etran_to_Eionize_`,
 # `absorption_oscillator_strength_`) did not wrap, but follow the same rule so that no kernel
-# mixes the two.
+# mixes the two. Differences of two levels (`nj**2 - ni**2` and the like) are factored with the
+# exact integer separation `nj - ni`, because the float copies of adjacent levels cancel
+# (relative error about 1e-9 at n = 1e8, a zero difference beyond 2**53); for realistic n every
+# factor is an exact integer.
 
 
 @OVERLOAD
@@ -301,7 +304,9 @@ def absorption_oscillator_strength_(ni: T_VEC_IA, nj: T_VEC_IA) -> T_VEC_FA:
     coef = 32.0 / (3.0 * CST.sqrt3_ * CST.pi_)
     ni_f = float(ni)
     nj_f = float(nj)
-    x = 1.0 - (ni_f / nj_f) ** 2
+    # x = 1.0 - (ni_f / nj_f) ** 2
+    # factored with the exact integer nj - ni: no cancellation between adjacent levels
+    x = float(nj - ni) * float(nj + ni) / (nj_f * nj_f)
 
     fij = coef * ni_f / (x * nj_f) ** 3
 
@@ -353,14 +358,18 @@ def einstein_A_coefficient_(ni: T_VEC_IA, nj: T_VEC_IA) -> T_VEC_FA:
     nj_f = float(nj)
 
     # Gaunt factor
-    x = 1.0 - (ni_f / nj_f) ** 2
+    # x = 1.0 - (ni_f / nj_f) ** 2
+    # factored with the exact integer nj - ni: no cancellation between adjacent levels
+    x = float(nj - ni) * float(nj + ni) / (nj_f * nj_f)
     g = gaunt_factor_(ni, x)
 
     # corrected absorption oscillator strength
     fij = absorption_oscillator_strength_(ni, nj) * g
 
     # excitation energy
-    Eij = CST.E_Rydberg_H_ * (1.0 / ni_f**2 - 1.0 / nj_f**2)
+    # Eij = CST.E_Rydberg_H_ * (1.0 / ni_f**2 - 1.0 / nj_f**2)
+    # factored with the exact integer nj - ni: no cancellation between adjacent levels
+    Eij = CST.E_Rydberg_H_ * float(nj - ni) * float(nj + ni) / (ni_f * ni_f * nj_f * nj_f)
 
     # wavelength
     w = CST.h_ * CST.c_ / Eij
@@ -439,7 +448,9 @@ def CE_rate_coe_(ni: T_VEC_IA, nj: T_VEC_IA, Te: T_VEC_IFA) -> T_VEC_FA:
     nj_f = float(nj)
 
     # Gaunt factor
-    x = 1.0 - (ni_f / nj_f) ** 2
+    # x = 1.0 - (ni_f / nj_f) ** 2
+    # factored with the exact integer nj - ni: no cancellation between adjacent levels
+    x = float(nj - ni) * float(nj + ni) / (nj_f * nj_f)
     x_m = 1.0 / x
     g = gaunt_factor_(ni, x)
 
@@ -462,7 +473,9 @@ def CE_rate_coe_(ni: T_VEC_IA, nj: T_VEC_IA, Te: T_VEC_IFA) -> T_VEC_FA:
     Bij = 4.0 * ni_f * (ni_f / nj_f) ** 3 * x_m**2 * (1.0 + x_m * (4 / 3 + x_m * bi))
 
     # excitation energy
-    Eij = CST.E_Rydberg_H_ * (1.0 / ni_f**2 - 1.0 / nj_f**2)
+    # Eij = CST.E_Rydberg_H_ * (1.0 / ni_f**2 - 1.0 / nj_f**2)
+    # factored with the exact integer nj - ni: no cancellation between adjacent levels
+    Eij = CST.E_Rydberg_H_ * float(nj - ni) * float(nj + ni) / (ni_f * ni_f * nj_f * nj_f)
 
     # Eq(37)
     y = Eij / kT
@@ -919,7 +932,9 @@ def collisional_broadening_Res_and_Van_(ni: T_VEC_IA, nj: T_VEC_IA, nH_I_ground:
 
     ni_f = float(ni)
     nj_f = float(nj)
-    cvdw = 1.61e-33 * (nj_f**4 - ni_f**4)
+    # cvdw = 1.61e-33 * (nj_f**4 - ni_f**4)
+    # factored with the exact integer nj - ni: no cancellation between adjacent levels
+    cvdw = 1.61e-33 * (float(nj - ni) * (nj_f + ni_f) * (nj_f * nj_f + ni_f * ni_f))
 
     V_HH = 20596.0 * _sqrt(Te)
     psi_w = 17.0 * cvdw**0.4 * V_HH**0.6
@@ -988,5 +1003,7 @@ def collisional_broadening_LinearStark_(ni: T_VEC_IA, nj: T_VEC_IA, Ne: T_VEC_IF
     else:
         a1 = 1.0
 
-    gamma = 0.255 * a1 * (nj_f * nj_f - ni_f * ni_f) * Ne ** (2.0 / 3.0)
+    # gamma = 0.255 * a1 * (nj_f * nj_f - ni_f * ni_f) * Ne ** (2.0 / 3.0)
+    # factored with the exact integer nj - ni: no cancellation between adjacent levels
+    gamma = 0.255 * a1 * (float(nj - ni) * (nj_f + ni_f)) * Ne ** (2.0 / 3.0)
     return gamma

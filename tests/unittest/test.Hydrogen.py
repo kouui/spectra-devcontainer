@@ -1,3 +1,4 @@
+from fractions import Fraction
 import math
 import unittest
 
@@ -62,7 +63,7 @@ def _LinearStark_exact(ni: int, nj: int, Ne: float) -> float:
 class Test_collisional_broadening_large_n(unittest.TestCase):
     def test_Res_and_Van_matches_exact_integer_difference(self):
         nH, Te = 1e12, 7000.0
-        for ni, nj in ((_N_WRAP_POW4, 2 * _N_WRAP_POW4),):
+        for ni, nj in ((_N_WRAP_POW4, 2 * _N_WRAP_POW4), (10**8, 10**8 + 1), (2**53, 2**53 + 1)):
             with self.subTest(ni=ni, nj=nj):
                 gamma = Hydrogen.collisional_broadening_Res_and_Van_(ni, nj, nH, Te)
                 self.assertGreater(gamma, 0.0)
@@ -70,33 +71,40 @@ class Test_collisional_broadening_large_n(unittest.TestCase):
 
     def test_LinearStark_matches_exact_integer_difference(self):
         Ne = 1e12
-        for ni, nj in ((_N_WRAP_POW2, 2 * _N_WRAP_POW2),):
+        for ni, nj in ((_N_WRAP_POW2, 2 * _N_WRAP_POW2), (10**8, 10**8 + 1), (2**53, 2**53 + 1)):
             with self.subTest(ni=ni, nj=nj):
                 gamma = Hydrogen.collisional_broadening_LinearStark_(ni, nj, Ne)
                 self.assertGreater(gamma, 0.0)
                 self.assertAlmostEqual(gamma / _LinearStark_exact(ni, nj, Ne), 1.0, delta=1e-12)
 
 
-def _einstein_A_float(ni: float, nj: float) -> float:
-    x = 1.0 - (ni / nj) ** 2
-    f0 = 32.0 / (3.0 * CST.sqrt3_ * CST.pi_) * ni / (x * nj) ** 3
-    fij = f0 * _gaunt_float(ni, x)
-    Eij = CST.E_Rydberg_H_ * (1.0 / ni**2 - 1.0 / nj**2)
+def _x_and_Eij_exact(ni: int, nj: int) -> tuple[float, float]:
+    # exact rational arithmetic: the difference of adjacent levels is not rounded away
+    diff = nj * nj - ni * ni
+    return float(Fraction(diff, nj * nj)), CST.E_Rydberg_H_ * float(Fraction(diff, ni * ni * nj * nj))
+
+
+def _oscillator_strength_exact(ni: int, nj: int) -> float:
+    x, _ = _x_and_Eij_exact(ni, nj)
+    return 32.0 / (3.0 * CST.sqrt3_ * CST.pi_) * ni / (x * nj) ** 3
+
+
+def _einstein_A_exact(ni: int, nj: int) -> float:
+    x, Eij = _x_and_Eij_exact(ni, nj)
+    fij = _oscillator_strength_exact(ni, nj) * _gaunt_float(float(ni), x)
     w = CST.h_ * CST.c_ / Eij
     return (ni / nj) ** 2 * 0.667025 / (w * w) * fij
 
 
-def _CE_float(ni: float, nj: float, Te: float) -> float:
-    x = 1.0 - (ni / nj) ** 2
+def _CE_exact(ni: int, nj: int, Te: float) -> float:
+    x, Eij = _x_and_Eij_exact(ni, nj)
     x_m = 1.0 / x
-    f0 = 32.0 / (3.0 * CST.sqrt3_ * CST.pi_) * ni / (x * nj) ** 3
-    fij = f0 * _gaunt_float(ni, x)
+    fij = _oscillator_strength_exact(ni, nj) * _gaunt_float(float(ni), x)
     Aij = 2.0 * ni**2 * x_m * fij
     ni_m = 1.0 / ni
     bi = ni_m * (4.0 + ni_m * (-18.63 + ni_m * (36.24 - ni_m * 28.09)))
     ri = 1.94 * ni_m**1.57
     Bij = 4.0 * ni * (ni / nj) ** 3 * x_m**2 * (1.0 + x_m * (4 / 3 + x_m * bi))
-    Eij = CST.E_Rydberg_H_ * (1.0 / ni**2 - 1.0 / nj**2)
     y = Eij / (CST.k_ * Te)
     z = ri * x + y
     term1 = Aij * ((1.0 / y + 0.5) * Special.E1_(y) - (1.0 / z + 0.5) * Special.E1_(z))
@@ -104,18 +112,31 @@ def _CE_float(ni: float, nj: float, Te: float) -> float:
     return CST.C0_ * Te**0.5 * 2 * ni * ni * x_m * y * y * (term1 + term2)
 
 
-class Test_rate_coefficients_huge_n(unittest.TestCase):
-    def test_einstein_A_matches_float_formula_beyond_int64_square_wrap(self):
-        n = _N_WRAP_POW2 + 600_000_000
-        value = Hydrogen.einstein_A_coefficient_(n, n + 1)
-        self.assertGreater(value, 0.0)
-        self.assertAlmostEqual(value / _einstein_A_float(float(n), float(n + 1)), 1.0, delta=1e-6)
+# adjacent levels: 3.1e9 squares beyond int64, 1e8 and 2**53 where float copies of the
+# neighbouring levels lose the difference
+_ADJACENT_LEVELS = ((_N_WRAP_POW2 + 600_000_000, _N_WRAP_POW2 + 600_000_001), (10**8, 10**8 + 1), (2**53, 2**53 + 1))
 
-    def test_CE_matches_float_formula_beyond_int64_square_wrap(self):
-        n = _N_WRAP_POW2 + 600_000_000
-        value = Hydrogen.CE_rate_coe_(n, n + 1, 7000.0)
-        self.assertGreater(value, 0.0)
-        self.assertAlmostEqual(value / _CE_float(float(n), float(n + 1), 7000.0), 1.0, delta=1e-6)
+
+class Test_rate_coefficients_huge_n(unittest.TestCase):
+    def test_oscillator_strength_matches_exact_difference(self):
+        for ni, nj in _ADJACENT_LEVELS:
+            with self.subTest(ni=ni):
+                value = Hydrogen.absorption_oscillator_strength_(ni, nj)
+                self.assertAlmostEqual(value / _oscillator_strength_exact(ni, nj), 1.0, delta=1e-12)
+
+    def test_einstein_A_matches_exact_difference(self):
+        for ni, nj in _ADJACENT_LEVELS:
+            with self.subTest(ni=ni):
+                value = Hydrogen.einstein_A_coefficient_(ni, nj)
+                self.assertGreater(value, 0.0)
+                self.assertAlmostEqual(value / _einstein_A_exact(ni, nj), 1.0, delta=1e-9)
+
+    def test_CE_matches_exact_difference(self):
+        for ni, nj in _ADJACENT_LEVELS:
+            with self.subTest(ni=ni):
+                value = Hydrogen.CE_rate_coe_(ni, nj, 7000.0)
+                self.assertGreater(value, 0.0)
+                self.assertAlmostEqual(value / _CE_exact(ni, nj, 7000.0), 1.0, delta=1e-9)
 
     def test_ionization_rates_are_finite_and_positive_beyond_int64_square_wrap(self):
         n = _N_WRAP_POW2 + 600_000_000
