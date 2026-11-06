@@ -55,6 +55,12 @@ saha_: T_FLOAT = 2 * (2 * pi_ * me_ * k_ / h_ / h_) ** (1.5)
 r"""a constant factor in Saha's equation, :math:`2(2 \pi m_e k /h^2)^{3/2}`, [:math:`g^{3/2} \cdot erg^{-3/2} \cdot k^{-3/2} \cdot s^{-3}`]
 """
 
+CE_omega_to_rate_: T_FLOAT = pi_ * a0_**2 * (8 * k_ / pi_ / me_) ** 0.5 * E_Rydberg_ / k_
+r"""collision-strength-to-rate prefactor (CGS, 8.629e-6) of the excitation rate coefficient
+:math:`C_{ij} = \mathrm{prefactor} \cdot \Omega_{ij} / (g_i \sqrt{T_e}) \cdot e^{-\Delta E_{ij}/kT_e}`;
+:math:`\pi a_0^2 (8k/\pi m_e)^{1/2} E_{Ry}/k`, [:math:`cm^{3}s^{-1}K^{1/2}`]
+"""
+
 C0_: T_FLOAT = 5.465366 * 1.0e-11
 r"""a constant factor in collisional excitation/ionization rate coefficient, :math:`\pi^a_{0}^{2}(8k/m\pi)^{1/2}`, [:math:`cm^{3}s^{-1}K^{-1/2}`]
 """

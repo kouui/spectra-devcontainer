@@ -108,11 +108,8 @@ def CE_rate_coe_(omega: T_VEC_FA, Te: T_VEC_IFA, gi: T_VEC_IA, dEij: T_VEC_FA) -
     T_VEC_FA
         collisional excitation rate coefficient, [:math:`cm^{3} s^{-1}`]
     """
-    # Cst.pi_ * Cst.a0_**2 * (8*Cst.k_/Cst.pi_/Cst.me_)**0.5 * Cst.E_Rydberg_ / Cst.k_
-    # =8.629140599482176e-06 [in CGS unit]
-
     kT = CST.k_ * Te
-    CEij = (8.63e-06 * omega) / (gi * Te**0.5) * _numpy.exp(-dEij / kT)
+    CEij = (CST.CE_omega_to_rate_ * omega) / (gi * Te**0.5) * _numpy.exp(-dEij / kT)
 
     return CEij
 
