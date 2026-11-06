@@ -71,7 +71,9 @@ _V1_DATA = _v1_read_data_()
 #    p_y_1     = params[8]
 
 
-@nb_vec(**NB_VEC_KWGS)
+# numpy.vectorize, not numba: only called from python when generating atomic
+# data, so a compile on first use would cost more than it saves.
+@np_vec(**NP_VEC_KWGS)
 def _v1_fit_func_(
     wave: T_VEC_FA,
     p_E_th: T_FLOAT,

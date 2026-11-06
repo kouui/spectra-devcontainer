@@ -8,6 +8,8 @@ set -u
 cache=$(mktemp -d) || exit 1
 trap 'rm -rf -- "$cache"' EXIT
 
-NUMBA_CACHE_DIR="$cache" uv run --extra dev python -m pytest \
+# env -u: an exported NUMBA_DISABLE_JIT=1 would run the kernels as python and skip
+# the compile-only tests, so the hook would pass without compiling anything.
+env -u NUMBA_DISABLE_JIT NUMBA_CACHE_DIR="$cache" uv run --extra dev python -m pytest \
     tests/regression/ tests/unittest/ tests/numba/test_Feautrier_jit.py \
     -q -p no:cacheprovider "$@"

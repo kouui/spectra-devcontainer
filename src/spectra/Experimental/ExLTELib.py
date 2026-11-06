@@ -101,6 +101,9 @@ def log_saha_(ion: T_STR, T: T_VEC_FA) -> T_VEC_FA:
 # def population_to_H_(ion : T_STR, ep : T_FLOAT, T : T_ARRAY, Ne : T_ARRAY) -> T_ARRAY: ...
 
 
+# numpy.vectorize, not numba: the ion name is a string and the element and
+# partition-function lookups are python-level, which nopython mode cannot compile.
+@np_vec(**NP_VEC_KWGS)
 def population_to_H_(ion: T_STR, ep: T_FLOAT, T: T_VEC_FA, Ne: T_VEC_FA) -> T_VEC_FA:
     r"""abandance of an element in some ionize. & exitation state
     relative to hydrogen devided by g (statistical weight)
@@ -298,13 +301,3 @@ def line_prof_lte_(
         contrib[j, :] = cntrb[:]
 
     return prof, ic, contrib
-
-
-# -----------------------------------------------------------------------------
-# vectorization
-# -----------------------------------------------------------------------------
-
-# numpy.vectorize, not numba: population_to_H_ takes the ion name as a string and
-# calls python-level element/partition-function lookups, which nopython mode
-# cannot compile.
-population_to_H_ = np_vec(population_to_H_, **NP_VEC_KWGS)
