@@ -13,7 +13,7 @@ from .Types import *
 
 # abun ref.  allen 1973, 'astr.quantity' p.31
 # IonizeEV: first and second ionization energies [eV], NIST Atomic Spectra Database
-# (ver. 5.12, Kramida et al. 2024), rounded to 3 decimals
+# (ver. 5.12, Kramida et al. 2024), rounded half up to 3 decimals
 
 ELEMENT_DICT: T_DICT = _OrderedDict()
 ELEMENT_DICT["H"] = {"Z": 1, "Mass": 1.0080, "Abundance": 12.00, "IonizeEV": [13.598]}
