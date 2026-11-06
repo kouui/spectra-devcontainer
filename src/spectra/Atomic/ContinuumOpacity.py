@@ -125,7 +125,11 @@ def hydrogenic_bf_cross_sec_n_(ni: T_VEC_IA, w: T_VEC_IFA, Z: T_INT) -> T_VEC_FA
     """
 
     ## ionization wavelength limit
-    w_ni = CST.ni2cm_ * ni * ni
+    # Principal quantum numbers arrive as int64, and integer products such as ni * ni wrap around
+    # for large ni. Arithmetic therefore uses the float copy `ni_f`; `ni` stays for the
+    # integer-signature Gaunt factor kernel.
+    ni_f = float(ni)
+    w_ni = CST.ni2cm_ * ni_f * ni_f
 
     if w > w_ni:
         alpha = 0.0
@@ -138,7 +142,7 @@ def hydrogenic_bf_cross_sec_n_(ni: T_VEC_IA, w: T_VEC_IFA, Z: T_INT) -> T_VEC_FA
         # bound-free gaunt factor
         g_ni = Hydrogen.gaunt_factor_(ni, ratio)
 
-        alpha = 7.904e-18 * (ni / Z / Z) * ratio_m1**3 * g_ni
+        alpha = 7.904e-18 * (ni_f / Z / Z) * ratio_m1**3 * g_ni
 
     return alpha
 
