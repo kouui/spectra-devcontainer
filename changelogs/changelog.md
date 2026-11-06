@@ -10,9 +10,9 @@ recent date inside the file) and start a fresh entry below.
 
 ## 2026-11-07
 
-### `Elements.py`, `tests/regression/test_reg_ElementUtil.py`, `tests/unittest/test.RomanElement.py` — YW.Huang
+### `Elements.py`, `tests/regression/{test_reg_ElementUtil.py,reference_values.json}`, `tests/unittest/test.RomanElement.py` — YW.Huang
 
-Hydrogen's ionization energy in `ELEMENT_DICT` read 13.508 eV, a digit typo for 13.598 eV. The other 12 elements' `IonizeEV` entries (24 values) were older tabulated values that differ from NIST ASD 5.12 (Kramida et al. 2024) by up to 0.04 eV (Fe I 7.870 -> 7.9025, Fe II 16.16 -> 16.1992, Ti I 6.82 -> 6.8281, Na II 47.269 -> 47.2864); all 25 values are now NIST values to 4 decimals (H I 13.5984). They reach `ElementUtil.ion_to_ioniz_potential_` and `ELEMENT_IONIZPOTENTIAL`, used only by `Experimental/ExLTELib` for the ion of the synthesized line. `test.RomanElement.py` had asserted the typo; a new regression test requires `ion_to_ioniz_potential_("H_I")` to agree with `E_Rydberg_H_` (it failed before the fix). The pinned Ca II value in `reference_values.json` moved with Ca II 11.871 -> 11.8717 eV.
+Hydrogen's ionization energy in `ELEMENT_DICT` read 13.508 eV, a digit typo for 13.598 eV (`CST.E_Rydberg_H_` gives 13.5984). The table reaches `ElementUtil.ion_to_ioniz_potential_` and `ELEMENT_IONIZPOTENTIAL`, used only by `Experimental/ExLTELib`. All 25 `IonizeEV` values (first and second ionization energies of 13 elements) are now the NIST Atomic Spectra Database values (ver. 5.12, Kramida et al. 2024) rounded to 3 decimals, as the table already wrote them; the source is stated above the table. Apart from H I the old values were older tabulated values, not typos; the largest changes are Fe I 7.870 -> 7.902, Fe II 16.16 -> 16.199, Na II 47.269 -> 47.286, Cr II 16.50 -> 16.486 eV, the rest move by under 0.01 eV. `test.RomanElement.py` had asserted the typo and now asserts 13.598; a new regression test requires `ion_to_ioniz_potential_("H_I")` to agree with `E_Rydberg_H_` to the table's 1e-3 eV (it failed before the fix); the pinned `ElementUtil.ion_to_ioniz_potential_Ca_II` is regenerated (11.871 -> 11.872 eV; no other key changed).
 
 ### `Atomic/LTELib.py`, `tests/regression/{test_reg_LTELib_extra.py,reference_values.json}` — YW.Huang
 
