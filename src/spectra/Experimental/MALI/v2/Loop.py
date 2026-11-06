@@ -33,24 +33,18 @@ from . import Structs as _Structs
 # mali_multilevel_): 1e3 overrelaxation at most, rounding amplified by 1e3
 _W_SCA_MAX: T_FLOAT = 1.0 - 1.0e-3
 
-# jitted callers need jitted callees; production compiles these only under
-# CFG._IS_JIT, so bind compiled references here otherwise.
-if CFG._IS_JIT:
-    _formal_rh_ = _Feautrier.formal_improved_RH_
-    _set_matrixR_ = _SEsolver.set_matrixR_
-    _set_matrixC_ = _SEsolver.set_matrixC_
-    _solve_SE_ = _SEsolver.solve_SE_
-else:
-    _formal_rh_ = nb_njit(**NB_NJIT_KWGS)(_Feautrier.formal_improved_RH_)
-    _set_matrixR_ = nb_njit(**NB_NJIT_KWGS)(_SEsolver.set_matrixR_)
-    _set_matrixC_ = nb_njit(**NB_NJIT_KWGS)(_SEsolver.set_matrixC_)
-    _solve_SE_ = nb_njit(**NB_NJIT_KWGS)(_SEsolver.solve_SE_)
+# production kernels are compiled at their definition; a jitted caller here binds
+# the dispatchers directly (re-wrapping a dispatcher in njit raises).
+_formal_rh_ = _Feautrier.formal_improved_RH_
+_set_matrixR_ = _SEsolver.set_matrixR_
+_set_matrixC_ = _SEsolver.set_matrixC_
+_solve_SE_ = _SEsolver.solve_SE_
 
-# the production b-b opacity/emissivity conventions, compiled from the raw
-# python functions behind their numpy.vectorize wrappers -- reused rather than
-# re-derived so the convention cannot drift from Atomic/{extinction,emisivity}.
-_bb_extinction_ = nb_njit(**NB_NJIT_KWGS)(_extinction.bb_extinction_.pyfunc)  # type: ignore[attr-defined]
-_bb_emissivity_ = nb_njit(**NB_NJIT_KWGS)(_emisivity.bb_emissivity_.pyfunc)  # type: ignore[attr-defined]
+# the production b-b opacity/emissivity conventions (numba DUFuncs, callable from
+# njit code) -- reused rather than re-derived so the convention cannot drift from
+# Atomic/{extinction,emisivity}.
+_bb_extinction_ = _extinction.bb_extinction_
+_bb_emissivity_ = _emisivity.bb_emissivity_
 
 
 def line_coefficients_(
@@ -298,9 +292,7 @@ def bf_rates_kernel_(
 
     trapezoid on the window points -- the same formulas as the production
     PhotoIonize.bound_free_radiative_transition_coefficient_, which is the
-    oracle this kernel is tested against; re-stated here because the
-    production function is compiled only under the global JIT flag and its
-    nested trapezoid cannot be bound from a jitted caller otherwise.
+    oracle this kernel is tested against.
 
     Input:
         J: (Nspect, ND); wl: (Nspect,); Nblue, span, win_off: all transitions

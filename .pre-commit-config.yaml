@@ -47,8 +47,8 @@ repos:
       #   pass_filenames: false
       #   always_run: true
 
-      # commit-only: the pre-push pytest-jit hook runs the same suites, so repeating the
-      # default-mode run at push is redundant.
+      # commit-only: the pre-push pytest-fresh-cache hook runs the same suites, so
+      # repeating the run at push is redundant.
       - id: pytest-regression
         name: pytest regression + unit tests
         entry: uv run --extra dev python -m pytest tests/regression/ tests/unittest/ tests/numba/test_Feautrier_jit.py -q
@@ -66,9 +66,9 @@ repos:
 
       # Fresh NUMBA_CACHE_DIR: numba's cache=True keys on the caller's source file only,
       # so a changed callee in another file can be masked by a stale cache entry.
-      - id: pytest-jit
-        name: pytest regression + unit tests (SPECTRA_JIT=1, fresh numba cache)
-        entry: bash scripts/run_tests_jit.sh
+      - id: pytest-fresh-cache
+        name: pytest regression + unit tests (fresh numba cache)
+        entry: bash scripts/run_tests_fresh_cache.sh
         language: system
         pass_filenames: false
         always_run: true

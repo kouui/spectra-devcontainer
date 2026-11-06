@@ -101,6 +101,11 @@ def log_saha_(ion: T_STR, T: T_VEC_FA) -> T_VEC_FA:
 # def population_to_H_(ion : T_STR, ep : T_FLOAT, T : T_ARRAY, Ne : T_ARRAY) -> T_ARRAY: ...
 
 
+# numpy.vectorize, not numba: no compiled code calls it, and numba.vectorize
+# types a str argument as a numpy unicode array ('U'), where `sym == "H"` is
+# silently False. njit would handle the str, but needs the whole ElementUtil /
+# RomanUtil / Ufunc_ lookup chain compiled first.
+@np_vec(**NP_VEC_KWGS)
 def population_to_H_(ion: T_STR, ep: T_FLOAT, T: T_VEC_FA, Ne: T_VEC_FA) -> T_VEC_FA:
     r"""abandance of an element in some ionize. & exitation state
     relative to hydrogen devided by g (statistical weight)
@@ -298,14 +303,3 @@ def line_prof_lte_(
         contrib[j, :] = cntrb[:]
 
     return prof, ic, contrib
-
-
-# -----------------------------------------------------------------------------
-# numba optimization
-# -----------------------------------------------------------------------------
-
-if CFG._IS_JIT:
-    population_to_H_ = np_vec(population_to_H_, **NP_VEC_KWGS)
-
-else:
-    population_to_H_ = np_vec(population_to_H_, **NP_VEC_KWGS)

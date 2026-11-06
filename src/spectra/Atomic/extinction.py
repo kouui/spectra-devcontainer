@@ -8,23 +8,25 @@ import numpy as _numpy
 from ..ImportAll import *
 
 
-@_numpy.vectorize
+# No defaults for psi/phi: numba.vectorize rejects default arguments, so callers
+# pass 1.0 explicitly for the integrated opacity.
+@nb_vec(**NB_VEC_KWGS)
 def bb_extinction_(
     wl: T_FLOAT,
     Bji: T_FLOAT,
     Bij: T_FLOAT,
     Nj: T_FLOAT,
     Ni: T_FLOAT,
-    psi: T_FLOAT = 1.0,
-    phi: T_FLOAT = 1.0,
+    psi: T_FLOAT,
+    phi: T_FLOAT,
 ) -> T_FLOAT:
     r"""bound-bound (line) extinction coefficient.
 
     .. math::
         \alpha = \frac{h\nu}{4\pi}\,(N_i B_{ij}\phi - N_j B_{ji}\psi)
 
-    ``Bji`` / ``Bij`` are already wavelength-base Einstein coefficients. With the
-    default unit profiles (``psi = phi = 1``) this returns the wavelength-
+    ``Bji`` / ``Bij`` are already wavelength-base Einstein coefficients. With unit
+    profiles (``psi = phi = 1``) this returns the wavelength-
     **integrated** opacity (dimensionless); passing the normalized profiles
     (``[cm^{-1}]``) yields the spectral extinction ``[cm^{-1}]``. May be negative
     under population inversion (``Nj B_{ji} > Ni B_{ij}``).
@@ -42,9 +44,9 @@ def bb_extinction_(
     Ni : T_FLOAT
         number density of the lower level, [1/cm^3]
     psi : T_FLOAT
-        emission line profile (default 1.0 → integrated), [cm^-1] or [-]
+        emission line profile (1.0 → integrated), [cm^-1] or [-]
     phi : T_FLOAT
-        absorption line profile (default 1.0 → integrated), [cm^-1] or [-]
+        absorption line profile (1.0 → integrated), [cm^-1] or [-]
 
     Returns
     -------
@@ -55,7 +57,7 @@ def bb_extinction_(
     return CST.h_ * nu / (4.0 * CST.pi_) * (Bij * Ni * phi - Bji * Nj * psi)
 
 
-@_numpy.vectorize
+@nb_vec(**NB_VEC_KWGS)
 def bf_extinction_(wl: T_FLOAT, alpha: T_FLOAT, Te: T_FLOAT, Ni: T_FLOAT) -> T_FLOAT:
     r"""bound-free (continuum) extinction coefficient, corrected for stimulated emission.
 

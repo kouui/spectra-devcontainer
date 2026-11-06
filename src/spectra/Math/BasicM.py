@@ -5,6 +5,7 @@
 from ..ImportAll import *
 
 
+@nb_vec(**NB_VEC_KWGS)
 def is_odd_(n: T_INT) -> T_INT:
     """A fast method to check whether a number is odd.
 
@@ -19,11 +20,3 @@ def is_odd_(n: T_INT) -> T_INT:
         1 if input number is an odd number, otherwise 0
     """
     return n & 0x1
-
-
-# -----------------------------------------------------------------------------
-# numba optimization
-# -----------------------------------------------------------------------------
-
-if CFG._IS_JIT:
-    is_odd_ = nb_vec(**NB_VEC_KWGS)(is_odd_)

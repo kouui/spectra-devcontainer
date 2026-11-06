@@ -29,10 +29,8 @@ from ....ImportAll import *
 from ....RadiativeTransfer import Feautrier as _Feautrier
 from . import Structs as _Structs
 
-if CFG._IS_JIT:
-    _formal_rh_ = _Feautrier.formal_improved_RH_
-else:
-    _formal_rh_ = nb_njit(**NB_NJIT_KWGS)(_Feautrier.formal_improved_RH_)
+# bound directly: the production dispatcher is already compiled
+_formal_rh_ = _Feautrier.formal_improved_RH_
 
 
 @_dataclass(**STRUCT_KWGS_UNFROZEN)

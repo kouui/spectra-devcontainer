@@ -5,11 +5,11 @@
 # from .ImportExternalModule import *
 
 
-from numba.typed import List
+from numba.core import config as _nb_config
 import numpy as _numpy
 
 from numba import njit as nb_njit
-from numba import vectorize as nb_vec
+from numba import vectorize as _nb_vectorize
 
 from . import Configurations as CFG
 from . import Constants as CST
@@ -20,8 +20,27 @@ from .Warnings import WARN_
 
 np_vec = _numpy.vectorize
 
-nb_List = List if CFG._IS_JIT else list
-del List
+
+def nb_vec(*args, **kwargs):
+    """numba.vectorize, or numpy.vectorize when NUMBA_DISABLE_JIT is set.
+
+    numba.vectorize stays compiled under NUMBA_DISABLE_JIT, which freezes module
+    constants into the ufunc (and into its on-disk cache); the numpy path keeps
+    them patchable at runtime. The fallback fixes the output type to float: without
+    otypes numpy infers it from the first element, so a kernel whose first branch
+    returns an integer literal (e.g. planck_cm_ in its cutoff) would yield integer
+    output for some inputs and float for others, and fail on empty input. The only
+    integer-valued kernel, BasicM.is_odd_, is used for truthiness only, which float
+    output preserves.
+    """
+    if not _nb_config.DISABLE_JIT:
+        return _nb_vectorize(*args, **kwargs)
+
+    def _decorator(f):
+        return _numpy.vectorize(f, otypes=[float])
+
+    return _decorator
+
 
 ## : numba TypedDict much slower than numpy struct array
 # comment : currently we will not use dictionary as a data struct in spectra
@@ -155,7 +174,6 @@ __all__ = [
     "T_VEC_IFA",
     # Warnings
     "WARN_",
-    "nb_List",
     # numba
     "nb_njit",
     "nb_vec",

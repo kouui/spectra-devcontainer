@@ -92,7 +92,7 @@ def _SE_to_slab_0D_bb_(
     Bji: T_ARRAY = Line["BJI"][:]
     Ni: T_ARRAY = ni * N_ele
     Nj: T_ARRAY = nj * N_ele
-    absorption: T_ARRAY = _extinction.bb_extinction_(Line["w0"][:], Bji, Bij, Nj, Ni)
+    absorption: T_ARRAY = _extinction.bb_extinction_(Line["w0"][:], Bji, Bij, Nj, Ni, 1.0, 1.0)
 
     ## 3. compute line emissivity j and source function S = j / alpha
     # clip Aji<=0 to 0: no spontaneous emission -> zero emissivity -> Src = 0.

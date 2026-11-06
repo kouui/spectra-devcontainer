@@ -6,6 +6,7 @@
 from ..ImportAll import *
 
 
+@nb_vec(**NB_VEC_KWGS)
 def relative_flux_(AJI: T_FLOAT | T_ARRAY, f0: T_FLOAT | T_ARRAY, nj: T_INT | T_ARRAY) -> T_FLOAT | T_ARRAY:
     """
     calculate optically thin relative flux (some constants are removed)
@@ -60,11 +61,3 @@ def relative_flux_(AJI: T_FLOAT | T_ARRAY, f0: T_FLOAT | T_ARRAY, nj: T_INT | T_
     """
 
     return CST.h_ * f0 * nj * AJI
-
-
-# -----------------------------------------------------------------------------
-# numba optimization
-# -----------------------------------------------------------------------------
-
-if CFG._IS_JIT:
-    relative_flux_ = nb_vec(**NB_VEC_KWGS)(relative_flux_)

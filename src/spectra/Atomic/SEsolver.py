@@ -11,6 +11,7 @@ from ..ImportAll import *
 # -------------------------------------------------------------------------------
 
 
+@nb_njit(**NB_NJIT_KWGS)
 def set_matrixC_(Cmat: T_ARRAY, Cji: T_ARRAY, Cij: T_ARRAY, idxI: T_ARRAY, idxJ: T_ARRAY, Ne: T_FLOAT | T_INT):
     r"""
     Compute the collisional rate matrix.
@@ -68,6 +69,7 @@ def set_matrixC_(Cmat: T_ARRAY, Cji: T_ARRAY, Cij: T_ARRAY, idxI: T_ARRAY, idxJ:
         Cmat[j, i] += Ne * Cij[k]
 
 
+@nb_njit(**NB_NJIT_KWGS)
 def set_matrixR_(Rmat: T_ARRAY, Rji_spon: T_ARRAY, Rji_stim: T_ARRAY, Rij: T_ARRAY, idxI: T_ARRAY, idxJ: T_ARRAY):
     r"""
     Compute the radiative rate matrix.
@@ -125,6 +127,7 @@ def set_matrixR_(Rmat: T_ARRAY, Rji_spon: T_ARRAY, Rji_stim: T_ARRAY, Rij: T_ARR
 # -------------------------------------------------------------------------------
 
 
+@nb_njit(**NB_NJIT_KWGS)
 def solve_SE_(Rmat: T_ARRAY, Cmat: T_ARRAY) -> T_ARRAY:
     r"""Solve the linear equation system of statistical equilibrium.
 
@@ -167,13 +170,3 @@ def solve_SE_(Rmat: T_ARRAY, Cmat: T_ARRAY) -> T_ARRAY:
     nArr = _numpy.linalg.solve(A, b)
 
     return nArr
-
-
-# -------------------------------------------------------------------------------
-# numba optimization
-# -------------------------------------------------------------------------------
-
-if CFG._IS_JIT:
-    set_matrixC_ = nb_njit(**NB_NJIT_KWGS)(set_matrixC_)
-    set_matrixR_ = nb_njit(**NB_NJIT_KWGS)(set_matrixR_)
-    solve_SE_ = nb_njit(**NB_NJIT_KWGS)(solve_SE_)

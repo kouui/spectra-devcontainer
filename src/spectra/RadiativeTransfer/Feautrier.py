@@ -19,6 +19,7 @@ _A_SIXTH: T_FLOAT = 1.0 / 6.0
 Feautrier_Result = _namedtuple("Feautrier_Result", ["j", "I_emergent", "Psi"])
 
 
+@nb_njit(**NB_NJIT_KWGS)
 def formal_improved_RH_(
     tau: T_ARRAY,
     S: T_ARRAY,
@@ -180,6 +181,10 @@ def formal_improved_RH_(
 # direct solution
 # -------------------------------------------------------------------------------
 
+# direct_feautrier_ is left interpreted on purpose: it is a verification-only
+# reference whose runtime is irrelevant, and its per-depth np.linalg.inv would
+# impose array-contiguity constraints for no benefit.
+
 
 def direct_feautrier_(
     tau: T_ARRAY,
@@ -278,17 +283,3 @@ def direct_feautrier_(
         S[d] = (1 - eps[d]) * (j[d, :] * ws[:]).sum() + eps[d] * planckB[d]
 
     return S
-
-
-# -----------------------------------------------------------------------------
-# numba optimization
-# -----------------------------------------------------------------------------
-
-if CFG._IS_JIT:
-    formal_improved_RH_ = nb_njit(**NB_NJIT_KWGS)(formal_improved_RH_)
-    # direct_feautrier_ is left interpreted on purpose: it is a verification-only
-    # reference whose runtime is irrelevant, and its per-depth np.linalg.inv would
-    # impose array-contiguity constraints for no benefit.
-
-else:
-    pass

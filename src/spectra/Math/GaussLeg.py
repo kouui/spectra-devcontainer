@@ -9,6 +9,7 @@ from ..ImportAll import *
 _ERROR = 3.0e-14
 
 
+@nb_njit(**NB_NJIT_KWGS)
 def gauss_quad_coe_(a: T_FLOAT, b: T_FLOAT, n: T_INT) -> T_TUPLE[T_ARRAY, T_ARRAY]:
     """Compute abscissas and weights for N-point Gauss Legendre quadrature formula
 
@@ -62,11 +63,3 @@ def gauss_quad_coe_(a: T_FLOAT, b: T_FLOAT, n: T_INT) -> T_TUPLE[T_ARRAY, T_ARRA
         w_arr[n - 1 - i] = w_arr[i]
 
     return x_arr, w_arr
-
-
-# -----------------------------------------------------------------------------
-# numba optimization
-# -----------------------------------------------------------------------------
-
-if CFG._IS_JIT:
-    gauss_quad_coe_ = nb_njit(**NB_NJIT_KWGS)(gauss_quad_coe_)

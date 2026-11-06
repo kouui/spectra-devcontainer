@@ -15,6 +15,7 @@ from ..Math import Integrate
 # -------------------------------------------------------------------------------
 # interpolate data
 # -------------------------------------------------------------------------------
+@nb_njit(**NB_NJIT_KWGS)
 def interpolate_PI_intensity_(backRad: T_ARRAY, continuum_mesh: T_ARRAY) -> T_ARRAY:
     """Given continuum mesh, interpolate background intensity profile
 
@@ -104,6 +105,7 @@ def interpolate_PI_alpha_(alpha_table: T_ARRAY, alpha_table_idxs: T_ARRAY, conti
 # -------------------------------------------------------------------------------
 
 
+@nb_njit(**NB_NJIT_KWGS)
 def bound_free_radiative_transition_coefficient_(
     wave: T_ARRAY, J: T_ARRAY, alpha: T_ARRAY, Te: T_FLOAT | T_INT, nk_by_ni_LTE: T_FLOAT
 ) -> T_TUPLE[T_FLOAT, T_FLOAT, T_FLOAT]:
@@ -204,12 +206,3 @@ def bound_free_radiative_transition_coefficient_(
     Rki_spon = factor * 4.0 * CST.pi_ * Integrate.trapze_(integrand_ki_spon, wave)
 
     return Rik, Rki_stim, Rki_spon
-
-
-# -----------------------------------------------------------------------------
-# numba optimization
-# -----------------------------------------------------------------------------
-
-if CFG._IS_JIT:
-    bound_free_radiative_transition_coefficient_ = nb_njit(**NB_NJIT_KWGS)(bound_free_radiative_transition_coefficient_)
-    interpolate_PI_intensity_ = nb_njit(**NB_NJIT_KWGS)(interpolate_PI_intensity_)

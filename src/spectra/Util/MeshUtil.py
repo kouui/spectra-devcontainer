@@ -12,6 +12,7 @@ from ..Math import BasicM
 # -------------------------------------------------------------------------------
 
 
+@nb_njit(**NB_NJIT_KWGS)
 def make_half_line_mesh_(nLambda: T_INT, qcore: T_FLOAT, qwing: T_FLOAT, q: T_ARRAY):
     """
     Construct half line mesh. Following RH's `getlambda.c`.
@@ -58,6 +59,7 @@ def make_half_line_mesh_(nLambda: T_INT, qcore: T_FLOAT, qwing: T_FLOAT, q: T_AR
         q[i] = a * (i + (_numpy.exp(b * i) - 1.0))
 
 
+@nb_njit(**NB_NJIT_KWGS)
 def make_full_line_mesh_(nLambda: T_INT, qcore: T_FLOAT = 2.5, qwing: T_FLOAT = 10.0) -> T_ARRAY:
     """
     Construct Full line mesh.
@@ -177,12 +179,3 @@ def array_from_1D_(arr_1D: T_ARRAY, mesh_idxs: T_ARRAY, k: T_INT) -> T_ARRAY:
     i2: T_INT = mesh_idxs[k, 1]
 
     return arr_1D[i1:i2].copy()
-
-
-# -----------------------------------------------------------------------------
-# numba optimization
-# -----------------------------------------------------------------------------
-
-if CFG._IS_JIT:
-    make_half_line_mesh_ = nb_njit(**NB_NJIT_KWGS)(make_half_line_mesh_)
-    make_full_line_mesh_ = nb_njit(**NB_NJIT_KWGS)(make_full_line_mesh_)

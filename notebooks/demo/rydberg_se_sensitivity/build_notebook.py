@@ -14,9 +14,11 @@ single module constant ``Constants.E_Rydberg_H_``:
   - level energies  -> Saha/Boltzmann factors (thermodynamic balance),
   - rate coefficients (CE / CI / photoionization) -> kinetic rates.
 
-Because numba JIT is off by default (``Configurations._IS_JIT = False``) and every
-use is a qualified ``CST.E_Rydberg_H_`` lookup, patching the module attribute at
-runtime drives both channels consistently. The *theoretical* hydrogen atom
+Compiled numba code freezes module globals at compile time (and in the on-disk
+cache), so the notebook sets ``NUMBA_DISABLE_JIT=1`` before importing numba/spectra.
+With the JIT disabled and every use a qualified ``CST.E_Rydberg_H_`` lookup,
+patching the module attribute at runtime drives both channels consistently.
+The *theoretical* hydrogen atom
 (``init_theoretical_hydrogen_atom_``) rebuilds its energies *and* rates from that
 constant, so it isolates the Rydberg as a single parameter.
 
@@ -81,7 +83,10 @@ $n_p/N_\mathrm{tot}$. The Rydberg reaches them through **two channels**:
 
 The *theoretical* hydrogen atom rebuilds the first two from the one constant
 `Constants.E_Rydberg_H_`, so a single monkeypatch toggles the whole solve
-self-consistently (numba JIT is off, every lookup is qualified `CST.E_Rydberg_H_`).
+self-consistently. This only works with the numba JIT disabled
+(`NUMBA_DISABLE_JIT=1`, set in the first code cell before any import): compiled
+code freezes `CST.E_Rydberg_H_` as a constant when it is compiled, and reuses
+that value from the on-disk cache, so a runtime patch would never reach it.
 
 **No clean analytic limit.** The solve is driven by the *default solar radiation
 field* (`se_params=None` ⇒ `radiation.solar`), **not** a Planck function at $T_e$.
@@ -98,14 +103,23 @@ shift dragging line wavelengths across a steeply varying solar UV field, which
     md(r"""## Setup
 """),
     code(
-        r"""import numpy as np
+        r"""import os
+
+# Must precede the first numba / spectra import: compiled code freezes
+# CST.E_Rydberg_H_, so the runtime patch below only works with the JIT disabled.
+os.environ["NUMBA_DISABLE_JIT"] = "1"
+
+import numpy as np
 import matplotlib.pyplot as plt
 
 import spectra.Constants as CST
+from numba.core import config as nb_config
 from spectra.Atomic import Hydrogen
 from spectra.Function.SEquil import SELib
 from spectra.Struct import Atmosphere, Atom, Radiation
 
+# a kernel that was already imported (or a stale kernel session) would silently ignore the patch
+assert nb_config.DISABLE_JIT, "restart the kernel: NUMBA_DISABLE_JIT must be set before numba is imported"
 # the patch only propagates if the rate modules share this Constants object
 assert Hydrogen.CST is CST, "Rydberg monkeypatch would not reach the rate functions"
 
@@ -121,7 +135,7 @@ NE_LIST = [1e8, 1e9, 1e10, 1e11, 1e12, 1e13]               # [cm^-3]
 _R_MEASURED_ERG = CST.E_Rydberg_H_   # restore at the end
 
 
-# Patch the module-level Rydberg energy [erg]. JIT is off, so every qualified
+# Patch the module-level Rydberg energy [erg]. The JIT is disabled, so every qualified
 # CST.E_Rydberg_H_ lookup in the rate functions and in the theoretical-atom
 # builder picks this up at call time.
 def set_rydberg(R_cm):

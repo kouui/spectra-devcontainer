@@ -73,6 +73,9 @@ _V1_DATA = _v1_read_data_()
 #    p_K     = params[4]
 #    p_T_min = params[5]
 #    p_T_max = params[6]
+# numpy.vectorize, not numba: only called from python when generating atomic
+# data, so a compile on first use would cost more than it saves.
+@np_vec(**NP_VEC_KWGS)
 def _v1_fit_func_(
     Te: T_VEC_FA,
     p_dE: T_FLOAT,
@@ -96,9 +99,6 @@ def _v1_fit_func_(
     rate_coe = p_A * (1.0 + p_P * _sqrt(u)) / (p_X + u) * u**p_K * _exp(-u)
 
     return rate_coe
-
-
-_v1_fit_func_ = np_vec(_v1_fit_func_, **NP_VEC_KWGS)
 
 
 def v1_rate_coe_(Te: T_VEC_IFA, nZ: T_INT, ioniz_stage: T_INT) -> T_VEC_FA:
