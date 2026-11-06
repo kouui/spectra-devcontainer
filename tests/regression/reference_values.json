@@ -641,8 +641,8 @@
     2.3052079600275097,
     12613249.627769286
   ],
-  "LTELib.einsteinBs_hz_Bji": 3.157331687513888e-12,
-  "LTELib.einsteinBs_hz_Bij": 1.2629326750055552e-11,
+  "LTELib.einsteinBs_hz_Bji": 2837668243.004732,
+  "LTELib.einsteinBs_hz_Bij": 11350672972.018929,
   "LTELib.Aji_to_Bji_cm": 1.3996133103308881e-11,
   "LTELib.Bji_to_Bij": 5.5984532413235526e-11,
   "Hydrogen.gaunt_coe_i0_ni1": 1.133,

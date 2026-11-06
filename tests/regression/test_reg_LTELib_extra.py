@@ -33,6 +33,20 @@ class TestEinsteinBsHz:
         assert_close(Bji, ref["LTELib.einsteinBs_hz_Bji"])
         assert_close(Bij, ref["LTELib.einsteinBs_hz_Bij"])
 
+    def test_einstein_relation(self):
+        # B_ji = A_ji / (2 h nu^3 / c^2) and g_i B_ij = g_j B_ji, written out here
+        Aji, f0, gi, gj = 6.27e8, CST.c_ / 1216e-8, 2, 8
+        Bji, Bij = LTELib.einsteinA_to_einsteinBs_hz_(Aji, f0, gi, gj)
+        assert_close(Bji, Aji * CST.c_**2 / (2.0 * CST.h_ * f0**3))
+        assert_close(gi * Bij, gj * Bji)
+
+    def test_consistent_with_wavelength_convention(self):
+        # B_ji J_nu = B_ji(lambda) J_lambda with J_lambda = J_nu c / lambda^2
+        Aji, w0, gi, gj = 6.27e8, 1216e-8, 2, 8
+        Bji_hz, _ = LTELib.einsteinA_to_einsteinBs_hz_(Aji, CST.c_ / w0, gi, gj)
+        Bji_cm, _ = LTELib.einsteinA_to_einsteinBs_cm_(Aji, w0, gi, gj)
+        assert_close(Bji_hz, Bji_cm * CST.c_ / w0**2)
+
 
 class TestAjiToBjiCm:
     def test_scalar(self, ref):

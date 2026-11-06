@@ -295,7 +295,7 @@ def einsteinA_to_einsteinBs_hz_(
         Princeton University Press, pp. 117, 2015.
     """
 
-    factor = 2.0 * CST.h_ * f0 * f0 * f0 / CST.c_ * CST.c_
+    factor = 2.0 * CST.h_ * f0 * f0 * f0 / (CST.c_ * CST.c_)
     Bji = Aji / factor
     Bij = Bji * T_FLOAT(gj) / T_FLOAT(gi)
 
