@@ -292,9 +292,7 @@ def bf_rates_kernel_(
 
     trapezoid on the window points -- the same formulas as the production
     PhotoIonize.bound_free_radiative_transition_coefficient_, which is the
-    oracle this kernel is tested against; re-stated here because the
-    production function is compiled only under the global JIT flag and its
-    nested trapezoid cannot be bound from a jitted caller otherwise.
+    oracle this kernel is tested against.
 
     Input:
         J: (Nspect, ND); wl: (Nspect,); Nblue, span, win_off: all transitions
