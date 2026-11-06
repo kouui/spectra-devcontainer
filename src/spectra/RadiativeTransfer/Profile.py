@@ -256,7 +256,14 @@ def hf_(a: T_FLOAT, x: T_ARRAY) -> T_TUPLE[T_ARRAY, T_ARRAY]:
 # njit-callable). must be bound BEFORE voigt_ is rebound to its vectorized
 # form. njit without a signature compiles lazily, so sessions that never call
 # it pay no import cost.
-voigt_nb_ = nb_njit(**NB_NJIT_KWGS)(voigt_)
+#
+# cache=False: numba names the cache index after the module file, the function's
+# qualified name and its source line, and the lookup key leaves out compilation
+# flags and target. the njit and the vectorize compilation of this same python
+# function therefore share one index, and the second loads the first's artifact;
+# loading a ufunc kernel as a plain function segfaults. jitted callers still
+# cache; they link this callee in at compile time.
+voigt_nb_ = nb_njit(**{**NB_NJIT_KWGS, "cache": False})(voigt_)
 
 if CFG._IS_JIT:
     voigt_ = nb_vec(**NB_VEC_KWGS)(voigt_)
