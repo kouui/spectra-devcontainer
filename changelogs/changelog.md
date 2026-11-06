@@ -10,6 +10,10 @@ recent date inside the file) and start a fresh entry below.
 
 ## 2026-11-07
 
+### `Elements.py`, `tests/regression/test_reg_ElementUtil.py`, `tests/unittest/test.RomanElement.py` — YW.Huang
+
+Hydrogen's ionization energy in `ELEMENT_DICT` read 13.508 eV, a digit typo for 13.598 eV (NIST: 13.5984; `CST.E_Rydberg_H_` gives the same). It reaches `ElementUtil.ion_to_ioniz_potential_` and `ELEMENT_IONIZPOTENTIAL`, used only by `Experimental/ExLTELib`. `test.RomanElement.py` had asserted the typo and now asserts 13.598; a new regression test requires `ion_to_ioniz_potential_("H_I")` to agree with `E_Rydberg_H_` to the table's 1e-3 eV (it failed before the fix). The other 25 entries were compared with NIST ASD 5.12: Fe I/II differ by 0.03-0.04 eV, Na II and Cr II by about 0.015 eV, the rest by under 0.01 eV; those are older tabulated values, not typos, and are left unchanged (owner's decision; the comparison is recorded on the issue).
+
 ### `Atomic/LTELib.py`, `tests/regression/{test_reg_LTELib_extra.py,reference_values.json}` — YW.Huang
 
 `einsteinA_to_einsteinBs_hz_` computed its factor as `2 h f0^3 / c * c`, which operator precedence makes `2 h f0^3`; the Einstein relation (Hubeny & Mihalas 2015, cited in the docstring) is `B_ji = A_ji / (2 h nu^3 / c^2)`. It now divides by `c * c`. No caller in `src/`; the wavelength version `einsteinA_to_einsteinBs_cm_` was right. The two pinned values `LTELib.einsteinBs_hz_Bji` / `_Bij` had locked in the wrong result and are regenerated (both grow by c^2 = 8.99e20; no other key changed). New tests check the relation written out and the consistency with the wavelength convention (`B_nu = B_lambda * c / lambda^2`); both failed before the fix. In the same function, from review: the docstring is now a raw string (its `\frac` / `\nu` were read as escape characters), `Bij` is computed as `Bji * gj / gi` (the `float(gj)` casts raised for the advertised array input; a test covers arrays now), and the `Bij` return entries of the hz and cm versions no longer say `Bji`.

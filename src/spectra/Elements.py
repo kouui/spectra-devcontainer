@@ -14,7 +14,7 @@ from .Types import *
 # abun ref.  allen 1973, 'astr.quantity' p.31
 
 ELEMENT_DICT: T_DICT = _OrderedDict()
-ELEMENT_DICT["H"] = {"Z": 1, "Mass": 1.0080, "Abundance": 12.00, "IonizeEV": [13.508]}
+ELEMENT_DICT["H"] = {"Z": 1, "Mass": 1.0080, "Abundance": 12.00, "IonizeEV": [13.598]}
 ELEMENT_DICT["He"] = {"Z": 2, "Mass": 4.0026, "Abundance": 10.99, "IonizeEV": [24.587, 54.416]}
 ELEMENT_DICT["Li"] = {"Z": 3, "Mass": 6.9410, "Abundance": 1.16, "IonizeEV": []}
 ELEMENT_DICT["Be"] = {"Z": 4, "Mass": 9.0112, "Abundance": 1.15, "IonizeEV": []}
