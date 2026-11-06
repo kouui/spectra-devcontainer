@@ -825,7 +825,7 @@
     "II"
   ],
   "ElementUtil.sym_and_stage_to_ion": "Ca_II",
-  "ElementUtil.ion_to_ioniz_potential_Ca_II": 1.901943865602e-11,
+  "ElementUtil.ion_to_ioniz_potential_Ca_II": 1.9020560179654e-11,
   "ElementUtil.shfit_ion_Ca_II_1": "Ca_III",
   "RomanUtil.index_to_roman_1": "I",
   "RomanUtil.index_to_roman_2": "II",

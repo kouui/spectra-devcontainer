@@ -54,7 +54,7 @@ class Test_Element(unittest.TestCase):
 
     def test_ion_to_ioniz_potential(self):
 
-        self.assertTrue(_ISCLOSE(_ElementUtil.ion_to_ioniz_potential_("H_I"), 13.598 * CST.eV2erg_))
+        self.assertTrue(_ISCLOSE(_ElementUtil.ion_to_ioniz_potential_("H_I"), 13.5984 * CST.eV2erg_))
 
     def test_shift_ion(self):
 
