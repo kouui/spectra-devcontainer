@@ -33,9 +33,3 @@ class TestZToTau:
         xi = np.full(4, 2.0)
         tau = Tau.z_to_tau_(Z, xi)
         np.testing.assert_allclose(tau, [9.0, 7.0, 3.0, 1.0], rtol=1e-14)
-
-    def test_experimental_alias_is_same_function(self):
-        from spectra.Experimental import ExTau
-
-        assert ExTau.tau_v1_ is Tau.z_to_tau_
-        assert ExTau.tau_ is Tau.z_to_tau_

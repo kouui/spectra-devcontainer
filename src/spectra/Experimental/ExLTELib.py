@@ -10,11 +10,11 @@ from ..Atomic import LTELib as _LTELib
 from ..ImportAll import *
 from ..Math import Integrate as _Integrate
 from ..RadiativeTransfer import Profile as _Profile
+from ..RadiativeTransfer import Tau as _Tau
 from ..Struct import Atmosphere as _Atmosphere
 from ..Util import ElementUtil as _ElementUtil
 from ..Util import RomanUtil as _RomanUtil
 from . import ExLine as _Line
-from . import ExTau as _Tau
 
 
 def lte_integ_(Z: T_ARRAY, T: T_ARRAY, x: T_ARRAY, wl: T_FLOAT, um: T_FLOAT) -> T_TUPLE[T_FLOAT, T_ARRAY, T_ARRAY]:
@@ -65,7 +65,7 @@ def lte_integ_(Z: T_ARRAY, T: T_ARRAY, x: T_ARRAY, wl: T_FLOAT, um: T_FLOAT) -> 
 
     um_m1 = 1.0 / um
 
-    tau = _Tau.tau_(Z[:], x[:])
+    tau = _Tau.z_to_tau_(Z[:], x[:])
     tau[:] *= um_m1
     contrib: T_ARRAY = _LTELib.planck_cm_(wl, T[:]) * _numpy.exp(-tau[:]) * x[:] * um_m1
     intensity = _Integrate.trapze_(contrib[:], Z[:])
