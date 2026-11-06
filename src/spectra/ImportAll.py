@@ -34,6 +34,12 @@ def nb_vec(signatures, **kwargs):
     kernel lists several signatures, put the integer-input ones first: numpy picks
     the first loop that accepts the inputs under safe casting.
 
+    Cost: numba's cache=True stores only the element kernel; the ufunc loop
+    wrapper is rebuilt and JIT-compiled in every process (numba 0.65-0.68), about
+    40 ms per signature at import. A lazy vectorize pays the same on first call,
+    but only for the loops it uses. guvectorize caches its wrapper, but njit code
+    cannot call it with scalars, so it cannot replace vectorize here.
+
     numba.vectorize stays compiled under NUMBA_DISABLE_JIT, which freezes module
     constants into the ufunc (and into its on-disk cache); the numpy path keeps
     them patchable at runtime. The fallback pins `otypes` to the signatures' return
