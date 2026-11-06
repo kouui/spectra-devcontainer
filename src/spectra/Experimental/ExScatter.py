@@ -29,7 +29,7 @@ def HI_bf_emissivity_LTE_(wave: T_FLOAT, nHI_pop_LTE: T_ARRAY, Te: T_FLOAT):
     kT = CST.k_ * Te
     factor = 1 - _exp(-CST.h_ * CST.c_ / (wave * kT))
     for k in range(n_HI_Level):
-        ni = k
+        ni = k + 1  # k is the 0-based level index, the principal quantum number starts at 1
         alpha = _Hydrogen.PI_cross_section_cm_(ni, wave, 1)
         eta += nHI_pop_LTE[k] * alpha * factor * _LTELib.planck_cm_(wave, Te)
 
