@@ -71,6 +71,7 @@ _V1_DATA = _v1_read_data_()
 #    p_y_1     = params[8]
 
 
+@nb_vec(**NB_VEC_KWGS)
 def _v1_fit_func_(
     wave: T_VEC_FA,
     p_E_th: T_FLOAT,
@@ -99,9 +100,6 @@ def _v1_fit_func_(
     alpha *= 1.0e-18  # [Mb] to [cm^2]
 
     return alpha
-
-
-_v1_fit_func_ = np_vec(_v1_fit_func_, **NP_VEC_KWGS)
 
 
 def v1_photoioniz_cross_section_(wave: T_VEC_FA, nZ: T_INT, ioniz_stage: T_INT) -> T_VEC_FA:

@@ -8,12 +8,13 @@ import numpy as _numpy
 from ..ImportAll import *
 
 
-# NOTE : replace with numba vectorize if necessary
-@_numpy.vectorize
+# No default for I0: numba.vectorize rejects default arguments, so callers pass
+# 0.0 explicitly for no background.
+@nb_vec(**NB_VEC_KWGS)
 def emergent_intensity_(
     Src: T_FLOAT,
     tau: T_FLOAT,
-    I0: T_FLOAT = 0.0,
+    I0: T_FLOAT,
 ) -> T_FLOAT:
     r"""emergent intensity of a homogeneous slab illuminated from behind.
 
@@ -22,7 +23,7 @@ def emergent_intensity_(
     Exact solution for a uniform source function `S` over a finite optical
     depth `tau`; not restricted to the optically-thin regime.
 
-    `@_numpy.vectorize` makes this a ufunc: the body operates on scalars while
+    `@nb_vec` makes this a ufunc: the body operates on scalars while
     callers may pass arrays for `tau` / `I0` (broadcast elementwise).
 
     Parameters

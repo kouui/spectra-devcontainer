@@ -315,6 +315,9 @@ def cal_SE_(
             PI_intensity = _LTELib.planck_cm_(cont_wave_mesh[:, :], Tr)
         else:
             PI_intensity = _PhotoIonize.interpolate_PI_intensity_(solar[:, :], cont_wave_mesh[:, :])
+    # the njit dispatcher is untyped, so the assignment above does not narrow the
+    # declared `T_ARRAY | None` for the type checker
+    assert PI_intensity is not None
 
     Nh_I_ground: T_FLOAT
     if Nh_SE is None:
@@ -425,6 +428,7 @@ def cal_SE_(
 # -----------------------------------------------------------------------------
 
 
+@nb_njit(**NB_NJIT_KWGS)
 def _ni_nj_LTE_(Level: T_ARRAY, Line: T_ARRAY, Cont: T_ARRAY, Te: T_FLOAT, Ne: T_FLOAT) -> T_TUPLE[T_ARRAY, T_ARRAY]:
 
     _nLevel = Level.shape[0]
@@ -463,6 +467,7 @@ def _ni_nj_LTE_(Level: T_ARRAY, Line: T_ARRAY, Cont: T_ARRAY, Te: T_FLOAT, Ne: T
     return ni, nj_by_ni
 
 
+@nb_njit(**NB_NJIT_KWGS)
 def _nj_by_ni_To_ni_(nj_by_ni: T_ARRAY, idxI: T_ARRAY, idxJ: T_ARRAY, isGround: T_ARRAY, nLine: T_INT) -> T_ARRAY:
 
     nLevel = isGround.shape[0]
@@ -490,6 +495,7 @@ def _nj_by_ni_To_ni_(nj_by_ni: T_ARRAY, idxI: T_ARRAY, idxJ: T_ARRAY, isGround: 
     return ni[:] / ni.sum(axis=0)
 
 
+@nb_njit(**NB_NJIT_KWGS)
 def _bf_R_rate_(
     Cont: T_ARRAY,
     Cont_mesh: T_ARRAY,
@@ -543,6 +549,7 @@ _B_Jbar_Result = _namedtuple(
 )
 
 
+@nb_njit(**NB_NJIT_KWGS)
 def _B_Jbar_(
     Line: T_ARRAY,
     Line_mesh_Coe: T_ARRAY,
@@ -701,6 +708,7 @@ def _B_Jbar_(
     )
 
 
+@nb_njit(**NB_NJIT_KWGS)
 def _get_Cij_(  # noqa: C901
     Line: T_ARRAY,
     Cont: T_ARRAY,
@@ -781,6 +789,7 @@ def _make_Rji_Rij_(
     return Rij, Rji_stim, Rji_spon
 
 
+@nb_njit(**NB_NJIT_KWGS)
 def _solve_SE_(
     nLevel: T_INT,
     idxI: T_ARRAY,
@@ -851,16 +860,3 @@ def Rmat_Cmat_to_Pmat_(Rmat: T_ARRAY, Cmat: T_ARRAY) -> T_ARRAY:
     # nArr = _numpy.linalg.solve(A, b)
 
     return A
-
-
-# -------------------------------------------------------------------------------
-# numba optimization
-# -------------------------------------------------------------------------------
-
-if CFG._IS_JIT:
-    _nj_by_ni_To_ni_ = nb_njit(**NB_NJIT_KWGS)(_nj_by_ni_To_ni_)
-    _ni_nj_LTE_ = nb_njit(**NB_NJIT_KWGS)(_ni_nj_LTE_)
-    _bf_R_rate_ = nb_njit(**NB_NJIT_KWGS)(_bf_R_rate_)
-    _B_Jbar_ = nb_njit(**NB_NJIT_KWGS)(_B_Jbar_)
-    _get_Cij_ = nb_njit(**NB_NJIT_KWGS)(_get_Cij_)
-    _solve_SE_ = nb_njit(**NB_NJIT_KWGS)(_solve_SE_)

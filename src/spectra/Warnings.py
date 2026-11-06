@@ -1,5 +1,5 @@
 # -------------------------------------------------------------------------------
-# warning function for normal/numba mode
+# warning function callable from both python and numba-compiled code
 # -------------------------------------------------------------------------------
 
 import warnings as WARNINGS
@@ -20,14 +20,9 @@ _NB_NJIT_KWGS: T_DICT[T_STR, T_BOOL] = {
 }
 
 
+@_nb_njit(**_NB_NJIT_KWGS)
 def WARN_(text: T_STR):
-
-    if CFG._IS_JIT:
-        with objmode():
-            WARNINGS.warn(text, stacklevel=2)
-    else:
+    # objmode: python's warnings module is not available in nopython mode, and
+    # WARN_ must be callable from other compiled functions as well as from python.
+    with objmode():
         WARNINGS.warn(text, stacklevel=2)
-
-
-if CFG._IS_JIT:
-    WARN_ = _nb_njit(**_NB_NJIT_KWGS)(WARN_)

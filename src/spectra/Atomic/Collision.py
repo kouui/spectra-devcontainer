@@ -13,6 +13,7 @@ def interp_omega_(table: T_ARRAY, Te: T_FLOAT, Te_table: T_ARRAY, f1: T_FLOAT, f
 def interp_omega_(table: T_ARRAY, Te: T_ARRAY, Te_table: T_ARRAY, f1: T_FLOAT, f2: T_FLOAT) -> T_ARRAY: ...
 
 
+@nb_njit(**NB_NJIT_KWGS)
 def interp_omega_(
     table: T_ARRAY,
     Te: T_FLOAT | T_INT | T_ARRAY,
@@ -55,6 +56,7 @@ def Cij_to_Cji_(Cij: T_FLOAT, nj_by_ni_LTE: T_FLOAT) -> T_FLOAT: ...
 def Cij_to_Cji_(Cij: T_ARRAY, nj_by_ni_LTE: T_ARRAY) -> T_ARRAY: ...
 
 
+@nb_vec(**NB_VEC_KWGS)
 def Cij_to_Cji_(Cij: T_VEC_FA, nj_by_ni_LTE: T_VEC_FA) -> T_VEC_FA:
     """Given the LTE population ration and collisional coefficient Cij,
        calculate collisional coefficient Cji
@@ -84,6 +86,7 @@ def CE_rate_coe_(omega: T_FLOAT, Te: T_ARRAY, gi: T_INT, dEij: T_FLOAT) -> T_ARR
 def CE_rate_coe_(omega: T_ARRAY, Te: T_FLOAT, gi: T_ARRAY, dEij: T_ARRAY) -> T_ARRAY: ...
 
 
+@nb_vec(**NB_VEC_KWGS)
 def CE_rate_coe_(omega: T_VEC_FA, Te: T_VEC_IFA, gi: T_VEC_IA, dEij: T_VEC_FA) -> T_VEC_FA:
     """[summary]
 
@@ -120,6 +123,7 @@ def CI_rate_coe_(omega: T_FLOAT, Te: T_ARRAY, dEik: T_FLOAT) -> T_ARRAY: ...
 def CI_rate_coe_(omega: T_ARRAY, Te: T_FLOAT, dEik: T_ARRAY) -> T_ARRAY: ...
 
 
+@nb_vec(**NB_VEC_KWGS)
 def CI_rate_coe_(omega: T_VEC_FA, Te: T_VEC_FA, dEik: T_VEC_FA) -> T_VEC_FA:
     """[summary]
 
@@ -141,14 +145,3 @@ def CI_rate_coe_(omega: T_VEC_FA, Te: T_VEC_FA, dEik: T_VEC_FA) -> T_VEC_FA:
     CIij = omega * Te**0.5 * _numpy.exp(-dEik / kT)
 
     return CIij
-
-
-# -----------------------------------------------------------------------------
-# numba optimization
-# -----------------------------------------------------------------------------
-
-if CFG._IS_JIT:
-    interp_omega_ = nb_njit(**NB_NJIT_KWGS)(interp_omega_)
-    Cij_to_Cji_ = nb_vec(**NB_VEC_KWGS)(Cij_to_Cji_)
-    CE_rate_coe_ = nb_vec(**NB_VEC_KWGS)(CE_rate_coe_)
-    CI_rate_coe_ = nb_vec(**NB_VEC_KWGS)(CI_rate_coe_)

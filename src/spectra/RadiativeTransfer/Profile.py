@@ -25,6 +25,7 @@ def voigt_(a: T_ARRAY, x: T_FLOAT) -> T_ARRAY: ...
 def voigt_(a: T_FLOAT, x: T_ARRAY) -> T_ARRAY: ...
 
 
+@nb_vec(**NB_VEC_KWGS)
 def voigt_(a: T_VEC_FA, x: T_VEC_FA) -> T_VEC_FA:
     r"""
     Calculate Doppler width normalized voigt function using polynomial fitting formula.
@@ -124,6 +125,7 @@ def gaussian_(x: T_FLOAT) -> T_FLOAT: ...
 def gaussian_(x: T_ARRAY) -> T_ARRAY: ...
 
 
+@nb_vec(**NB_VEC_KWGS)
 def gaussian_(x: T_VEC_FA) -> T_VEC_FA:
     r"""
     Calculate Doppler width normalized gaussian profile.
@@ -158,6 +160,7 @@ def gaussian_(x: T_VEC_FA) -> T_VEC_FA:
     return _exp(-x * x) / CST.sqrtPi_
 
 
+@nb_njit(**NB_NJIT_KWGS)
 def hf_(a: T_FLOAT, x: T_ARRAY) -> T_TUPLE[T_ARRAY, T_ARRAY]:
     """compute Voigt and Faraday-Voigt function
     by comprex probability function w(z)=exp(-z^2)*erfc(-i*z)
@@ -244,31 +247,3 @@ def hf_(a: T_FLOAT, x: T_ARRAY) -> T_TUPLE[T_ARRAY, T_ARRAY]:
     f = _numpy.imag(w4) / CST.sqrtPi_
 
     return h, f
-
-
-# -----------------------------------------------------------------------------
-# numba optimization
-# -----------------------------------------------------------------------------
-
-# always-compiled scalar voigt, independent of CFG._IS_JIT: unconditionally
-# jitted kernels need a compilable scalar callee, and the vectorized voigt_
-# below only exposes one under CFG._IS_JIT (a DUFunc; numpy.vectorize is not
-# njit-callable). must be bound BEFORE voigt_ is rebound to its vectorized
-# form. njit without a signature compiles lazily, so sessions that never call
-# it pay no import cost.
-#
-# cache=False: numba names the cache index after the module file, the function's
-# qualified name and its source line, and the lookup key leaves out compilation
-# flags and target. the njit and the vectorize compilation of this same python
-# function therefore share one index, and the second loads the first's artifact;
-# loading a ufunc kernel as a plain function segfaults. jitted callers still
-# cache; they link this callee in at compile time.
-voigt_nb_ = nb_njit(**{**NB_NJIT_KWGS, "cache": False})(voigt_)
-
-if CFG._IS_JIT:
-    voigt_ = nb_vec(**NB_VEC_KWGS)(voigt_)
-    gaussian_ = nb_vec(**NB_VEC_KWGS)(gaussian_)
-    hf_ = nb_njit(**NB_NJIT_KWGS)(hf_)
-
-else:
-    voigt_ = np_vec(voigt_, **NP_VEC_KWGS)

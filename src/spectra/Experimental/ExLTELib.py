@@ -301,11 +301,10 @@ def line_prof_lte_(
 
 
 # -----------------------------------------------------------------------------
-# numba optimization
+# vectorization
 # -----------------------------------------------------------------------------
 
-if CFG._IS_JIT:
-    population_to_H_ = np_vec(population_to_H_, **NP_VEC_KWGS)
-
-else:
-    population_to_H_ = np_vec(population_to_H_, **NP_VEC_KWGS)
+# numpy.vectorize, not numba: population_to_H_ takes the ion name as a string and
+# calls python-level element/partition-function lookups, which nopython mode
+# cannot compile.
+population_to_H_ = np_vec(population_to_H_, **NP_VEC_KWGS)

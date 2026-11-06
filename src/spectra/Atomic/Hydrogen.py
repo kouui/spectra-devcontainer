@@ -22,6 +22,7 @@ def ratio_Etran_to_Eionize_(ni: T_ARRAY, w: T_ARRAY) -> T_ARRAY: ...
 def ratio_Etran_to_Eionize_(ni: T_INT, w: T_ARRAY) -> T_ARRAY: ...
 
 
+@nb_vec(**NB_VEC_KWGS)
 def ratio_Etran_to_Eionize_(ni: T_VEC_IA, w: T_VEC_FA) -> T_VEC_FA:
     """
     Compute the "ratio of transition energy to ionization energy"
@@ -151,6 +152,7 @@ def gaunt_factor_gingerich_(ni: T_VEC_IA, x: T_VEC_IFA) -> T_VEC_FA:
     return g
 
 
+@nb_vec(**NB_VEC_KWGS)
 def gaunt_factor_coe_(i: T_VEC_IA, ni: T_VEC_IA) -> T_VEC_FA:
     """
     coefficients to calculate Gaunt factor
@@ -198,6 +200,7 @@ def gaunt_factor_coe_(i: T_VEC_IA, ni: T_VEC_IA) -> T_VEC_FA:
     return gi
 
 
+@nb_vec(**NB_VEC_KWGS)
 def gaunt_factor_(ni: T_VEC_IA, x: T_VEC_IFA) -> T_VEC_FA:
     """
     Gaunt factor
@@ -253,6 +256,7 @@ def gaunt_factor_(ni: T_VEC_IA, x: T_VEC_IFA) -> T_VEC_FA:
 # -----------------------------------------------------------------------------
 # Einstein Aji coefficient
 # -----------------------------------------------------------------------------
+@nb_vec(**NB_VEC_KWGS)
 def absorption_oscillator_strength_(ni: T_VEC_IA, nj: T_VEC_IA) -> T_VEC_FA:
     r"""
     absorption oscillator strength given by (Bethe and Salpeter 1957)
@@ -294,6 +298,7 @@ def absorption_oscillator_strength_(ni: T_VEC_IA, nj: T_VEC_IA) -> T_VEC_FA:
     return fij
 
 
+@nb_vec(**NB_VEC_KWGS)
 def einstein_A_coefficient_(ni: T_VEC_IA, nj: T_VEC_IA) -> T_VEC_FA:
     r"""
     Einstein coefficient for spontaneous emission in the hydrogen atom
@@ -366,6 +371,7 @@ def CE_rate_coe_(ni: T_INT, nj: T_INT, Te: T_ARRAY) -> T_ARRAY: ...
 def CE_rate_coe_(ni: T_ARRAY, nj: T_ARRAY, Te: T_FLOAT) -> T_ARRAY: ...
 
 
+@nb_vec(**NB_VEC_KWGS)
 def CE_rate_coe_(ni: T_VEC_IA, nj: T_VEC_IA, Te: T_VEC_IFA) -> T_VEC_FA:
     r"""
     Collisional Excitation rate coefficient qij for the hydrogen atom
@@ -471,6 +477,7 @@ def CI_rate_coe_(ni: T_ARRAY, Te: T_FLOAT) -> T_ARRAY: ...
 def CI_rate_coe_(ni: T_INT, Te: T_ARRAY) -> T_ARRAY: ...
 
 
+@nb_vec(**NB_VEC_KWGS)
 def CI_rate_coe_(ni: T_VEC_IA, Te: T_VEC_IFA) -> T_VEC_FA:
     r"""
     Collisional ionization rate coefficient qik for the hydrogen atom
@@ -655,6 +662,7 @@ def PI_cross_section_cm_(ni: T_ARRAY, w: T_ARRAY, Z: T_INT) -> T_ARRAY: ...
 def PI_cross_section_cm_(ni: T_INT, w: T_ARRAY, Z: T_INT) -> T_ARRAY: ...
 
 
+@nb_vec(**NB_VEC_KWGS)
 def PI_cross_section_cm_(ni: T_VEC_IA, w: T_VEC_IFA, Z: T_VEC_IA) -> T_VEC_FA:
     r"""
     Photoionization cross-section for hydrogen from lower level ni at wavelength w.
@@ -715,6 +723,7 @@ def PI_cross_section_(ni: T_INT, x: T_ARRAY, Z: T_INT) -> T_ARRAY: ...
 def PI_cross_section_(ni: T_ARRAY, x: T_ARRAY, Z: T_INT) -> T_ARRAY: ...
 
 
+@nb_vec(**NB_VEC_KWGS)
 def PI_cross_section_(ni: T_VEC_IA, x: T_VEC_IFA, Z: T_VEC_IA) -> T_VEC_FA:
     r"""
     Photoionization cross-section for hydrogen from lower level ni at wavelength w.
@@ -772,6 +781,7 @@ def PI_cross_section_(ni: T_VEC_IA, x: T_VEC_IFA, Z: T_VEC_IA) -> T_VEC_FA:
 # -----------------------------------------------------------------------------
 
 
+@nb_vec(**NB_VEC_KWGS)
 def Rki_spon_rate_coe_(ni: T_VEC_IA, Te: T_VEC_IFA) -> T_VEC_FA:
     r"""
     Parameters
@@ -836,6 +846,7 @@ def collisional_broadening_Res_and_Van_(ni: T_INT, nj: T_INT, nH_I_ground: T_ARR
 def collisional_broadening_Res_and_Van_(ni: T_ARRAY, nj: T_ARRAY, nH_I_ground: T_FLOAT, Te: T_FLOAT) -> T_ARRAY: ...
 
 
+@nb_vec(**NB_VEC_KWGS)
 def collisional_broadening_Res_and_Van_(ni: T_VEC_IA, nj: T_VEC_IA, nH_I_ground: T_VEC_FA, Te: T_VEC_IFA) -> T_VEC_FA:
     r"""
 
@@ -909,6 +920,7 @@ def collisional_broadening_LinearStark_(ni: T_INT, nj: T_INT, Ne: T_ARRAY) -> T_
 def collisional_broadening_LinearStark_(ni: T_ARRAY, nj: T_ARRAY, Ne: T_FLOAT) -> T_ARRAY: ...
 
 
+@nb_vec(**NB_VEC_KWGS)
 def collisional_broadening_LinearStark_(ni: T_VEC_IA, nj: T_VEC_IA, Ne: T_VEC_IFA) -> T_VEC_FA:
     r"""
 
@@ -953,40 +965,3 @@ def collisional_broadening_LinearStark_(ni: T_VEC_IA, nj: T_VEC_IA, Ne: T_VEC_IF
 
     gamma = 0.255 * a1 * (nj * nj - ni * ni) * Ne ** (2.0 / 3.0)
     return gamma
-
-
-# -------------------------------------------------------------------------------
-# numba optimization
-# -------------------------------------------------------------------------------
-
-if CFG._IS_JIT:
-    ratio_Etran_to_Eionize_ = nb_vec(**NB_VEC_KWGS)(ratio_Etran_to_Eionize_)
-
-    # gaunt_factor_gingerich_cm_ = nb_vec(**NB_VEC_KWGS) (gaunt_factor_gingerich_cm_)
-    # gaunt_factor_gingerich_ = nb_vec(**NB_VEC_KWGS) (gaunt_factor_gingerich_)
-
-    gaunt_factor_coe_ = nb_vec(**NB_VEC_KWGS)(gaunt_factor_coe_)
-    gaunt_factor_ = nb_vec(**NB_VEC_KWGS)(gaunt_factor_)
-
-    absorption_oscillator_strength_ = nb_vec(**NB_VEC_KWGS)(absorption_oscillator_strength_)
-    einstein_A_coefficient_ = nb_vec(**NB_VEC_KWGS)(einstein_A_coefficient_)
-
-    CE_rate_coe_ = nb_vec(**NB_VEC_KWGS)(CE_rate_coe_)
-    CI_rate_coe_ = nb_vec(**NB_VEC_KWGS)(CI_rate_coe_)
-
-    PI_cross_section_cm_ = nb_vec(**NB_VEC_KWGS)(PI_cross_section_cm_)
-    PI_cross_section_ = nb_vec(**NB_VEC_KWGS)(PI_cross_section_)
-    Rki_spon_rate_coe_ = nb_vec(**NB_VEC_KWGS)(Rki_spon_rate_coe_)
-
-    collisional_broadening_Res_and_Van_ = nb_vec(**NB_VEC_KWGS)(collisional_broadening_Res_and_Van_)
-    collisional_broadening_LinearStark_ = nb_vec(**NB_VEC_KWGS)(collisional_broadening_LinearStark_)
-
-else:
-    # gaunt_factor_gingerich_cm_ = np_vec( gaunt_factor_gingerich_cm_, **NP_VEC_KWGS )
-    gaunt_factor_coe_ = np_vec(gaunt_factor_coe_, **NP_VEC_KWGS)
-    CE_rate_coe_ = np_vec(CE_rate_coe_, **NP_VEC_KWGS)
-    CI_rate_coe_ = np_vec(CI_rate_coe_, **NP_VEC_KWGS)
-    PI_cross_section_cm_ = np_vec(PI_cross_section_cm_, **NP_VEC_KWGS)
-    PI_cross_section_ = np_vec(PI_cross_section_, **NP_VEC_KWGS)
-    collisional_broadening_Res_and_Van_ = np_vec(collisional_broadening_Res_and_Van_, **NP_VEC_KWGS)
-    collisional_broadening_LinearStark_ = np_vec(collisional_broadening_LinearStark_, **NP_VEC_KWGS)

@@ -22,6 +22,7 @@ def boltzmann_distribution_(gi: T_ARRAY, gj: T_ARRAY, Eji: T_ARRAY, Te: T_FLOAT)
 def boltzmann_distribution_(gi: T_INT, gj: T_INT, Eji: T_FLOAT, Te: T_ARRAY) -> T_ARRAY: ...
 
 
+@nb_vec(**NB_VEC_KWGS)
 def boltzmann_distribution_(gi: T_VEC_IA, gj: T_VEC_IA, Eji: T_VEC_FA, Te: T_VEC_IFA) -> T_VEC_FA:
     r"""calculate the population ratio between upper level j and lower level i under LTE.
 
@@ -58,6 +59,7 @@ def saha_distribution_(gi: T_ARRAY, gk: T_ARRAY, chi: T_ARRAY, Ne: T_FLOAT, Te: 
 def saha_distribution_(gi: T_INT, gk: T_INT, chi: T_FLOAT, Ne: T_ARRAY, Te: T_ARRAY) -> T_ARRAY: ...
 
 
+@nb_vec(**NB_VEC_KWGS)
 def saha_distribution_(gi: T_VEC_IA, gk: T_VEC_IA, chi: T_VEC_FA, Ne: T_VEC_IFA, Te: T_VEC_IFA) -> T_VEC_FA:
     """calculate the population ratio between the ground states of two subsequent ionization stage under LTE.
 
@@ -447,6 +449,7 @@ def planck_cm_(W: T_ARRAY, T: T_FLOAT) -> T_ARRAY: ...
 def planck_cm_(W: T_FLOAT, T: T_ARRAY) -> T_ARRAY: ...
 
 
+@nb_vec(**NB_VEC_KWGS)
 def planck_cm_(W: T_ARRAY | T_FLOAT | T_INT, T: T_ARRAY | T_FLOAT | T_INT) -> T_ARRAY | T_FLOAT | T_INT:
     r"""
     given wavelength and temperature,
@@ -623,16 +626,3 @@ def Ufunc_(elm: T_STR, T: T_ARRAY | T_FLOAT | T_INT) -> T_ARRAY | T_FLOAT:
     ufunc1 = 10.0**s
 
     return ufunc1
-
-
-# -----------------------------------------------------------------------------
-# numba optimization
-# -----------------------------------------------------------------------------
-
-if CFG._IS_JIT:
-    boltzmann_distribution_ = nb_vec(**NB_VEC_KWGS)(boltzmann_distribution_)
-    saha_distribution_ = nb_vec(**NB_VEC_KWGS)(saha_distribution_)
-    planck_cm_ = nb_vec(**NB_VEC_KWGS)(planck_cm_)
-
-else:
-    planck_cm_ = np_vec(planck_cm_, **NP_VEC_KWGS)

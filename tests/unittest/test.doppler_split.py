@@ -279,9 +279,7 @@ def test_init_FAL_doppler_fields():
 
 def test_jit_smoke_b_jbar_nonzero_vd_sun():
     # Numba-compiled _B_Jbar_ must accept Vd_sun != 0 without compile errors
-    # and yield a normalized n_SE. Only meaningful when JIT is enabled.
-    if not CFG._IS_JIT:
-        pytest.skip("JIT disabled; numba codepath not exercised")
+    # and yield a normalized n_SE.
     _, _, _, _, SE_con = _hydrogen_setup(Vd_obs=0.0, Vd_sun=5.0e5)
     total = float(SE_con.n_SE.sum())
     assert np.isfinite(total)

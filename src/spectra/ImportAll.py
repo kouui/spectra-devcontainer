@@ -5,7 +5,6 @@
 # from .ImportExternalModule import *
 
 
-from numba.typed import List
 import numpy as _numpy
 
 from numba import njit as nb_njit
@@ -19,9 +18,6 @@ from .Types import *
 from .Warnings import WARN_
 
 np_vec = _numpy.vectorize
-
-nb_List = List if CFG._IS_JIT else list
-del List
 
 ## : numba TypedDict much slower than numpy struct array
 # comment : currently we will not use dictionary as a data struct in spectra
@@ -155,7 +151,6 @@ __all__ = [
     "T_VEC_IFA",
     # Warnings
     "WARN_",
-    "nb_List",
     # numba
     "nb_njit",
     "nb_vec",
