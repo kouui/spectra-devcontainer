@@ -15,9 +15,9 @@ import numpy as _numpy
 from ....ImportAll import *
 from ....RadiativeTransfer import Profile as _Profile
 
-# per-iteration-tier kernels are compiled unconditionally; a jitted caller needs
-# a jitted callee -- the always-compiled scalar binding, independent of CFG._IS_JIT
-_voigt_ = _Profile.voigt_nb_
+# a jitted caller needs a jitted callee: voigt_ is a numba DUFunc, which njit
+# code can call with scalars
+_voigt_ = _Profile.voigt_
 
 
 def line_profile_table_(
