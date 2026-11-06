@@ -228,8 +228,15 @@ def LTE_ratio_(erg: T_ARRAY, g: T_ARRAY, stage: T_ARRAY, Te: T_FLOAT | T_INT, Ne
             nRatio[i] = nRatio[i - 1] * boltzmann_distribution_(gi, gj, erg[i] - erg[i - 1], Te)
         elif stage[i] - stage[i - 1] == 1:
             nRatio[i] = nRatio[i - 1] * saha_distribution_(gi, gj, erg[i] - erg[i - 1], Ne, Te)
+        else:
+            # each level is chained to the previous one, so the levels must be
+            # ordered by ionization stage without skipping a stage
+            raise ValueError("consecutive levels must have equal stages or stages differing by 1")
 
-        nRatio[:] /= nRatio[:].sum()
+        # rescale at every step so that a long chain of large Saha factors cannot
+        # overflow; only the prefix that is already set, because the array starts
+        # uninitialized
+        nRatio[: i + 1] /= nRatio[: i + 1].sum()
 
     return nRatio
 
