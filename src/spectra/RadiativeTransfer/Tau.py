@@ -38,30 +38,10 @@ def make_tau_(ND: T_INT, e_max: T_FLOAT, relax: T_FLOAT = 0.0):
     return tau
 
 
-def z_to_dtau_(z: T_ARRAY, alpha: T_ARRAY):
-    r"""[summary]
-
-    Parameters
-    ----------
-    z : T_ARRAY, [cm]
-        1D depth with z[0] as the surface and z[i] < z[i+1]
-    alpha : T_ARRAY, [cm^{-1}]
-        extinction coefficient
-
-    Returns
-    --------
-    dtau : T_ARRAY, [-]
-        difference of optical depth
-    """
-    nZ = z.shape[0]
-    _dtau = _numpy.zeros(nZ, dtype=DT_NB_FLOAT)
-
-
 def z_to_tau_(Z: T_ARRAY, xi: T_ARRAY) -> T_ARRAY:
     r"""given height `Z` and opacity `xi`, calculate optical depth tau
 
-    Trapezoidal integration of `xi` from the surface inwards. Note the
-    ordering is the reverse of `z_to_dtau_`.
+    Trapezoidal integration of `xi` from the surface inwards.
 
     Parameters
     ----------
