@@ -2,7 +2,10 @@
 # numba.vectorize compiles one loop per input dtype on first call, so the output
 # dtype depends on the caller and a str argument is typed as a unicode array.
 
-import re
+import ast
+import os
+import subprocess
+import sys
 
 from numba.core import config as _nb_config
 from numba.np.ufunc.dufunc import DUFunc
@@ -63,14 +66,58 @@ def test_every_nb_vec_kernel_has_explicit_signatures():
     assert not lazy, f"nb_vec kernels without explicit signatures: {lazy}"
 
 
-def test_no_nb_vec_kernel_lives_outside_the_checked_modules():
+def _decorated_kernel_names_():
+    # Parsed with ast so that a docstring or comment mentioning `@nb_vec(` is not counted.
     root = CFG._ROOT_DIR / "src" / "spectra"
-    decorated = 0
+    names = set()
     for path in root.rglob("*.py"):
-        if "Experimental" in path.parts:
+        if "Experimental" in path.relative_to(root).parts:
             continue
-        decorated += len(re.findall(r"^@nb_vec\(", path.read_text(), flags=re.MULTILINE))
-    assert decorated == len(_kernels_())
+        module = ".".join(("spectra", *path.relative_to(root).with_suffix("").parts))
+        for node in ast.walk(ast.parse(path.read_text())):
+            if not isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
+                continue
+            for dec in node.decorator_list:
+                if isinstance(dec, ast.Call) and isinstance(dec.func, ast.Name) and dec.func.id == "nb_vec":
+                    names.add(f"{module}.{node.name}")
+    return names
+
+
+def test_no_nb_vec_kernel_lives_outside_the_checked_modules():
+    decorated = _decorated_kernel_names_()
+    found = set(_kernels_())
+    assert decorated == found, (
+        f"decorated with nb_vec but not in _MODULES: {sorted(decorated - found)}; "
+        f"found as DUFunc but without an nb_vec decorator: {sorted(found - decorated)}"
+    )
+
+
+_BAD_SIGNATURE_PROBE = """
+from spectra.ImportAll import *
+
+try:
+    @nb_vec(["float64(float64)"], nopython=True)
+    def f(x):
+        return x
+except TypeError as err:
+    print("TypeError", err)
+"""
+
+
+@pytest.mark.parametrize(
+    "signature", ["float64(float64)", ["float64(float64)"], [T_NB_FLOAT(T_NB_FLOAT), "int64(int64)"]]
+)
+def test_string_signature_is_rejected_at_decoration(signature):
+    with pytest.raises(TypeError, match="Signature"):
+        nb_vec(signature, nopython=True)(lambda x: x)
+
+
+def test_string_signature_is_rejected_at_decoration_without_jit(tmp_path):
+    env = {**os.environ, "NUMBA_DISABLE_JIT": "1", "NUMBA_CACHE_DIR": str(tmp_path)}
+    out = subprocess.run(
+        [sys.executable, "-c", _BAD_SIGNATURE_PROBE], env=env, capture_output=True, text=True, check=True
+    )
+    assert out.stdout.startswith("TypeError"), out.stdout + out.stderr
 
 
 def test_is_odd_has_a_single_integer_loop():

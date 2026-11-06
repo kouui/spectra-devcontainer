@@ -6,6 +6,7 @@
 
 
 from numba.core import config as _nb_config
+from numba.core.typing.templates import Signature as _NbSignature
 from numba.np.numpy_support import as_dtype as _nb_as_dtype
 import numpy as _numpy
 
@@ -28,11 +29,14 @@ def nb_vec(signatures, **kwargs):
     The signatures are required. Without them numba compiles lazily per input
     dtype, so the output dtype depends on the caller and a str argument is silently
     typed as a unicode array. With them the loops are compiled at import: the
-    output dtype is fixed, a compile error surfaces at import, and an input that
-    cannot be cast safely to a loop (str, or float into an integer-only kernel)
-    raises TypeError. Use only T_NB_FLOAT / T_NB_INT in the signatures. When one
-    kernel lists several signatures, put the integer-input ones first: numpy picks
-    the first loop that accepts the inputs under safe casting.
+    output dtype is fixed, a compile error surfaces at import, and, with JIT
+    enabled, an input that cannot be cast safely to a loop (str, or float into an
+    integer-only kernel) raises TypeError. Use only T_NB_FLOAT / T_NB_INT in the
+    signatures, as numba Signature objects (`T_NB_FLOAT(T_NB_FLOAT)`), never as
+    strings: a string works compiled but the fallback needs `return_type`, so both
+    modes reject it at decoration time. When one kernel lists several signatures,
+    put the integer-input ones first: numpy picks the first loop that accepts the
+    inputs under safe casting.
 
     Cost: numba's cache=True stores only the element kernel; the ufunc loop
     wrapper is rebuilt and JIT-compiled in every process (numba 0.65-0.68), about
@@ -48,14 +52,28 @@ def nb_vec(signatures, **kwargs):
     cutoff) would yield integer output for some inputs and float for others, and
     fail on empty input. numpy.vectorize takes one output type per output, so
     signatures of one kernel that disagree on the return type are rejected.
+
+    The fallback fixes the output dtype only; the inputs keep Python semantics and
+    are not checked against the signatures. `Hydrogen.einstein_A_coefficient_(1.0,
+    2.0)` therefore returns a number under NUMBA_DISABLE_JIT and raises TypeError
+    compiled, so a pure-python test run cannot catch a float passed to an integer
+    slot or a str passed to a float slot.
     """
     if not signatures:
         raise ValueError("nb_vec needs at least one explicit signature")
+    # A string signature is accepted by numba.vectorize but has no `return_type`,
+    # which the fallback needs; checking here keeps both modes equally strict.
+    sigs: list[T_ANY] = [signatures] if isinstance(signatures, str | _NbSignature) else list(signatures)
+    not_signatures = [sig for sig in sigs if not isinstance(sig, _NbSignature)]
+    if not_signatures:
+        raise TypeError(
+            f"nb_vec signatures must be numba Signature objects such as T_NB_FLOAT(T_NB_FLOAT), got {not_signatures!r}"
+        )
 
     if not _nb_config.DISABLE_JIT:
-        return _nb_vectorize(signatures, **kwargs)
+        return _nb_vectorize(sigs, **kwargs)
 
-    return_types = {sig.return_type for sig in signatures}
+    return_types = {sig.return_type for sig in sigs}
     if len(return_types) != 1:
         raise ValueError(f"nb_vec signatures disagree on the return type: {sorted(map(str, return_types))}")
     otype = _nb_as_dtype(return_types.pop())
