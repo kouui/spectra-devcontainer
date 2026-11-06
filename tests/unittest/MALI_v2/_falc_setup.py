@@ -32,7 +32,7 @@ E_VOIGT = E_ABSORPTION_PROFILE_TYPE.VOIGT
 
 # RH's own constants: using them for the damping isolates the broadening
 # physics from the (slightly different) CODATA values in spectra.Constants
-H_RH, C_RH = 6.6260755e-34, 2.99792458e8
+h_RH_, c_RH_ = 6.6260755e-34, 2.99792458e8
 HE_ABUND = 10.0 ** (10.99 - 12.0)  # RH abundance.input
 N_PRINCIPAL = [1, 2, 3, 4, 5]  # H_6_CRD level labels 1S, 2P, 3D, 4F, 5G
 
@@ -77,9 +77,9 @@ def parse_h6_atom_():
         if p[0] == "TEMP":
             Ttab = np.array([float(x) for x in p[2 : 2 + int(p[1])]])
         elif p[0] in ("CE", "CI"):
-            j, i = int(p[1]), int(p[2])
+            first, second = int(p[1]), int(p[2])  # CE: upper, lower; CI: lower, upper
             vals = np.array([float(x) for x in p[3 : 3 + len(Ttab)]])
-            (CE if p[0] == "CE" else CI).append((j, i, vals))
+            (CE if p[0] == "CE" else CI).append((first, second, vals))
         elif p[0] == "END":
             break
     return levels, lines, conts, Ttab, CE, CI
@@ -108,7 +108,7 @@ def build_atom_(levels, lines_in, conts_in):
     atom.Level["isGround"][5] = True  # the proton is the ion-stage ground
 
     nCont = len(conts_in)
-    Cont = np.zeros(nCont, dtype=atom.Cont.dtype if atom.Cont.size else Structs._CONT_DTYPE)
+    Cont = np.zeros(nCont, dtype=Structs._CONT_DTYPE)
     Cont_mesh = np.empty((nCont, N_CONT_MESH))
     alpha = np.empty((nCont, N_CONT_MESH))
     for kC, c in enumerate(conts_in):
@@ -122,15 +122,15 @@ def build_atom_(levels, lines_in, conts_in):
         Cont["f0"][kC] = chi_ion / CST.h_
         # RH integrates the b-f rates over [lamb_min, edge] only; keep the
         # edge-concentrated sqrt spacing but remap it onto that range
-        m = MeshUtil.make_continuum_mesh_(N_CONT_MESH)
+        s_unit = MeshUtil.make_continuum_mesh_(N_CONT_MESH)
         lm_frac = c["lamb_min_nm"] * 1.0e-7 / wl_edge
-        mesh = wl_edge * (lm_frac + (1.0 - lm_frac) * (m - m[-1]) / (1.0 - m[-1]))
+        mesh = wl_edge * (lm_frac + (1.0 - lm_frac) * (s_unit - s_unit[-1]) / (1.0 - s_unit[-1]))
         Cont_mesh[kC, :] = mesh
         n_eff = np.sqrt(CST.E_Rydberg_ / chi_ion)
         g_edge = BG.gaunt_bf_(float(wl_edge), float(n_eff), 1)
-        for m in range(N_CONT_MESH):
-            g = BG.gaunt_bf_(float(mesh[m]), float(n_eff), 1)
-            alpha[kC, m] = c["alpha0_cm2"] * (g / g_edge) * (mesh[m] / wl_edge) ** 3
+        for kW in range(N_CONT_MESH):
+            g = BG.gaunt_bf_(float(mesh[kW]), float(n_eff), 1)
+            alpha[kC, kW] = c["alpha0_cm2"] * (g / g_edge) * (mesh[kW] / wl_edge) ** 3
     atom.Cont = Cont
     atom.Cont_mesh = Cont_mesh
     atom.alpha = alpha
@@ -158,17 +158,17 @@ def cij_table_(atom, levels, Ttab, CE, CI, Te):
     for kC in range(atom.nCont):
         tran_index[(int(atom.Cont["idxI"][kC]), int(atom.Cont["idxJ"][kC]))] = atom.nLine + kC
 
-    for j, i, vals in CE:
+    for j, i, vals in CE:  # "CE j i": upper level first
         kT = tran_index[(i, j)]
         coe = CubicSpline(Ttab, vals, bc_type="natural")(Tlook) * 1.0e6  # SI m^3 -> cm^3
         gij = levels[i][1] / levels[j][1]
         dE = (levels[j][0] - levels[i][0]) * CST.h_ * CST.c_
         Cji = coe * gij * np.sqrt(Te)
         Cij[:, kT] = Cji * (levels[j][1] / levels[i][1]) * np.exp(-dE / (CST.k_ * Te))
-    for i, j, vals in [(i, j, v) for j, i, v in CI]:  # CI rows are "i j" order in file
-        kT = tran_index[(min(i, j), max(i, j))]
+    for i, j, vals in CI:  # unlike CE ("CE j i"), CI rows read "CI i j": lower level first
+        kT = tran_index[(i, j)]
         coe = CubicSpline(Ttab, vals, bc_type="natural")(Tlook) * 1.0e6
-        dE = abs(levels[max(i, j)][0] - levels[min(i, j)][0]) * CST.h_ * CST.c_
+        dE = (levels[j][0] - levels[i][0]) * CST.h_ * CST.c_
         Cij[:, kT] = coe * np.sqrt(Te) * np.exp(-dE / (CST.k_ * Te))
     return Cij
 
@@ -244,7 +244,7 @@ def adamp_all_(levels, lines_in, falc):
     """
     Te, Ne, vturb = falc["T"], falc["ne"], falc["vturb"]
     n1s = falc["nH_file"][:, 0] * falc["n1s_rescale"]
-    E = np.array([lv[0] for lv in levels]) * 100.0 * H_RH * C_RH * 1.0e7  # [erg]
+    E = np.array([lv[0] for lv in levels]) * 100.0 * h_RH_ * c_RH_ * 1.0e7  # [erg]
     vbroad = BR.broadening_velocity_(Te, vturb, AM_H)
     adamp = np.empty((Te.shape[0], len(lines_in)))
     for kL, ln in enumerate(lines_in):
@@ -255,6 +255,6 @@ def adamp_all_(levels, lines_in, falc):
         )
         g_sq = BR.stark_quadratic_(Te, Ne, AM_H, float(E[i]), float(E[j]), float(E[-1]), ln["cStark"])
         g_sl = BR.stark_linear_hydrogen_(Ne, N_PRINCIPAL[i], N_PRINCIPAL[j])
-        w0_cm = float(H_RH * C_RH / ((E[j] - E[i]) * 1.0e-7) * 100.0)
+        w0_cm = float(h_RH_ * c_RH_ / ((E[j] - E[i]) * 1.0e-7) * 100.0)
         adamp[:, kL] = BR.damping_parameter_(ln["Grad"] + g_vdw + g_sq + g_sl, w0_cm, vbroad)
     return adamp
