@@ -6,8 +6,14 @@ reference is the dispatcher's py_func; the compiled function is the module's own
 dispatcher.
 """
 
+from numba.core import config as nb_config
 import numpy as np
 import pytest
+
+# Under NUMBA_DISABLE_JIT the dispatcher is a plain function without py_func, and
+# there is no compilation left to test.
+if nb_config.DISABLE_JIT:
+    pytest.skip("compilation test: NUMBA_DISABLE_JIT is set", allow_module_level=True)
 
 from spectra.Enums import E_FEAUTRIER_ORDER
 from spectra.RadiativeTransfer import Feautrier

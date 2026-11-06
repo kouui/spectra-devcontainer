@@ -51,8 +51,9 @@ class TestHydrogenCloudModel:
         SE_con.n_SE[j0], SE_con.n_SE[i0] = SE_con.n_SE[i0], SE_con.n_SE[j0]
 
         # exp(-tau) overflows when |tau| is large negative (synthetic extreme,
-        # not a real-world concern). prof_1D is irrelevant for this test.
-        with _numpy.errstate(over="ignore"):
+        # not a real-world concern); inf - inf then gives nan ("invalid").
+        # prof_1D is irrelevant for this test.
+        with _numpy.errstate(over="ignore", invalid="ignore"):
             Cloud_con = _CloudModel._SE_to_slab_0D_bb_(atom, atmos, SE_con, depth=1.0e3 * 1.0e5)
 
         # Sanity: line 0 actually went negative.
