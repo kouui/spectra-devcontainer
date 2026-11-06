@@ -25,7 +25,7 @@ def voigt_(a: T_ARRAY, x: T_FLOAT) -> T_ARRAY: ...
 def voigt_(a: T_FLOAT, x: T_ARRAY) -> T_ARRAY: ...
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_FLOAT, T_NB_FLOAT)], **NB_VEC_KWGS)
 def voigt_(a: T_VEC_FA, x: T_VEC_FA) -> T_VEC_FA:
     r"""
     Calculate Doppler width normalized voigt function using polynomial fitting formula.
@@ -125,7 +125,7 @@ def gaussian_(x: T_FLOAT) -> T_FLOAT: ...
 def gaussian_(x: T_ARRAY) -> T_ARRAY: ...
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_FLOAT)], **NB_VEC_KWGS)
 def gaussian_(x: T_VEC_FA) -> T_VEC_FA:
     r"""
     Calculate Doppler width normalized gaussian profile.

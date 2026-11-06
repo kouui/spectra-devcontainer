@@ -6,7 +6,7 @@
 from ..ImportAll import *
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_FLOAT, T_NB_FLOAT, T_NB_FLOAT)], **NB_VEC_KWGS)
 def relative_flux_(AJI: T_FLOAT | T_ARRAY, f0: T_FLOAT | T_ARRAY, nj: T_INT | T_ARRAY) -> T_FLOAT | T_ARRAY:
     """
     calculate optically thin relative flux (some constants are removed)

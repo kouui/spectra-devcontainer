@@ -21,7 +21,7 @@ def thomson_scattering_(n_e: T_FLOAT) -> T_FLOAT: ...
 def thomson_scattering_(n_e: T_ARRAY) -> T_ARRAY: ...
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_FLOAT)], **NB_VEC_KWGS)
 def thomson_scattering_(n_e: T_VEC_IFA) -> T_VEC_FA:
     r"""
     Thomson scattering of free electrons (non-relativistic).
@@ -75,7 +75,7 @@ def hydrogenic_bf_cross_sec_n_(ni: T_ARRAY, w: T_FLOAT, Z: T_INT) -> T_ARRAY: ..
 def hydrogenic_bf_cross_sec_n_(ni: T_INT, w: T_ARRAY, Z: T_INT) -> T_ARRAY: ...
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_INT, T_NB_FLOAT, T_NB_INT)], **NB_VEC_KWGS)
 def hydrogenic_bf_cross_sec_n_(ni: T_VEC_IA, w: T_VEC_IFA, Z: T_INT) -> T_VEC_FA:
     r"""
     return bound-free cross section of a hydrogenic atom
@@ -156,7 +156,7 @@ def HI_bf_LTE_cross_sec_(Te: T_ARRAY, w: T_FLOAT) -> T_ARRAY: ...
 def HI_bf_LTE_cross_sec_(Te: T_FLOAT, w: T_ARRAY) -> T_ARRAY: ...
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_FLOAT, T_NB_FLOAT)], **NB_VEC_KWGS)
 def HI_bf_LTE_cross_sec_(Te: T_VEC_IFA, w: T_VEC_IFA) -> T_VEC_FA:
     r"""
     HI bound-free Cross section in LTE per 1 HI atom in unit of cm^2
@@ -238,7 +238,7 @@ def gaunt_factor_ff_(Te: T_ARRAY, w: T_FLOAT) -> T_ARRAY: ...
 def gaunt_factor_ff_(Te: T_FLOAT, w: T_ARRAY) -> T_ARRAY: ...
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_FLOAT, T_NB_FLOAT)], **NB_VEC_KWGS)
 def gaunt_factor_ff_(Te: T_VEC_FA, w: T_VEC_FA) -> T_VEC_FA:
 
     w_AA = w * 1.0e8  # [cm --> AA]
@@ -260,7 +260,7 @@ def Hp_ff_cross_sec_(Te: T_ARRAY, w: T_FLOAT, Ne: T_ARRAY, Z: T_INT) -> T_ARRAY:
 
 
 # No default for Z: numba.vectorize does not support default arguments.
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_FLOAT, T_NB_FLOAT, T_NB_FLOAT, T_NB_INT)], **NB_VEC_KWGS)
 def Hp_ff_cross_sec_(Te: T_VEC_FA, w: T_VEC_FA, Ne: T_VEC_FA, Z: T_INT) -> T_VEC_FA:
 
     # if Te > 2E4:
@@ -373,7 +373,7 @@ def Hminus_cross_sec_(Te: T_ARRAY, w: T_FLOAT, Ne: T_ARRAY) -> T_ARRAY: ...
 def Hminus_cross_sec_(Te: T_FLOAT, w: T_ARRAY, Ne: T_FLOAT) -> T_ARRAY: ...
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_FLOAT, T_NB_FLOAT, T_NB_FLOAT)], **NB_VEC_KWGS)
 def Hminus_cross_sec_(Te: T_VEC_IFA, w: T_VEC_IFA, Ne: T_VEC_IFA) -> T_VEC_FA:
     r"""
     H-minus (negative hidrogen) Cross Section per HI atom in unit of cm^2 (*LTE*)
@@ -454,7 +454,7 @@ def HI_rayleigh_cross_sec_(w: T_FLOAT) -> T_FLOAT: ...
 def HI_rayleigh_cross_sec_(w: T_ARRAY) -> T_ARRAY: ...
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_FLOAT)], **NB_VEC_KWGS)
 def HI_rayleigh_cross_sec_(w: T_VEC_IFA) -> T_VEC_FA:
     r"""
     return Rayleigh scattering cross section of a HI atom in unit of cm^2
@@ -722,7 +722,7 @@ def _avH2p_(Te: T_ARRAY, w: T_FLOAT) -> T_ARRAY: ...
 def _avH2p_(Te: T_FLOAT, w: T_ARRAY) -> T_ARRAY: ...
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_FLOAT, T_NB_FLOAT)], **NB_VEC_KWGS)
 def _avH2p_(Te: T_VEC_IFA, w: T_VEC_IFA) -> T_VEC_FA:
     r"""
 
@@ -796,7 +796,7 @@ def H2p_cross_sec_(Te: T_FLOAT, w: T_ARRAY, Np: T_FLOAT) -> T_ARRAY: ...
 def H2p_cross_sec_(Te: T_ARRAY, w: T_FLOAT, Np: T_ARRAY) -> T_ARRAY: ...
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_FLOAT, T_NB_FLOAT, T_NB_FLOAT)], **NB_VEC_KWGS)
 def H2p_cross_sec_(Te: T_VEC_FA, w: T_VEC_FA, Np: T_VEC_FA) -> T_VEC_FA:
     r"""
     return H2+ CrossSection per 1 HI atom n unit of cm^2 in LTE
@@ -853,7 +853,7 @@ def H_LTE_continuum_opacity_(Te: T_ARRAY, Ne: T_ARRAY, Nh: T_FLOAT, w: T_FLOAT) 
 def H_LTE_continuum_opacity_(Te: T_FLOAT, Ne: T_FLOAT, Nh: T_FLOAT, w: T_ARRAY) -> T_ARRAY: ...
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_FLOAT, T_NB_FLOAT, T_NB_FLOAT, T_NB_FLOAT)], **NB_VEC_KWGS)
 def H_LTE_continuum_opacity_(Te: T_VEC_FA, Ne: T_VEC_FA, Nh: T_VEC_FA, w: T_VEC_FA) -> T_VEC_FA:
     r"""
     LTE continuum opacity in cm-1, incruding HI, H-, H2, rayleigh scat.

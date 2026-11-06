@@ -58,7 +58,7 @@ def Cij_to_Cji_(Cij: T_FLOAT, nj_by_ni_LTE: T_FLOAT) -> T_FLOAT: ...
 def Cij_to_Cji_(Cij: T_ARRAY, nj_by_ni_LTE: T_ARRAY) -> T_ARRAY: ...
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_FLOAT, T_NB_FLOAT)], **NB_VEC_KWGS)
 def Cij_to_Cji_(Cij: T_VEC_FA, nj_by_ni_LTE: T_VEC_FA) -> T_VEC_FA:
     """Given the LTE population ration and collisional coefficient Cij,
        calculate collisional coefficient Cji
@@ -88,7 +88,7 @@ def CE_rate_coe_(omega: T_FLOAT, Te: T_ARRAY, gi: T_INT, dEij: T_FLOAT) -> T_ARR
 def CE_rate_coe_(omega: T_ARRAY, Te: T_FLOAT, gi: T_ARRAY, dEij: T_ARRAY) -> T_ARRAY: ...
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_FLOAT, T_NB_FLOAT, T_NB_INT, T_NB_FLOAT)], **NB_VEC_KWGS)
 def CE_rate_coe_(omega: T_VEC_FA, Te: T_VEC_IFA, gi: T_VEC_IA, dEij: T_VEC_FA) -> T_VEC_FA:
     """[summary]
 
@@ -125,7 +125,7 @@ def CI_rate_coe_(omega: T_FLOAT, Te: T_ARRAY, dEik: T_FLOAT) -> T_ARRAY: ...
 def CI_rate_coe_(omega: T_ARRAY, Te: T_FLOAT, dEik: T_ARRAY) -> T_ARRAY: ...
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_FLOAT, T_NB_FLOAT, T_NB_FLOAT)], **NB_VEC_KWGS)
 def CI_rate_coe_(omega: T_VEC_FA, Te: T_VEC_FA, dEik: T_VEC_FA) -> T_VEC_FA:
     """[summary]
 

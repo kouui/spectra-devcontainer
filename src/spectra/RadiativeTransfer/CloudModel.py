@@ -10,7 +10,7 @@ from ..ImportAll import *
 
 # No default for I0: numba.vectorize rejects default arguments, so callers pass
 # 0.0 explicitly for no background.
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_FLOAT, T_NB_FLOAT, T_NB_FLOAT)], **NB_VEC_KWGS)
 def emergent_intensity_(
     Src: T_FLOAT,
     tau: T_FLOAT,

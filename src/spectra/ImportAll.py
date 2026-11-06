@@ -6,6 +6,7 @@
 
 
 from numba.core import config as _nb_config
+from numba.np.numpy_support import as_dtype as _nb_as_dtype
 import numpy as _numpy
 
 from numba import njit as nb_njit
@@ -21,23 +22,40 @@ from .Warnings import WARN_
 np_vec = _numpy.vectorize
 
 
-def nb_vec(*args, **kwargs):
-    """numba.vectorize, or numpy.vectorize when NUMBA_DISABLE_JIT is set.
+def nb_vec(signatures, **kwargs):
+    """numba.vectorize with explicit signatures, or numpy.vectorize when NUMBA_DISABLE_JIT is set.
+
+    The signatures are required. Without them numba compiles lazily per input
+    dtype, so the output dtype depends on the caller and a str argument is silently
+    typed as a unicode array. With them the loops are compiled at import: the
+    output dtype is fixed, a compile error surfaces at import, and an input that
+    cannot be cast safely to a loop (str, or float into an integer-only kernel)
+    raises TypeError. Use only T_NB_FLOAT / T_NB_INT in the signatures. When one
+    kernel lists several signatures, put the integer-input ones first: numpy picks
+    the first loop that accepts the inputs under safe casting.
 
     numba.vectorize stays compiled under NUMBA_DISABLE_JIT, which freezes module
     constants into the ufunc (and into its on-disk cache); the numpy path keeps
-    them patchable at runtime. The fallback fixes the output type to float: without
-    otypes numpy infers it from the first element, so a kernel whose first branch
-    returns an integer literal (e.g. planck_cm_ in its cutoff) would yield integer
-    output for some inputs and float for others, and fail on empty input. The only
-    integer-valued kernel, BasicM.is_odd_, is used for truthiness only, which float
-    output preserves.
+    them patchable at runtime. The fallback pins `otypes` to the signatures' return
+    type: without otypes numpy infers the output type from the first element, so a
+    kernel whose first branch returns an integer literal (e.g. planck_cm_ in its
+    cutoff) would yield integer output for some inputs and float for others, and
+    fail on empty input. numpy.vectorize takes one output type per output, so
+    signatures of one kernel that disagree on the return type are rejected.
     """
+    if not signatures:
+        raise ValueError("nb_vec needs at least one explicit signature")
+
     if not _nb_config.DISABLE_JIT:
-        return _nb_vectorize(*args, **kwargs)
+        return _nb_vectorize(signatures, **kwargs)
+
+    return_types = {sig.return_type for sig in signatures}
+    if len(return_types) != 1:
+        raise ValueError(f"nb_vec signatures disagree on the return type: {sorted(map(str, return_types))}")
+    otype = _nb_as_dtype(return_types.pop())
 
     def _decorator(f):
-        return _numpy.vectorize(f, otypes=[float])
+        return _numpy.vectorize(f, otypes=[otype])
 
     return _decorator
 
@@ -163,6 +181,8 @@ __all__ = [
     "T_INT",
     "T_LIST",
     "T_LITERAL",
+    "T_NB_FLOAT",
+    "T_NB_INT",
     "T_NORETURN",
     "T_SLICE",
     "T_STR",

@@ -22,15 +22,23 @@ def boltzmann_distribution_(gi: T_ARRAY, gj: T_ARRAY, Eji: T_ARRAY, Te: T_FLOAT)
 def boltzmann_distribution_(gi: T_INT, gj: T_INT, Eji: T_FLOAT, Te: T_ARRAY) -> T_ARRAY: ...
 
 
-@nb_vec(**NB_VEC_KWGS)
-def boltzmann_distribution_(gi: T_VEC_IA, gj: T_VEC_IA, Eji: T_VEC_FA, Te: T_VEC_IFA) -> T_VEC_FA:
+# Two loops: Atom structs store statistical weights as integers, while the MALI toy atoms
+# store them as floats. The integer loop comes first so integer weights keep it.
+@nb_vec(
+    [
+        T_NB_FLOAT(T_NB_INT, T_NB_INT, T_NB_FLOAT, T_NB_FLOAT),
+        T_NB_FLOAT(T_NB_FLOAT, T_NB_FLOAT, T_NB_FLOAT, T_NB_FLOAT),
+    ],
+    **NB_VEC_KWGS,
+)
+def boltzmann_distribution_(gi: T_VEC_IFA, gj: T_VEC_IFA, Eji: T_VEC_FA, Te: T_VEC_IFA) -> T_VEC_FA:
     r"""calculate the population ratio between upper level j and lower level i under LTE.
 
     Parameters
     ----------
-    gi : T_VEC_IA
+    gi : T_VEC_IFA
         statistical weight of lower level i, [-]
-    gj : T_VEC_IA
+    gj : T_VEC_IFA
         statistical weight of upper level j, [-]
     Eji : T_VEC_FA
         the gap of level energy between upper level j and lower level i
@@ -59,16 +67,24 @@ def saha_distribution_(gi: T_ARRAY, gk: T_ARRAY, chi: T_ARRAY, Ne: T_FLOAT, Te: 
 def saha_distribution_(gi: T_INT, gk: T_INT, chi: T_FLOAT, Ne: T_ARRAY, Te: T_ARRAY) -> T_ARRAY: ...
 
 
-@nb_vec(**NB_VEC_KWGS)
-def saha_distribution_(gi: T_VEC_IA, gk: T_VEC_IA, chi: T_VEC_FA, Ne: T_VEC_IFA, Te: T_VEC_IFA) -> T_VEC_FA:
+# Two loops: Atom structs store statistical weights as integers, while the MALI toy atoms
+# store them as floats. The integer loop comes first so integer weights keep it.
+@nb_vec(
+    [
+        T_NB_FLOAT(T_NB_INT, T_NB_INT, T_NB_FLOAT, T_NB_FLOAT, T_NB_FLOAT),
+        T_NB_FLOAT(T_NB_FLOAT, T_NB_FLOAT, T_NB_FLOAT, T_NB_FLOAT, T_NB_FLOAT),
+    ],
+    **NB_VEC_KWGS,
+)
+def saha_distribution_(gi: T_VEC_IFA, gk: T_VEC_IFA, chi: T_VEC_FA, Ne: T_VEC_IFA, Te: T_VEC_IFA) -> T_VEC_FA:
     """calculate the population ratio between the ground states of two subsequent ionization stage under LTE.
 
     Parameters
     ----------
-    gi : T_VEC_IA
+    gi : T_VEC_IFA
         statistical weight of the ground state in ionization stage I, [-]
         [-]
-    gk : T_VEC_IA
+    gk : T_VEC_IFA
         statistical weight of the ground state in ionization stage I+1
         [-]
     chi : T_VEC_FA
@@ -449,7 +465,7 @@ def planck_cm_(W: T_ARRAY, T: T_FLOAT) -> T_ARRAY: ...
 def planck_cm_(W: T_FLOAT, T: T_ARRAY) -> T_ARRAY: ...
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_FLOAT, T_NB_FLOAT)], **NB_VEC_KWGS)
 def planck_cm_(W: T_ARRAY | T_FLOAT | T_INT, T: T_ARRAY | T_FLOAT | T_INT) -> T_ARRAY | T_FLOAT | T_INT:
     r"""
     given wavelength and temperature,

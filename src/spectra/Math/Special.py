@@ -19,7 +19,7 @@ _A56 = _numpy.array([8.5733287401, 18.0590169730, 8.6347608925, 0.2677737343], d
 _B56 = _numpy.array([9.5733223454, 25.6329561486, 21.0996530827, 3.9584969228], dtype=DT_NB_FLOAT)
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_FLOAT)], **NB_VEC_KWGS)
 def E0_(x: T_VEC_IFA) -> T_VEC_FA:
     """E_0(x)
 
@@ -36,7 +36,7 @@ def E0_(x: T_VEC_IFA) -> T_VEC_FA:
     return _numpy.exp(-x) / x
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_FLOAT)], **NB_VEC_KWGS)
 def E1_(x: T_VEC_IFA) -> T_VEC_FA:
     """
     Approximated formula for Exponential integral :math:`E_1(x)`.
@@ -77,7 +77,7 @@ def E1_(x: T_VEC_IFA) -> T_VEC_FA:
     return E1
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_FLOAT)], **NB_VEC_KWGS)
 def E2_(x: T_VEC_IFA) -> T_VEC_FA:
     """
     Calculate Exponential integral :math:`E_2(x)` from :math:`E_1(x)`.
@@ -110,7 +110,7 @@ def E2_(x: T_VEC_IFA) -> T_VEC_FA:
     return _numpy.exp(-x) - x * E1_(x)
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_FLOAT)], **NB_VEC_KWGS)
 def E3_(x: T_VEC_IFA) -> T_VEC_FA:
     """Calculate Exponential integral :math:`E_3(x)` from :math:`E_2(x)`.
 
