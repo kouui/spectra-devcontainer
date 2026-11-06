@@ -11,6 +11,13 @@ from numpy import sqrt as _sqrt
 from ..ImportAll import *
 from ..Math import Special
 
+# Principal quantum numbers arrive in the kernels as int64. Integer powers and products such as
+# `n**5` or `nj**4 - ni**4` wrap around int64 for large n, so every kernel in this module does
+# its arithmetic on float copies (`ni_f`, `nj_f`). The integer stays for indexes, branches and
+# kernels with integer signatures (e.g. `gaunt_factor_`). Some kernels (`ratio_Etran_to_Eionize_`,
+# `absorption_oscillator_strength_`) did not wrap, but follow the same rule so that no kernel
+# mixes the two.
+
 
 @OVERLOAD
 def ratio_Etran_to_Eionize_(ni: T_INT, w: T_FLOAT) -> T_FLOAT: ...
@@ -50,9 +57,6 @@ def ratio_Etran_to_Eionize_(ni: T_VEC_IA, w: T_VEC_FA) -> T_VEC_FA:
 
     # ratio = E_tran / Eik
 
-    # Principal quantum numbers arrive as int64, and integer powers such as n**5 wrap around
-    # for large n. Arithmetic therefore uses the float copy `ni_f`; `ni` stays for indexing and
-    # for kernels with integer signatures.
     ni_f = float(ni)
     w_limit = CST.ni2cm_ * ni_f * ni_f
     ratio = w_limit / w

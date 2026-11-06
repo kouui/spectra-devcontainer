@@ -3,6 +3,7 @@ import unittest
 
 from spectra import Constants as CST
 from spectra.Atomic import Hydrogen
+from spectra.Math import Special
 
 # The principal quantum number enters the kernels as int64, so n**5 wraps for n >= 6209,
 # n**4 differences for n >= 55109 and n**2 for n >= 3.04e9.
@@ -47,30 +48,78 @@ class Test_PI_cross_section_large_n(unittest.TestCase):
         self.assertAlmostEqual(ratio, _N_WRAP_POW5 / (_N_WRAP_POW5 - 1), delta=1e-6)
 
 
+def _Res_and_Van_exact(ni: int, nj: int, nH: float, Te: float) -> float:
+    cvdw = 1.61e-33 * float(nj**4 - ni**4)  # Python ints do not wrap
+    psi_w = 17.0 * cvdw**0.4 * (20596.0 * Te**0.5) ** 0.6
+    return nH * psi_w / (4.0 * CST.pi_)
+
+
+def _LinearStark_exact(ni: int, nj: int, Ne: float) -> float:
+    a1 = 0.642 if nj - ni == 1 else 1.0
+    return 0.255 * a1 * float(nj * nj - ni * ni) * Ne ** (2.0 / 3.0)
+
+
 class Test_collisional_broadening_large_n(unittest.TestCase):
     def test_Res_and_Van_matches_exact_integer_difference(self):
-        ni, nj = _N_WRAP_POW4, 2 * _N_WRAP_POW4
         nH, Te = 1e12, 7000.0
-        cvdw = 1.61e-33 * float(nj**4 - ni**4)  # Python ints do not wrap
-        psi_w = 17.0 * cvdw**0.4 * (20596.0 * Te**0.5) ** 0.6
-        expected = nH * psi_w / (4.0 * CST.pi_)
-        gamma = Hydrogen.collisional_broadening_Res_and_Van_(ni, nj, nH, Te)
-        self.assertAlmostEqual(gamma / expected, 1.0, delta=1e-12)
+        for ni, nj in ((_N_WRAP_POW4, 2 * _N_WRAP_POW4),):
+            with self.subTest(ni=ni, nj=nj):
+                gamma = Hydrogen.collisional_broadening_Res_and_Van_(ni, nj, nH, Te)
+                self.assertGreater(gamma, 0.0)
+                self.assertAlmostEqual(gamma / _Res_and_Van_exact(ni, nj, nH, Te), 1.0, delta=1e-12)
 
     def test_LinearStark_matches_exact_integer_difference(self):
-        ni, nj = _N_WRAP_POW2, 2 * _N_WRAP_POW2
         Ne = 1e12
-        expected = 0.255 * float(nj * nj - ni * ni) * Ne ** (2.0 / 3.0)
-        gamma = Hydrogen.collisional_broadening_LinearStark_(ni, nj, Ne)
-        self.assertAlmostEqual(gamma / expected, 1.0, delta=1e-12)
+        for ni, nj in ((_N_WRAP_POW2, 2 * _N_WRAP_POW2),):
+            with self.subTest(ni=ni, nj=nj):
+                gamma = Hydrogen.collisional_broadening_LinearStark_(ni, nj, Ne)
+                self.assertGreater(gamma, 0.0)
+                self.assertAlmostEqual(gamma / _LinearStark_exact(ni, nj, Ne), 1.0, delta=1e-12)
+
+
+def _einstein_A_float(ni: float, nj: float) -> float:
+    x = 1.0 - (ni / nj) ** 2
+    f0 = 32.0 / (3.0 * CST.sqrt3_ * CST.pi_) * ni / (x * nj) ** 3
+    fij = f0 * _gaunt_float(ni, x)
+    Eij = CST.E_Rydberg_H_ * (1.0 / ni**2 - 1.0 / nj**2)
+    w = CST.h_ * CST.c_ / Eij
+    return (ni / nj) ** 2 * 0.667025 / (w * w) * fij
+
+
+def _CE_float(ni: float, nj: float, Te: float) -> float:
+    x = 1.0 - (ni / nj) ** 2
+    x_m = 1.0 / x
+    f0 = 32.0 / (3.0 * CST.sqrt3_ * CST.pi_) * ni / (x * nj) ** 3
+    fij = f0 * _gaunt_float(ni, x)
+    Aij = 2.0 * ni**2 * x_m * fij
+    ni_m = 1.0 / ni
+    bi = ni_m * (4.0 + ni_m * (-18.63 + ni_m * (36.24 - ni_m * 28.09)))
+    ri = 1.94 * ni_m**1.57
+    Bij = 4.0 * ni * (ni / nj) ** 3 * x_m**2 * (1.0 + x_m * (4 / 3 + x_m * bi))
+    Eij = CST.E_Rydberg_H_ * (1.0 / ni**2 - 1.0 / nj**2)
+    y = Eij / (CST.k_ * Te)
+    z = ri * x + y
+    term1 = Aij * ((1.0 / y + 0.5) * Special.E1_(y) - (1.0 / z + 0.5) * Special.E1_(z))
+    term2 = (Bij - Aij * math.log(2.0 * ni * ni * x_m)) * (Special.E2_(y) / y - Special.E2_(z) / z)
+    return CST.C0_ * Te**0.5 * 2 * ni * ni * x_m * y * y * (term1 + term2)
 
 
 class Test_rate_coefficients_huge_n(unittest.TestCase):
-    def test_rates_are_finite_and_positive_beyond_int64_square_wrap(self):
-        n = 3_100_000_000
+    def test_einstein_A_matches_float_formula_beyond_int64_square_wrap(self):
+        n = _N_WRAP_POW2 + 600_000_000
+        value = Hydrogen.einstein_A_coefficient_(n, n + 1)
+        self.assertGreater(value, 0.0)
+        self.assertAlmostEqual(value / _einstein_A_float(float(n), float(n + 1)), 1.0, delta=1e-6)
+
+    def test_CE_matches_float_formula_beyond_int64_square_wrap(self):
+        n = _N_WRAP_POW2 + 600_000_000
+        value = Hydrogen.CE_rate_coe_(n, n + 1, 7000.0)
+        self.assertGreater(value, 0.0)
+        self.assertAlmostEqual(value / _CE_float(float(n), float(n + 1), 7000.0), 1.0, delta=1e-6)
+
+    def test_ionization_rates_are_finite_and_positive_beyond_int64_square_wrap(self):
+        n = _N_WRAP_POW2 + 600_000_000
         rates = {
-            "einstein_A": Hydrogen.einstein_A_coefficient_(n, n + 1),
-            "CE": Hydrogen.CE_rate_coe_(n, n + 1, 7000.0),
             "CI": Hydrogen.CI_rate_coe_(n, 7000.0),
             "Rki_spon": Hydrogen.Rki_spon_rate_coe_(n, 7000.0),
         }
