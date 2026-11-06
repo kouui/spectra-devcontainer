@@ -47,6 +47,16 @@ class TestEinsteinBsHz:
         Bji_cm, _ = LTELib.einsteinA_to_einsteinBs_cm_(Aji, w0, gi, gj)
         assert_close(Bji_hz, Bji_cm * CST.c_ / w0**2)
 
+    def test_array_input(self):
+        Aji = np.array([6.27e8, 4.41e7])
+        f0 = CST.c_ / np.array([1216e-8, 6563e-8])
+        gi, gj = np.array([2, 8]), np.array([8, 18])
+        Bji, Bij = (np.asarray(B) for B in LTELib.einsteinA_to_einsteinBs_hz_(Aji, f0, gi, gj))
+        for k in range(2):
+            Bji_k, Bij_k = LTELib.einsteinA_to_einsteinBs_hz_(Aji[k], f0[k], int(gi[k]), int(gj[k]))
+            assert_close(Bji[k], Bji_k)
+            assert_close(Bij[k], Bij_k)
+
 
 class TestAjiToBjiCm:
     def test_scalar(self, ref):

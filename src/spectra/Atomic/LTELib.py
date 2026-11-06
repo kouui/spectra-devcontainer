@@ -247,7 +247,7 @@ def einsteinA_to_einsteinBs_hz_(
     gi: T_ARRAY | T_INT,
     gj: T_ARRAY | T_INT,
 ) -> tuple[T_ARRAY | T_FLOAT, T_ARRAY | T_FLOAT]:
-    """
+    r"""
 
     given Einstein A coefficient Aij,
     calculate Einstein B coefficients Bij and Bji.
@@ -275,7 +275,7 @@ def einsteinA_to_einsteinBs_hz_(
         Einstein B coefficient Bji,
         [:math:`s^{-1}/(erg/cm^{2}/Sr/Hz/s)`]
     Bij : T_ARRAY | T_FLOAT
-        Einstein B coefficient Bji,
+        Einstein B coefficient Bij,
         [:math:`s^{-1}/(erg/cm^{2}/Sr/Hz/s)`]
 
     Notes
@@ -297,7 +297,7 @@ def einsteinA_to_einsteinBs_hz_(
 
     factor = 2.0 * CST.h_ * f0 * f0 * f0 / (CST.c_ * CST.c_)
     Bji = Aji / factor
-    Bij = Bji * T_FLOAT(gj) / T_FLOAT(gi)
+    Bij = Bji * gj / gi
 
     return Bji, Bij
 
@@ -342,7 +342,7 @@ def einsteinA_to_einsteinBs_cm_(
         Einstein B coefficient Bji,
         [:math:`s^{-1}/(erg/cm^{2}/Sr/Hz/s)`]
     Bij : T_ARRAY | T_FLOAT
-        Einstein B coefficient Bji,
+        Einstein B coefficient Bij,
         [:math:`s^{-1}/(erg/cm^{2}/Sr/Hz/s)`]
 
     Notes
