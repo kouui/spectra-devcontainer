@@ -26,14 +26,18 @@ def nb_vec(*args, **kwargs):
 
     numba.vectorize stays compiled under NUMBA_DISABLE_JIT, which freezes module
     constants into the ufunc (and into its on-disk cache); the numpy path keeps
-    them patchable at runtime. Without otypes, numpy infers the output type from
-    the first result, so integer-valued kernels keep their dtype.
+    them patchable at runtime. The fallback fixes the output type to float: without
+    otypes numpy infers it from the first element, so a kernel whose first branch
+    returns an integer literal (e.g. planck_cm_ in its cutoff) would yield integer
+    output for some inputs and float for others, and fail on empty input. The only
+    integer-valued kernel, BasicM.is_odd_, is used for truthiness only, which float
+    output preserves.
     """
     if not _nb_config.DISABLE_JIT:
         return _nb_vectorize(*args, **kwargs)
 
     def _decorator(f):
-        return _numpy.vectorize(f)
+        return _numpy.vectorize(f, otypes=[float])
 
     return _decorator
 
