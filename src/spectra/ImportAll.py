@@ -5,10 +5,11 @@
 # from .ImportExternalModule import *
 
 
+from numba.core import config as _nb_config
 import numpy as _numpy
 
 from numba import njit as nb_njit
-from numba import vectorize as nb_vec
+from numba import vectorize as _nb_vectorize
 
 from . import Configurations as CFG
 from . import Constants as CST
@@ -18,6 +19,24 @@ from .Types import *
 from .Warnings import WARN_
 
 np_vec = _numpy.vectorize
+
+
+def nb_vec(*args, **kwargs):
+    """numba.vectorize, or numpy.vectorize when NUMBA_DISABLE_JIT is set.
+
+    numba.vectorize stays compiled under NUMBA_DISABLE_JIT, which freezes module
+    constants into the ufunc (and into its on-disk cache); the numpy path keeps
+    them patchable at runtime. Without otypes, numpy infers the output type from
+    the first result, so integer-valued kernels keep their dtype.
+    """
+    if not _nb_config.DISABLE_JIT:
+        return _nb_vectorize(*args, **kwargs)
+
+    def _decorator(f):
+        return _numpy.vectorize(f)
+
+    return _decorator
+
 
 ## : numba TypedDict much slower than numpy struct array
 # comment : currently we will not use dictionary as a data struct in spectra
