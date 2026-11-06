@@ -8,6 +8,6 @@ set -u
 cache=$(mktemp -d) || exit 1
 trap 'rm -rf -- "$cache"' EXIT
 
-SPECTRA_JIT=1 NUMBA_CACHE_DIR="$cache" uv run --extra dev python -m pytest \
+NUMBA_CACHE_DIR="$cache" uv run --extra dev python -m pytest \
     tests/regression/ tests/unittest/ tests/numba/test_Feautrier_jit.py \
     -q -p no:cacheprovider "$@"
