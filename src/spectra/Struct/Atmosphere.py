@@ -8,8 +8,8 @@ from dataclasses import dataclass as _dataclass
 import numpy as _numpy
 
 from ..Atomic import ContinuumOpacity as _ContinuumOpacity
-from ..Experimental import ExTau as _Tau
 from ..ImportAll import *
+from ..RadiativeTransfer import Tau as _Tau
 
 # -------------------------------------------------------------------------------
 # struct
@@ -980,7 +980,7 @@ def init_VAL_(val_type: T_STR = "C") -> AtmosphereC1D:
     # -- continuum optical depth @500nm (LTE)
     wl0 = 5.0e-5  # [cm]
     xc: T_ARRAY = _ContinuumOpacity.H_LTE_continuum_opacity_(Te, Ne, Nh, wl0)
-    tau5 = _Tau.tau_(Z[:], xc[:])
+    tau5 = _Tau.z_to_tau_(Z[:], xc[:])
 
     atmos = AtmosphereC1D(
         model=f"VAL-{val_type}",

@@ -55,3 +55,41 @@ def z_to_dtau_(z: T_ARRAY, alpha: T_ARRAY):
     """
     nZ = z.shape[0]
     _dtau = _numpy.zeros(nZ, dtype=DT_NB_FLOAT)
+
+
+def z_to_tau_(Z: T_ARRAY, xi: T_ARRAY) -> T_ARRAY:
+    r"""given height `Z` and opacity `xi`, calculate optical depth tau
+
+    Trapezoidal integration of `xi` from the surface inwards. Note the
+    ordering is the reverse of `z_to_dtau_`.
+
+    Parameters
+    ----------
+    Z : T_ARRAY
+        height with direction : [interior, surface]
+        [:math:`cm`]
+    xi : T_ARRAY
+        opacity
+        [:math:`cm^{-1}`]
+
+    Returns
+    -------
+    T_ARRAY
+        optical depth, tau[-1] at the surface
+        [-]
+
+    Notes
+    -----
+    The surface point is not zero: the layer above the topmost grid point is
+    assumed to be as thick as half the last interval,
+    ``tau[-1] = xi[-1] * (Z[-1] - Z[-2]) / 2``.
+    """
+
+    nZ = Z.shape[0]
+    tau = _numpy.zeros(nZ, dtype=DT_NB_FLOAT)
+
+    tau[-1] = xi[-1] * (Z[-1] - Z[-2]) * 0.5
+    for i in range(nZ - 2, -1, -1):
+        tau[i] = tau[i + 1] + (Z[i + 1] - Z[i]) * (xi[i] + xi[i + 1]) * 0.5
+
+    return tau
