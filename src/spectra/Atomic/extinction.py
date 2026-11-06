@@ -10,7 +10,7 @@ from ..ImportAll import *
 
 # No defaults for psi/phi: numba.vectorize rejects default arguments, so callers
 # pass 1.0 explicitly for the integrated opacity.
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_FLOAT, T_NB_FLOAT, T_NB_FLOAT, T_NB_FLOAT, T_NB_FLOAT, T_NB_FLOAT, T_NB_FLOAT)], **NB_VEC_KWGS)
 def bb_extinction_(
     wl: T_FLOAT,
     Bji: T_FLOAT,
@@ -57,7 +57,7 @@ def bb_extinction_(
     return CST.h_ * nu / (4.0 * CST.pi_) * (Bij * Ni * phi - Bji * Nj * psi)
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_FLOAT, T_NB_FLOAT, T_NB_FLOAT, T_NB_FLOAT)], **NB_VEC_KWGS)
 def bf_extinction_(wl: T_FLOAT, alpha: T_FLOAT, Te: T_FLOAT, Ni: T_FLOAT) -> T_FLOAT:
     r"""bound-free (continuum) extinction coefficient, corrected for stimulated emission.
 

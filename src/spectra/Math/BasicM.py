@@ -5,7 +5,7 @@
 from ..ImportAll import *
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_INT(T_NB_INT)], **NB_VEC_KWGS)
 def is_odd_(n: T_INT) -> T_INT:
     """A fast method to check whether a number is odd.
 

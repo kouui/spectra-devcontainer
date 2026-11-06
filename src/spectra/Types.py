@@ -7,6 +7,8 @@ from typing import Literal as T_LITERAL
 from typing import NoReturn as T_NORETURN
 from typing import overload as OVERLOAD
 
+import numba.types as _nb_types  # type: ignore
+
 # reference : https://numpy.org/devdocs/reference/typing.html
 from numpy import ndarray as _ndarray
 
@@ -73,6 +75,12 @@ DT_NB_FLOAT = "float64"
 DT_NB_INT = "int64"
 DT_NB_COMPLEX = "complex128"
 
+# Scalar numba types for nb_vec signatures, derived from the dtype strings so the
+# working precision is defined once. numpy rejects numba types as `dtype=`, hence
+# the strings above stay for array allocation.
+T_NB_FLOAT = getattr(_nb_types, DT_NB_FLOAT)
+T_NB_INT = getattr(_nb_types, DT_NB_INT)
+
 __all__ = [
     "DT_NB_COMPLEX",
     "DT_NB_FLOAT",
@@ -98,6 +106,8 @@ __all__ = [
     "T_INT",
     "T_LIST",
     "T_LITERAL",
+    "T_NB_FLOAT",
+    "T_NB_INT",
     "T_NORETURN",
     "T_SLICE",
     "T_STR",

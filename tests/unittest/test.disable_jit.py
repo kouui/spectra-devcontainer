@@ -97,3 +97,65 @@ def test_nb_vec_fallback_output_is_float(tmp_path):
     value = res["cutoff_first"][1][1]
     assert value > 0.0
     assert abs(res["reversed"][1][0] / value - 1.0) < 1e-12
+
+
+_IS_ODD_PROBE = """
+import json
+import numpy as np
+from spectra.Math import BasicM
+
+scalar = BasicM.is_odd_(3)
+arr = BasicM.is_odd_(np.arange(5))
+empty = BasicM.is_odd_(np.array([], dtype=np.int64))
+print(json.dumps({
+    "scalar": [np.asarray(scalar).dtype.name, int(scalar)],
+    "array": [arr.dtype.name, arr.tolist()],
+    "empty": [empty.dtype.name, empty.shape[0]],
+}))
+"""
+
+
+def _check_is_odd_(res):
+    # an integer result in both modes: the old fallback widened it to float
+    assert res["scalar"] == ["int64", 1]
+    assert res["array"] == ["int64", [0, 1, 0, 1, 0]]
+    assert res["empty"] == ["int64", 0]
+
+
+def test_is_odd_returns_integer_when_compiled(tmp_path):
+    import json
+
+    env = {k: v for k, v in os.environ.items() if k != "NUMBA_DISABLE_JIT"}
+    env["NUMBA_CACHE_DIR"] = str(tmp_path)
+    out = subprocess.run([sys.executable, "-c", _IS_ODD_PROBE], env=env, capture_output=True, text=True, check=True)
+    _check_is_odd_(json.loads(out.stdout.strip().splitlines()[-1]))
+
+
+def test_is_odd_returns_integer_without_jit(tmp_path):
+    import json
+
+    env = {**os.environ, "NUMBA_DISABLE_JIT": "1", "NUMBA_CACHE_DIR": str(tmp_path)}
+    out = subprocess.run([sys.executable, "-c", _IS_ODD_PROBE], env=env, capture_output=True, text=True, check=True)
+    _check_is_odd_(json.loads(out.stdout.strip().splitlines()[-1]))
+
+
+_DISAGREEING_SIGNATURES_PROBE = """
+from spectra.ImportAll import *
+
+try:
+    @nb_vec([T_NB_FLOAT(T_NB_FLOAT), T_NB_INT(T_NB_INT)], **NB_VEC_KWGS)
+    def f_(x):
+        return x
+except ValueError as e:
+    print("ValueError", e)
+"""
+
+
+def test_nb_vec_fallback_rejects_signatures_with_different_return_types(tmp_path):
+    # numpy.vectorize takes one output type per output; picking either would
+    # silently diverge from the compiled loops
+    env = {**os.environ, "NUMBA_DISABLE_JIT": "1", "NUMBA_CACHE_DIR": str(tmp_path)}
+    out = subprocess.run(
+        [sys.executable, "-c", _DISAGREEING_SIGNATURES_PROBE], env=env, capture_output=True, text=True, check=True
+    )
+    assert out.stdout.startswith("ValueError")

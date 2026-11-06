@@ -22,7 +22,7 @@ def ratio_Etran_to_Eionize_(ni: T_ARRAY, w: T_ARRAY) -> T_ARRAY: ...
 def ratio_Etran_to_Eionize_(ni: T_INT, w: T_ARRAY) -> T_ARRAY: ...
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_INT, T_NB_FLOAT)], **NB_VEC_KWGS)
 def ratio_Etran_to_Eionize_(ni: T_VEC_IA, w: T_VEC_FA) -> T_VEC_FA:
     """
     Compute the "ratio of transition energy to ionization energy"
@@ -152,7 +152,7 @@ def gaunt_factor_gingerich_(ni: T_VEC_IA, x: T_VEC_IFA) -> T_VEC_FA:
     return g
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_INT, T_NB_INT)], **NB_VEC_KWGS)
 def gaunt_factor_coe_(i: T_VEC_IA, ni: T_VEC_IA) -> T_VEC_FA:
     """
     coefficients to calculate Gaunt factor
@@ -200,7 +200,7 @@ def gaunt_factor_coe_(i: T_VEC_IA, ni: T_VEC_IA) -> T_VEC_FA:
     return gi
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_INT, T_NB_FLOAT)], **NB_VEC_KWGS)
 def gaunt_factor_(ni: T_VEC_IA, x: T_VEC_IFA) -> T_VEC_FA:
     """
     Gaunt factor
@@ -256,7 +256,7 @@ def gaunt_factor_(ni: T_VEC_IA, x: T_VEC_IFA) -> T_VEC_FA:
 # -----------------------------------------------------------------------------
 # Einstein Aji coefficient
 # -----------------------------------------------------------------------------
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_INT, T_NB_INT)], **NB_VEC_KWGS)
 def absorption_oscillator_strength_(ni: T_VEC_IA, nj: T_VEC_IA) -> T_VEC_FA:
     r"""
     absorption oscillator strength given by (Bethe and Salpeter 1957)
@@ -298,7 +298,7 @@ def absorption_oscillator_strength_(ni: T_VEC_IA, nj: T_VEC_IA) -> T_VEC_FA:
     return fij
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_INT, T_NB_INT)], **NB_VEC_KWGS)
 def einstein_A_coefficient_(ni: T_VEC_IA, nj: T_VEC_IA) -> T_VEC_FA:
     r"""
     Einstein coefficient for spontaneous emission in the hydrogen atom
@@ -371,7 +371,7 @@ def CE_rate_coe_(ni: T_INT, nj: T_INT, Te: T_ARRAY) -> T_ARRAY: ...
 def CE_rate_coe_(ni: T_ARRAY, nj: T_ARRAY, Te: T_FLOAT) -> T_ARRAY: ...
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_INT, T_NB_INT, T_NB_FLOAT)], **NB_VEC_KWGS)
 def CE_rate_coe_(ni: T_VEC_IA, nj: T_VEC_IA, Te: T_VEC_IFA) -> T_VEC_FA:
     r"""
     Collisional Excitation rate coefficient qij for the hydrogen atom
@@ -477,7 +477,7 @@ def CI_rate_coe_(ni: T_ARRAY, Te: T_FLOAT) -> T_ARRAY: ...
 def CI_rate_coe_(ni: T_INT, Te: T_ARRAY) -> T_ARRAY: ...
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_INT, T_NB_FLOAT)], **NB_VEC_KWGS)
 def CI_rate_coe_(ni: T_VEC_IA, Te: T_VEC_IFA) -> T_VEC_FA:
     r"""
     Collisional ionization rate coefficient qik for the hydrogen atom
@@ -662,7 +662,7 @@ def PI_cross_section_cm_(ni: T_ARRAY, w: T_ARRAY, Z: T_INT) -> T_ARRAY: ...
 def PI_cross_section_cm_(ni: T_INT, w: T_ARRAY, Z: T_INT) -> T_ARRAY: ...
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_INT, T_NB_FLOAT, T_NB_INT)], **NB_VEC_KWGS)
 def PI_cross_section_cm_(ni: T_VEC_IA, w: T_VEC_IFA, Z: T_VEC_IA) -> T_VEC_FA:
     r"""
     Photoionization cross-section for hydrogen from lower level ni at wavelength w.
@@ -723,7 +723,7 @@ def PI_cross_section_(ni: T_INT, x: T_ARRAY, Z: T_INT) -> T_ARRAY: ...
 def PI_cross_section_(ni: T_ARRAY, x: T_ARRAY, Z: T_INT) -> T_ARRAY: ...
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_INT, T_NB_FLOAT, T_NB_INT)], **NB_VEC_KWGS)
 def PI_cross_section_(ni: T_VEC_IA, x: T_VEC_IFA, Z: T_VEC_IA) -> T_VEC_FA:
     r"""
     Photoionization cross-section for hydrogen from lower level ni at wavelength w.
@@ -781,7 +781,7 @@ def PI_cross_section_(ni: T_VEC_IA, x: T_VEC_IFA, Z: T_VEC_IA) -> T_VEC_FA:
 # -----------------------------------------------------------------------------
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_INT, T_NB_FLOAT)], **NB_VEC_KWGS)
 def Rki_spon_rate_coe_(ni: T_VEC_IA, Te: T_VEC_IFA) -> T_VEC_FA:
     r"""
     Parameters
@@ -846,7 +846,7 @@ def collisional_broadening_Res_and_Van_(ni: T_INT, nj: T_INT, nH_I_ground: T_ARR
 def collisional_broadening_Res_and_Van_(ni: T_ARRAY, nj: T_ARRAY, nH_I_ground: T_FLOAT, Te: T_FLOAT) -> T_ARRAY: ...
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_INT, T_NB_INT, T_NB_FLOAT, T_NB_FLOAT)], **NB_VEC_KWGS)
 def collisional_broadening_Res_and_Van_(ni: T_VEC_IA, nj: T_VEC_IA, nH_I_ground: T_VEC_FA, Te: T_VEC_IFA) -> T_VEC_FA:
     r"""
 
@@ -920,7 +920,7 @@ def collisional_broadening_LinearStark_(ni: T_INT, nj: T_INT, Ne: T_ARRAY) -> T_
 def collisional_broadening_LinearStark_(ni: T_ARRAY, nj: T_ARRAY, Ne: T_FLOAT) -> T_ARRAY: ...
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_INT, T_NB_INT, T_NB_FLOAT)], **NB_VEC_KWGS)
 def collisional_broadening_LinearStark_(ni: T_VEC_IA, nj: T_VEC_IA, Ne: T_VEC_IFA) -> T_VEC_FA:
     r"""
 

@@ -66,7 +66,7 @@ def doppler_width_(p0: T_ARRAY, Te: T_FLOAT, Vt: T_FLOAT, am: T_FLOAT) -> T_ARRA
 def doppler_width_(p0: T_FLOAT, Te: T_ARRAY, Vt: T_ARRAY, am: T_FLOAT) -> T_ARRAY: ...
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_FLOAT, T_NB_FLOAT, T_NB_FLOAT, T_NB_FLOAT)], **NB_VEC_KWGS)
 def doppler_width_(p0: T_VEC_IFA, Te: T_VEC_IFA, Vt: T_VEC_IFA, am: T_FLOAT) -> T_VEC_IFA:
     """Given central wavelength/frequency, relative atomic mass of a line,
     and the temperature, turbulent velocity, compute the corresponding
@@ -133,7 +133,7 @@ def update_line_gamma_(idxI: T_ARRAY, idxJ: T_ARRAY, gamma_level: T_ARRAY, gamma
         gamma_line[i] = gamma_level[idxI[i]] + gamma_level[idxJ[i]]
 
 
-@nb_vec(**NB_VEC_KWGS)
+@nb_vec([T_NB_FLOAT(T_NB_FLOAT, T_NB_FLOAT)], **NB_VEC_KWGS)
 def damping_const_a_(gamma_line: T_VEC_FA, dop_width_hz: T_VEC_FA) -> T_VEC_FA:
     """Given the radiative damping constant and
     the Doppler Width (in frequency unit) of the line,
