@@ -10,6 +10,17 @@ recent date inside the file) and start a fresh entry below.
 
 ## 2026-11-07
 
+### `Struct/Atom.py`, `Util/AtomUtils/{RHAtomIO,AtomIO}.py`, `Function/SEquil/SELib.py`, `tests/unittest/test.RHAtomIO.py`, `tests/unittest/MALI_v2/test.rh_atom_parity.py`, `tests/regression/{_atom_serde.py,test_reg_e2e_AtomLoad.py,atom_reference_values.json}`, `scripts/gen_atom_reference.py` — YW.Huang
+
+`Atom.init_Atom_from_RH_(path)` reads an RH `*.atom` file into an `Atom` (first step of moving MALI out of `Experimental`; no solver change). `Atom` gets one trailing field `RH: RH_Data | None = None`; existing dtypes and fields are unchanged.
+
+- Reader: `RHAtomIO.read_RH_atom_` returns the raw file values (cm^-1, m^2, nm, raw `Nlambda`) and supports exactly what `H_6_CRD.atom` uses: header, levels, 15-column VOIGT/UNSOLD lines, HYDROGENIC continua, TEMP/CE/CI/END. Anything else (keyword, line type, symmetry, vdW approximation, continuum dependence, fixed transitions) raises `NotImplementedError` naming it.
+- `RH_Data` keeps the raw values per level, line and continuum, and the CE/CI rows in file order (CE upper level first, CI lower level first), converted once to CGS (x1e6): an evaluator must not multiply again.
+- Mapping: stage = RH stage + 1; `isGround` = lowest level of each stage; `Level.n` is read from the label (0 for the bare nucleus, as in `init_theoretical_hydrogen_atom_`); only the lines RH lists exist; `RL.Coe`/`nRL` give `init_Wave_Mesh_` the full-profile point count (SYMM `2N-1`, even count +1), `qcore`, `qwing`.
+- `PI` is the project's hydrogenic cross section on the default continuum mesh, as for a "Hydrogenic" PI-file entry, not RH's: the edge value differs from `alpha0` by up to 2.6 % (n = 1) and the mesh does not start at `lamb_min`. A solver that must reproduce RH builds its own cross sections from `atom.RH`. `CE`/`CI` are empty placeholders; `SELib.cal_SE_` (the one reader of `atom.CE`/`CI`, reached by every public entry) raises `ValueError` for an atom with `RH` set.
+- `AtomIO`: the Level/Line/RL/PI.Coe dtypes became module constants and the part of `make_Atom_Line_` after `AJI` became `finalize_Line_`, so the RH builder shares them; arithmetic unchanged.
+- Pins: `atom_reference_values.json` gains 125 keys (`H_6_CRD_RH.*`); no existing key changed. The parity test (removed with `MALI_v2`) compares energies, g, Aji, line and continuum parameters and CE/CI rows with `_falc_setup` exactly.
+
 ### `Constants.py`, `Atomic/Collision.py`, `Util/AtomicDataUtils/RH2Spectra/01makeAtom.py`, `data/atom/{He/He.CE.electron,Ca_I-II-III/Ca.CE.electron,Ca_II/Collisional_Excitation/RH.Electron}`, `tests/regression/{test_reg_Collision_extra.py,test_reg_CE_data_RH.py,reference_values.json,atom_reference_values.json}` — YW.Huang
 
 Fix: `Collision.CE_rate_coe_` used the rounded prefactor `8.63e-06`; the value derived from the constants (`pi_ * a0_**2 * (8*k_/pi_/me_)**0.5 * E_Rydberg_ / k_`) is 8.629140599482176e-06, so every excitation rate from an Omega table (`SELib`, non-hydrogen levels) was 1.0e-4 (relative) too large. The prefactor is now `Constants.CE_omega_to_rate_`. `RH2Spectra/01makeAtom.py`, which converts RH "CE" coefficients to Omega with the inverse factor, divides by the same constant and writes it in the file header. The round trip is exact algebraically; the converter writes Omega with `:.3E`, so a converted file reproduces RH only to about 5e-4 per value (unchanged).

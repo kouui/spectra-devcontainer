@@ -248,6 +248,16 @@ def cal_SE_(
     rate_only: T_BOOL = False,
     PI_intensity: T_ARRAY | None = None,
 ) -> T_TUPLE[_Container.SE_Container, _Container.TranRates_Container]:
+    # Every public entry of this module ends here, and this is the one place
+    # that reads atom.CE / atom.CI. An atom from an RH file keeps its
+    # collisions in atom.RH and has empty placeholders there, so without this
+    # check the formula collisions would be used silently.
+    if atom.RH is not None:
+        raise ValueError(
+            "SELib does not support an atom read from an RH file (atom.RH is set): "
+            "its CE/CI are empty placeholders and the collision data is in atom.RH"
+        )
+
     ##: TODO: instead of using background radiation in radiation struct
     ##        use an updatable MeanIntensity struct for lines and PI_intensity
 

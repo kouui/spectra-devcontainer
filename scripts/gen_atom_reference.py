@@ -4,6 +4,8 @@ One-shot helper that loads 8 canonical atom configurations through
 ``Atom.init_Atom_()`` and writes a flat ``{key: value}`` JSON file used by
 ``tests/regression/test_reg_e2e_AtomLoad.py`` for round-trip assertion.
 
+The RH atom (``Atom.init_Atom_from_RH_``) is pinned the same way.
+
 Regenerate whenever ``AtomIO`` business logic changes intentionally.
 """
 
@@ -38,6 +40,9 @@ CONFIGS: tuple[tuple[str, str, bool], ...] = (
     ("data/conf/Ca_I-II-III.conf", "Ca_I-II-III", False),
 )
 
+# (relative RH atom file path from repo root, readable name)
+RH_CONFIGS: tuple[tuple[str, str], ...] = (("tests/data/rh_falc/H_6_CRD.atom", "H_6_CRD_RH"),)
+
 DEFAULT_OUT = CFG._ROOT_DIR / "tests" / "regression" / "atom_reference_values.json"
 
 
@@ -51,6 +56,11 @@ def main() -> None:
         atom = Atom.init_Atom_(conf_path, is_hydrogen=is_H)
         path_dict = _AtomIO.read_conf_(conf_path)
         merged.update(dump_atom(atom, path_dict, name))
+
+    for rel, name in RH_CONFIGS:
+        print(f"loading {name}  <- {rel}", flush=True)
+        rh_atom = Atom.init_Atom_from_RH_(CFG._ROOT_DIR / rel)
+        merged.update(dump_atom(rh_atom, {"RH": str(CFG._ROOT_DIR / rel)}, name))
 
     out.parent.mkdir(parents=True, exist_ok=True)
     with out.open("w") as f:

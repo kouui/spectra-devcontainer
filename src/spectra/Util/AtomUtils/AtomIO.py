@@ -532,6 +532,116 @@ def read_conf_(conf_path: T_STR) -> T_DICT[T_STR, None | T_STR]:
 # functions for constructing structs
 # -------------------------------------------------------------------------------
 
+# Struct-array layouts shared by every Atom builder (`init_Atom_`,
+# `init_theoretical_hydrogen_atom_`, `init_Atom_from_RH_`): one definition, so
+# a builder cannot drift from the layout the consumers index into.
+LEVEL_DTYPE = _numpy.dtype(
+    [
+        ("erg", T_FLOAT),  #: level energy, erg
+        ("g", T_INT),  #: g=2J+1, statistical weight
+        ("stage", T_INT),  #: ionization stage
+        ("gamma", T_FLOAT),  #: radiative damping constant of Level
+        ("isGround", T_BOOL),  #: whether a level is ground level
+        ("n", T_INT),  #: quantum number n
+    ]
+)
+
+LINE_DTYPE = _numpy.dtype(
+    [
+        ("idxI", T_INT),  #: level index, the Level index of lower level
+        ("idxJ", T_INT),  #: level index, the Level index of lower level
+        ("AJI", T_FLOAT),  #: Einstein Aji coefficient
+        ("f0", T_FLOAT),  #: central frequency
+        ("w0", T_FLOAT),  #: central wavelength in cm
+        ("w0_AA", T_FLOAT),  #: central wavelength in Angstrom
+        # ("isContinuum",T_INT),    #: continuum tansition identifier, 0: same stage, 1: continuum transition, 2: others
+        ("Gamma", T_FLOAT),  #: radiative damping constant of Line
+        ("gi", T_INT),  #: statistical weight of lower level
+        ("gj", T_INT),  #: statistical weight of upper level
+        ("ni", T_INT),  #: quantum number n of lower level
+        ("nj", T_INT),  #: quantum number n of upper level
+        ("BJI", T_FLOAT),  #: Einstein Bji coefficient
+        ("BIJ", T_FLOAT),  #: Einstein BIJ coefficient
+    ]
+)
+
+RL_DTYPE = _numpy.dtype(
+    [
+        ("idxI", T_INT),  #: level index, the Level index of lower level
+        ("idxJ", T_INT),  #: level index, the Level index of upper level
+        ("lineIndex", T_INT),  #: line index
+        ("ProfileType", T_INT),  #: 0: Voigt; 1: Gaussian
+        ("qcore", T_FLOAT),
+        ("qwing", T_FLOAT),
+        ("nLambda", T_INT),  #: number of meaningful wavelength mesh point
+    ]
+)
+
+PI_COE_DTYPE = _numpy.dtype(
+    [
+        ("idxI", T_INT),  #: level index, the Level index of lower level
+        ("idxJ", T_INT),  #: level index, the Level index of upper level
+        # ('lineIndex',T_INT),  #: line index
+        ("nLambda", T_INT),  #: number of meaningful wavelength mesh point
+        ("alpha0", T_FLOAT),  #: Photoionization cross section at frequency edge
+        ("gi", T_INT),  #: statistical weight of lower level
+        ("gj", T_INT),  #: statistical weight of upper level
+        ("dEij", T_FLOAT),  #: ionization limit, [:math:`erg`]
+    ]
+)
+
+
+def finalize_Line_(Line: T_ARRAY, Level: T_ARRAY) -> None:
+    """Fill every Line field derived from ``idxI``, ``idxJ`` and ``AJI``, and
+    the radiative damping constants of ``Level`` (``gamma``), in place.
+
+    ``AJI`` must be set before the call; a degenerate pair (``f0 <= 0``) gets
+    ``AJI = 0``.
+    """
+    nLine = Line.shape[0]
+    # calculate f0, w0, w0_AA
+    for k in range(nLine):
+        i: int = Line["idxI"][k]
+        j: int = Line["idxJ"][k]
+        Line["f0"][k] = (Level["erg"][j] - Level["erg"][i]) / CST.h_
+        if Line["f0"][k] <= 0.0:
+            # degenerate level pair (e.g. unresolved fine structure): no
+            # radiative transition exists. w0=inf is the physical limit of
+            # c/f0; it keeps c_/w0-style expressions finite (-> 0.0) and is
+            # dropped by matplotlib, whereas a 0.0 placeholder would
+            # divide-by-zero and plot at wavelength 0.
+            Line["w0"][k] = _numpy.inf
+            Line["AJI"][k] = 0.0
+        else:
+            Line["w0"][k] = CST.c_ / Line["f0"][k]
+    # Line["w0"][:] = CST.c_ / Line["f0"][:]
+    Line["w0_AA"][:] = Line["w0"][:] * 1.0e8
+
+    # read gi,gj,ni,nj
+    Line["gi"][:] = Level["g"][Line["idxI"][:]]
+    Line["gj"][:] = Level["g"][Line["idxJ"][:]]
+    Line["ni"][:] = Level["n"][Line["idxI"][:]]
+    Line["nj"][:] = Level["n"][Line["idxJ"][:]]
+
+    # compute Bji, Bij
+    from ...Atomic import LTELib as _LTELib
+
+    # Line["BJI"][:], Line["BIJ"][:] = _LTELib.einsteinA_to_einsteinBs_cm_(Line["AJI"][:], Line["w0"][:], Line["gi"][:], Line["gj"][:])
+    for k in range(nLine):
+        if Line["AJI"][k] <= 0.0:
+            Line["BJI"][k], Line["BIJ"][k] = 0.0, 0.0
+            continue
+        Line["BJI"][k], Line["BIJ"][k] = _LTELib.einsteinA_to_einsteinBs_cm_(
+            Line["AJI"][k], Line["w0"][k], Line["gi"][k], Line["gj"][k]
+        )
+
+    # compute Level gamma and Line Gamma
+    Line["Gamma"][:] = 0.0
+    from ...Atomic import BasicP as _BasicP
+
+    _BasicP.update_level_gamma_(Line["AJI"][:], Line["idxJ"][:], Level["gamma"][:])
+    _BasicP.update_line_gamma_(Line["idxI"][:], Line["idxJ"][:], Level["gamma"][:], Line["Gamma"][:])
+
 
 def make_Atom_Level_(
     path: T_STR,
@@ -547,17 +657,7 @@ def make_Atom_Level_(
     # Abun : T_FLOAT = 10**(_ElementUtil.sym_to_abun_( element )-12.0)
     Abun: T_FLOAT = _ElementUtil.sym_to_abun_(element)
     # --- read Level info
-    dtype = _numpy.dtype(
-        [
-            ("erg", T_FLOAT),  #: level energy, erg
-            ("g", T_INT),  #: g=2J+1, statistical weight
-            ("stage", T_INT),  #: ionization stage
-            ("gamma", T_FLOAT),  #: radiative damping constant of Level
-            ("isGround", T_BOOL),  #: whether a level is ground level
-            ("n", T_INT),  #: quantum number n
-        ]
-    )
-    Level = _numpy.zeros(nLevel, dtype=dtype)
+    Level = _numpy.zeros(nLevel, dtype=LEVEL_DTYPE)
     Level_info: T_DICT[T_STR, T_LIST[T_STR]] = {"configuration": [], "term": [], "J": [], "2S+1": []}
     rs = read_Level_info_(
         rs,
@@ -723,27 +823,9 @@ def make_Atom_Line_(
     atom_type: T_E_ATOM,
 ) -> T_TUPLE[T_ARRAY, T_E_ATOMIC_DATA_SOURCE]:
 
-    dtype = _numpy.dtype(
-        [
-            ("idxI", T_INT),  #: level index, the Level index of lower level
-            ("idxJ", T_INT),  #: level index, the Level index of lower level
-            ("AJI", T_FLOAT),  #: Einstein Aji coefficient
-            ("f0", T_FLOAT),  #: central frequency
-            ("w0", T_FLOAT),  #: central wavelength in cm
-            ("w0_AA", T_FLOAT),  #: central wavelength in Angstrom
-            # ("isContinuum",T_INT),    #: continuum tansition identifier, 0: same stage, 1: continuum transition, 2: others
-            ("Gamma", T_FLOAT),  #: radiative damping constant of Line
-            ("gi", T_INT),  #: statistical weight of lower level
-            ("gj", T_INT),  #: statistical weight of upper level
-            ("ni", T_INT),  #: quantum number n of lower level
-            ("nj", T_INT),  #: quantum number n of upper level
-            ("BJI", T_FLOAT),  #: Einstein Bji coefficient
-            ("BIJ", T_FLOAT),  #: Einstein BIJ coefficient
-        ]
-    )
     nLine = len(Line_idx_table)
     # Line = _numpy.recarray(nLine, dtype=dtype)
-    Line = _numpy.zeros(nLine, dtype=dtype)
+    Line = _numpy.zeros(nLine, dtype=LINE_DTYPE)
 
     # idxI and idxJ
     for k in range(nLine):
@@ -769,48 +851,7 @@ def make_Atom_Line_(
             Line["AJI"][:] = _Hydrogen.einstein_A_coefficient_(Line["ni"][:], Line["nj"][:])
         else:
             raise ValueError("We don't have function to calculate Aji for non-hydrogen atoms")
-    # calculate f0, w0, w0_AA
-    for k in range(nLine):
-        i: int = Line["idxI"][k]
-        j: int = Line["idxJ"][k]
-        Line["f0"][k] = (Level["erg"][j] - Level["erg"][i]) / CST.h_
-        if Line["f0"][k] <= 0.0:
-            # degenerate level pair (e.g. unresolved fine structure): no
-            # radiative transition exists. w0=inf is the physical limit of
-            # c/f0; it keeps c_/w0-style expressions finite (-> 0.0) and is
-            # dropped by matplotlib, whereas a 0.0 placeholder would
-            # divide-by-zero and plot at wavelength 0.
-            Line["w0"][k] = _numpy.inf
-            Line["AJI"][k] = 0.0
-        else:
-            Line["w0"][k] = CST.c_ / Line["f0"][k]
-    # Line["w0"][:] = CST.c_ / Line["f0"][:]
-    Line["w0_AA"][:] = Line["w0"][:] * 1.0e8
-
-    # read gi,gj,ni,nj
-    Line["gi"][:] = Level["g"][Line["idxI"][:]]
-    Line["gj"][:] = Level["g"][Line["idxJ"][:]]
-    Line["ni"][:] = Level["n"][Line["idxI"][:]]
-    Line["nj"][:] = Level["n"][Line["idxJ"][:]]
-
-    # compute Bji, Bij
-    from ...Atomic import LTELib as _LTELib
-
-    # Line["BJI"][:], Line["BIJ"][:] = _LTELib.einsteinA_to_einsteinBs_cm_(Line["AJI"][:], Line["w0"][:], Line["gi"][:], Line["gj"][:])
-    for k in range(nLine):
-        if Line["AJI"][k] <= 0.0:
-            Line["BJI"][k], Line["BIJ"][k] = 0.0, 0.0
-            continue
-        Line["BJI"][k], Line["BIJ"][k] = _LTELib.einsteinA_to_einsteinBs_cm_(
-            Line["AJI"][k], Line["w0"][k], Line["gi"][k], Line["gj"][k]
-        )
-
-    # compute Level gamma and Line Gamma
-    Line["Gamma"][:] = 0.0
-    from ...Atomic import BasicP as _BasicP
-
-    _BasicP.update_level_gamma_(Line["AJI"][:], Line["idxJ"][:], Level["gamma"][:])
-    _BasicP.update_line_gamma_(Line["idxI"][:], Line["idxJ"][:], Level["gamma"][:], Line["Gamma"][:])
+    finalize_Line_(Line, Level)
 
     return Line, data_source_Aji
 
@@ -923,29 +964,17 @@ def make_Atom_RL_(
     path: T_STR | None, Level_info_table: T_CTJ_TABLE, Line_ctj_table: T_CTJ_PAIR_TABLE
 ) -> T_TUPLE[T_ARRAY, T_INT]:
 
-    dtype = _numpy.dtype(
-        [
-            ("idxI", T_INT),  #: level index, the Level index of lower level
-            ("idxJ", T_INT),  #: level index, the Level index of upper level
-            ("lineIndex", T_INT),  #: line index
-            ("ProfileType", T_INT),  #: 0: Voigt; 1: Gaussian
-            ("qcore", T_FLOAT),
-            ("qwing", T_FLOAT),
-            ("nLambda", T_INT),  #: number of meaningful wavelength mesh point
-        ]
-    )
-
     nRadiativeLine: T_INT
     if path is None:
         nRadiativeLine = 0
-        Coe = _numpy.zeros(nRadiativeLine, dtype=dtype)
+        Coe = _numpy.zeros(nRadiativeLine, dtype=RL_DTYPE)
     else:
         with Path(path).open() as f:
             fLines = f.readlines()
 
         nRadiativeLine, rs = read_Radiative_Line_number_(fLines)
 
-        Coe = _numpy.zeros(nRadiativeLine, dtype=dtype)
+        Coe = _numpy.zeros(nRadiativeLine, dtype=RL_DTYPE)
 
         RadLine_filenames: T_LIST[T_STR] = []
         read_Mesh_info_(
@@ -973,19 +1002,7 @@ def make_Atom_PI_(  # noqa: C901
 
     nCont = Cont.shape[0]
     nContMesh = Cont_mesh.shape[1]
-    dtype = _numpy.dtype(
-        [
-            ("idxI", T_INT),  #: level index, the Level index of lower level
-            ("idxJ", T_INT),  #: level index, the Level index of upper level
-            # ('lineIndex',T_INT),  #: line index
-            ("nLambda", T_INT),  #: number of meaningful wavelength mesh point
-            ("alpha0", T_FLOAT),  #: Photoionization cross section at frequency edge
-            ("gi", T_INT),  #: statistical weight of lower level
-            ("gj", T_INT),  #: statistical weight of upper level
-            ("dEij", T_FLOAT),  #: ionization limit, [:math:`erg`]
-        ]
-    )
-    Coe = _numpy.empty(nCont, dtype=dtype)  # in an order of Cont
+    Coe = _numpy.empty(nCont, dtype=PI_COE_DTYPE)  # in an order of Cont
     data_source_PI: T_E_ATOMIC_DATA_SOURCE
     alpha_table: T_ARRAY
     alpha_table_idxs: T_ARRAY
@@ -1089,3 +1106,43 @@ def make_Atom_PI_(  # noqa: C901
         alpha_interp = _PhotoIonize.interpolate_PI_alpha_(alpha_table[:, :], alpha_table_idxs[:, :], Cont_mesh[:, :])
 
     return alpha_table, alpha_table_idxs, Coe, alpha_interp, data_source_PI
+
+
+def make_Atom_PI_hydrogenic_(
+    Level: T_ARRAY, Cont: T_ARRAY, Cont_mesh: T_ARRAY, alpha0_cm2: T_ARRAY
+) -> T_TUPLE[T_ARRAY, T_ARRAY, T_ARRAY, T_ARRAY]:
+    """Photoionization of an atom whose continua are all hydrogenic.
+
+    The cross section follows the same hydrogenic formula as the "Hydrogenic"
+    branch of `make_Atom_PI_`, evaluated on ``Cont_mesh``. ``alpha0_cm2`` is
+    recorded in ``Coe`` only: it does not scale the values, as in that branch.
+
+    Returns
+    -------
+    alpha_table, alpha_table_idxs, Coe, alpha_interp
+        the same layout as `make_Atom_PI_` (``alpha_interp`` is (nCont, nContMesh))
+    """
+    from ...Function.Hydrogen import DegenerateN as _DegenerateN
+
+    nCont, nContMesh = Cont_mesh.shape
+    Coe = _numpy.zeros(nCont, dtype=PI_COE_DTYPE)
+    alpha_table = _numpy.empty((2, nCont * nContMesh), dtype=DT_NB_FLOAT)
+    alpha_table_idxs = _numpy.empty((nCont, 2), dtype=DT_NB_INT)
+    alpha_interp = _numpy.empty((nCont, nContMesh), dtype=DT_NB_FLOAT)
+    for k in range(nCont):
+        i, j = Cont["idxI"][k], Cont["idxJ"][k]
+        Coe["idxI"][k], Coe["idxJ"][k] = i, j
+        Coe["nLambda"][k] = 0  # no tabulated mesh, as for "Hydrogenic" in make_Atom_PI_
+        Coe["alpha0"][k] = alpha0_cm2[k]
+        Coe["gi"][k], Coe["gj"][k] = Level["g"][i], Level["g"][j]
+        Coe["dEij"][k] = Level["erg"][j] - Level["erg"][i]
+
+        alpha_interp[k, :] = _DegenerateN.compute_Hydrogenic_PI_cross_section_(
+            T_INT(Level["stage"][i]), T_INT(Level["n"][i]), T_FLOAT(Coe["dEij"][k]), Cont_mesh[k, :]
+        )
+        lo, hi = k * nContMesh, (k + 1) * nContMesh
+        alpha_table_idxs[k, :] = (lo, hi)
+        alpha_table[0, lo:hi] = Cont_mesh[k, :]
+        alpha_table[1, lo:hi] = alpha_interp[k, :]
+
+    return alpha_table, alpha_table_idxs, Coe, alpha_interp
