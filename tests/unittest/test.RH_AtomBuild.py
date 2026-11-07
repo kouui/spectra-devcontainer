@@ -32,6 +32,13 @@ def _level_line_cont(tmp_path: Path, text: str):
     return rh, Level, Line, Cont
 
 
+def _make_CE(rh, Level, Line):
+    # the labels of the info tables are not read by `make_CECI_`, only passed through
+    info = tuple((lab, "-", "-") for lab in rh.level_label)
+    ctj = tuple((info[i], info[j]) for i, j in zip(Line["idxI"], Line["idxJ"], strict=True))
+    return AtomBuild.make_CECI_("CE", Line, Level, info, ctj, rh.Te_table, rh.CE_idx, rh.CE_coe)
+
+
 # ---------------------------------------------------------------------------
 # levels
 # ---------------------------------------------------------------------------
@@ -109,10 +116,8 @@ def test_repeated_continuum_raises(atom_text, tmp_path):
 def test_collision_row_without_a_listed_transition_raises(atom_text, tmp_path):
     text = atom_text.replace(" CE      4  3", " CE      5  3", 1)
     rh, Level, Line, _ = _level_line_cont(tmp_path, text)
-    ctj = tuple(((str(i), "-", "-"), (str(j), "-", "-")) for i, j in zip(Line["idxI"], Line["idxJ"], strict=True))
-    info = tuple((lab, "-", "-") for lab in rh.level_label)
     with pytest.raises(ValueError, match="CE row"):
-        AtomBuild.make_CECI_("CE", Line, Level, info, ctj, rh.Te_table, rh.CE_idx, rh.CE_coe)
+        _make_CE(rh, Level, Line)
 
 
 def test_repeated_CE_row_raises(atom_text, tmp_path):
@@ -123,7 +128,5 @@ def test_repeated_CE_row_raises(atom_text, tmp_path):
         1,
     )
     rh, Level, Line, _ = _level_line_cont(tmp_path, text)
-    ctj = tuple(((str(i), "-", "-"), (str(j), "-", "-")) for i, j in zip(Line["idxI"], Line["idxJ"], strict=True))
-    info = tuple((lab, "-", "-") for lab in rh.level_label)
     with pytest.raises(ValueError, match="twice"):
-        AtomBuild.make_CECI_("CE", Line, Level, info, ctj, rh.Te_table, rh.CE_idx, rh.CE_coe)
+        _make_CE(rh, Level, Line)

@@ -5,6 +5,7 @@ checked here; what the values become in an `Atom` is in `test.RH_Atom.py`.
 """
 
 from pathlib import Path
+import re
 
 import pytest
 
@@ -97,3 +98,8 @@ def test_level_index_outside_the_level_list_raises(atom_text, tmp_path, old, new
 def test_file_without_end_raises(atom_text, tmp_path):
     with pytest.raises(ValueError, match="END"):
         AtomFile.read_RH_atom_(_write(tmp_path, atom_text.replace("END", "")))
+
+
+def test_level_index_error_shows_the_row_as_written(atom_text, tmp_path):
+    with pytest.raises(ValueError, match=re.escape("4  -1  1.036E+00")):
+        AtomFile.read_RH_atom_(_write(tmp_path, atom_text.replace("  4   3  1.036E+00", "  4  -1  1.036E+00", 1)))

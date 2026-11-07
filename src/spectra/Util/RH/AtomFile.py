@@ -9,15 +9,21 @@ mapping onto `Atom` arrays belong to `AtomBuild`, so this module imports no
 struct.
 
 Only the subset of the format that the repository's RH hydrogen atom uses is
-supported, and the import is stricter than RH on it. RH accepts an optional
-16th line column (``g_Lande_eff``), level rows without ``levelNo``, line rows
-with j and i in either order and several CE rows for one transition (summed).
-This reader raises on the first two, on ``lamb_min <= 0`` and on a level
-index outside ``[0, nLevel)`` in a line or continuum row; `AtomBuild` raises on
-the last two. Anything else
-raises ``NotImplementedError`` naming it: guessing the meaning of an unknown
-keyword would give a wrong atom without any error, and each new feature needs a
-decision on how its data enters the solver.
+supported. Anything else raises ``NotImplementedError`` naming it: guessing the
+meaning of an unknown keyword would give a wrong atom without any error, and
+each new feature needs a decision on how its data enters the solver.
+
+The import is also stricter than RH, which accepts an optional 16th line column
+(``g_Lande_eff``), level rows without ``levelNo``, line rows with j and i in
+either order and several CE rows for one transition (summed). ``ValueError``
+comes from:
+
+- this module: a line row that does not have exactly 15 columns (the 16th
+  column), a level row without ``levelNo``, ``lamb_min <= 0`` in a continuum
+  row, a level index outside ``[0, nLevel)`` in a line or continuum row;
+- `AtomBuild`: a line with j and i swapped (`make_Line_`), a repeated line
+  (`make_Line_`), a continuum with a non-positive ionization energy or a repeated
+  continuum (`make_Cont_`), a repeated or unmatched CE/CI row (`make_CECI_`).
 """
 
 from pathlib import Path
@@ -86,10 +92,10 @@ def _data_lines_(path: T_STR | Path) -> T_LIST[T_STR]:
     return out
 
 
-def _check_level_index_(idx: T_INT, nLevel: T_INT, row: T_LIST[T_STR]) -> None:
+def _check_level_index_(idx: T_INT, nLevel: T_INT, row: T_STR) -> None:
     # a negative index would silently alias a level counted from the end in numpy
     if not 0 <= idx < nLevel:
-        raise ValueError(f"RH atom file: level index {idx} outside [0, {nLevel}) in row {row}")
+        raise ValueError(f"RH atom file: level index {idx} outside [0, {nLevel}) in row {row!r}")
 
 
 def _not_implemented_(what: T_STR) -> NotImplementedError:
@@ -166,7 +172,8 @@ def read_RH_atom_(path: T_STR | Path) -> RH_Atom_File:  # noqa: C901
     symms: T_LIST[T_STR] = []
     vdws: T_LIST[T_STR] = []
     for k in range(nLine):
-        p = _next("the line list").split()
+        ln = _next("the line list")
+        p = ln.split()
         if len(p) != _N_LINE_COLUMNS:
             raise ValueError(f"RH atom file: line row needs {_N_LINE_COLUMNS} columns, got {len(p)}: {p}")
         if p[3].upper() != _SUPPORTED_LINE_TYPE:
@@ -175,9 +182,10 @@ def read_RH_atom_(path: T_STR | Path) -> RH_Atom_File:  # noqa: C901
             raise _not_implemented_(f"line symmetry {p[5]!r}")
         if p[8].upper() != _SUPPORTED_VDW:
             raise _not_implemented_(f"van der Waals approximation {p[8]!r}")
-        line_j[k], line_i[k], line_f[k] = int(p[0]), int(p[1]), float(p[2])
-        _check_level_index_(int(p[0]), nLevel, p)
-        _check_level_index_(int(p[1]), nLevel, p)
+        j, i = int(p[0]), int(p[1])
+        _check_level_index_(j, nLevel, ln)
+        _check_level_index_(i, nLevel, ln)
+        line_j[k], line_i[k], line_f[k] = j, i, float(p[2])
         line_N[k] = int(p[4])
         symms.append(p[5].upper())
         line_qcore[k], line_qwing[k] = float(p[6]), float(p[7])
@@ -196,14 +204,16 @@ def read_RH_atom_(path: T_STR | Path) -> RH_Atom_File:  # noqa: C901
     cont_lamb_min = _numpy.empty(nCont, dtype=DT_NB_FLOAT)
     wavedeps: T_LIST[T_STR] = []
     for k in range(nCont):
-        p = _next("the continuum list").split()
+        ln = _next("the continuum list")
+        p = ln.split()
         if len(p) != _N_CONT_COLUMNS:
             raise ValueError(f"RH atom file: continuum row needs {_N_CONT_COLUMNS} columns, got {len(p)}: {p}")
         if p[4].upper() != _SUPPORTED_WAVEDEP:
             raise _not_implemented_(f"continuum wavelength dependence {p[4]!r}")
-        cont_j[k], cont_i[k], cont_alpha0[k] = int(p[0]), int(p[1]), float(p[2])
-        _check_level_index_(int(p[0]), nLevel, p)
-        _check_level_index_(int(p[1]), nLevel, p)
+        j, i = int(p[0]), int(p[1])
+        _check_level_index_(j, nLevel, ln)
+        _check_level_index_(i, nLevel, ln)
+        cont_j[k], cont_i[k], cont_alpha0[k] = j, i, float(p[2])
         cont_N[k] = int(p[3])
         wavedeps.append(p[4].upper())
         cont_lamb_min[k] = float(p[5])
