@@ -11,6 +11,7 @@ import pytest
 _SLOW_WITHOUT_JIT_DIRS = (
     Path(__file__).parent / "unittest" / "MALI_v1",
     Path(__file__).parent / "unittest" / "MALI_v2",
+    Path(__file__).parent / "unittest" / "MALI",
 )
 
 
