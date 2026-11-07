@@ -34,28 +34,6 @@ _LINE_MESH_QWING: T_FLOAT = 10.0
 _LINE_MESH_TYPE: T_E_ABSORPTION_PROFILE_TYPE = E_ABSORPTION_PROFILE_TYPE.GAUSSIAN
 
 
-def _continuum_mesh_(w0: T_FLOAT, lamb_min: T_FLOAT) -> T_ARRAY:
-    """Wavelengths [cm] of one continuum, edge (``w0``) first.
-
-    ``lamb_min <= 0`` means the file gives no short-wavelength limit: the
-    edge-concentrated mesh is scaled by ``w0`` and reaches ``w0 / sqrt(N)``.
-    Otherwise the same mesh is remapped linearly so that its last point is
-    ``lamb_min``: an RH atom integrates the bound-free rates over
-    ``[lamb_min, w0]`` only, and the edge-concentrated spacing is kept.
-    """
-    s = _MeshUtil.make_continuum_mesh_(_N_CONT_MESH)
-    if lamb_min <= 0.0:
-        return w0 * s
-    lm_frac = lamb_min / w0
-    if lm_frac >= 1.0:
-        raise ValueError(f"lamb_min ({lamb_min} cm) must be shorter than the edge wavelength ({w0} cm)")
-    mesh = w0 * (lm_frac + (1.0 - lm_frac) * (s - s[-1]) / (1.0 - s[-1]))
-    # lm_frac + (1 - lm_frac) can round to one ulp above 1; an edge point beyond the
-    # threshold would get a zero cross section, so the edge is set exactly
-    mesh[0] = w0
-    return mesh
-
-
 def _lamb_min_or_default_(Cont_lamb_min: T_ARRAY | None, nCont: T_INT) -> T_ARRAY:
     if Cont_lamb_min is None:
         return _numpy.zeros(nCont, dtype=DT_NB_FLOAT)
@@ -92,7 +70,10 @@ def init_Wave_Mesh_(
         for k in range(nCont):
             # mesh = _MeshUtil.make_continuum_mesh_( _N_CONT_MESH ) # in limit wavelength unit
             # w0 = Cont["w0"][k]
-            Cont_mesh[k, :] = _continuum_mesh_(Cont["w0"][k], Cont_lamb_min[k])
+            if Cont_lamb_min[k] > 0.0:
+                Cont_mesh[k, :] = _MeshUtil.make_continuum_mesh_in_range_(_N_CONT_MESH, Cont["w0"][k], Cont_lamb_min[k])
+            else:
+                Cont_mesh[k, :] = Cont["w0"][k] * _MeshUtil.make_continuum_mesh_(_N_CONT_MESH)
 
             Cont_Coe["idxI"][k] = Cont["idxI"][k]
             Cont_Coe["idxJ"][k] = Cont["idxJ"][k]

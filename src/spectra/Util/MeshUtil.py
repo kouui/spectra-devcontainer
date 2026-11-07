@@ -126,6 +126,47 @@ def make_continuum_mesh_(nLambda: T_INT) -> T_ARRAY:
     return mesh
 
 
+def make_continuum_mesh_in_range_(nLambda: T_INT, w0: T_FLOAT, lamb_min: T_FLOAT) -> T_ARRAY:
+    """
+    Continuum mesh confined to ``[lamb_min, w0]``, edge first.
+
+    The spacing of `make_continuum_mesh_` (dense at the edge) is remapped
+    linearly so that it spans exactly ``[lamb_min, w0]``. The unscaled
+    `make_continuum_mesh_` only reaches ``w0 / sqrt(nLambda)``; use this one when
+    a data source states how far to the short-wavelength side the continuum is
+    needed (an RH atom file does: it integrates the bound-free rates over
+    ``[lamb_min, w0]`` only), so that no mesh point is spent beyond that limit.
+
+    Parameters
+    ----------
+    nLambda : T_INT
+        Number of points.
+
+    w0 : T_FLOAT
+        Edge (threshold) wavelength, [:math:`cm`].
+
+    lamb_min : T_FLOAT
+        Shortest wavelength of the mesh, [:math:`cm`]; must be shorter than ``w0``.
+
+    Returns
+    --------
+    mesh : T_ARRAY
+        Wavelengths [:math:`cm`], descending from ``w0`` (first) to ``lamb_min``
+        (last).
+    """
+    if not lamb_min > 0.0:
+        raise ValueError(f"lamb_min ({lamb_min} cm) must be positive")
+    s = make_continuum_mesh_(nLambda)
+    lm_frac = lamb_min / w0
+    if lm_frac >= 1.0:
+        raise ValueError(f"lamb_min ({lamb_min} cm) must be shorter than the edge wavelength ({w0} cm)")
+    mesh = w0 * (lm_frac + (1.0 - lm_frac) * (s - s[-1]) / (1.0 - s[-1]))
+    # lm_frac + (1 - lm_frac) can round to one ulp above 1; an edge point beyond the
+    # threshold would get a zero cross section, so the edge is set exactly
+    mesh[0] = w0
+    return mesh
+
+
 def half_to_full_(arr_half: T_ARRAY, isMinus: T_BOOL = False) -> T_ARRAY:
     r"""
     create full (anti-)symmetric full array according to half array
