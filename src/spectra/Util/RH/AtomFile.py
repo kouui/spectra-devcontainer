@@ -1,19 +1,20 @@
 # -------------------------------------------------------------------------------
-# reader of the RH (Uitenbroek) atom file format
+# parser of the RH (Uitenbroek) atom file format
 # -------------------------------------------------------------------------------
 """Read an RH ``*.atom`` file into plain arrays and tuples.
 
 Nothing is converted: energies stay in cm^-1, ``alpha0`` in m^2, ``lamb_min``
 in nm, collision coefficients in the SI units of the file. Conversions and the
-mapping onto `Struct.Atom.Atom` belong to the builder, so this module imports
-no struct.
+mapping onto `Atom` arrays belong to `AtomBuild`, so this module imports no
+struct.
 
 Only the subset of the format that the repository's RH hydrogen atom uses is
 supported, and the import is stricter than RH on it. RH accepts an optional
 16th line column (``g_Lande_eff``), level rows without ``levelNo``, line rows
 with j and i in either order and several CE rows for one transition (summed).
-This reader raises on the first two and on ``lamb_min <= 0``; the builder
-(``Struct.Atom.init_Atom_from_RH_``) raises on the last two. Anything else
+This reader raises on the first two, on ``lamb_min <= 0`` and on a level
+index outside ``[0, nLevel)`` in a line or continuum row; `AtomBuild` raises on
+the last two. Anything else
 raises ``NotImplementedError`` naming it: guessing the meaning of an unknown
 keyword would give a wrong atom without any error, and each new feature needs a
 decision on how its data enters the solver.
@@ -83,6 +84,12 @@ def _data_lines_(path: T_STR | Path) -> T_LIST[T_STR]:
             continue
         out.append(ln)
     return out
+
+
+def _check_level_index_(idx: T_INT, nLevel: T_INT, row: T_LIST[T_STR]) -> None:
+    # a negative index would silently alias a level counted from the end in numpy
+    if not 0 <= idx < nLevel:
+        raise ValueError(f"RH atom file: level index {idx} outside [0, {nLevel}) in row {row}")
 
 
 def _not_implemented_(what: T_STR) -> NotImplementedError:
@@ -169,6 +176,8 @@ def read_RH_atom_(path: T_STR | Path) -> RH_Atom_File:  # noqa: C901
         if p[8].upper() != _SUPPORTED_VDW:
             raise _not_implemented_(f"van der Waals approximation {p[8]!r}")
         line_j[k], line_i[k], line_f[k] = int(p[0]), int(p[1]), float(p[2])
+        _check_level_index_(int(p[0]), nLevel, p)
+        _check_level_index_(int(p[1]), nLevel, p)
         line_N[k] = int(p[4])
         symms.append(p[5].upper())
         line_qcore[k], line_qwing[k] = float(p[6]), float(p[7])
@@ -193,6 +202,8 @@ def read_RH_atom_(path: T_STR | Path) -> RH_Atom_File:  # noqa: C901
         if p[4].upper() != _SUPPORTED_WAVEDEP:
             raise _not_implemented_(f"continuum wavelength dependence {p[4]!r}")
         cont_j[k], cont_i[k], cont_alpha0[k] = int(p[0]), int(p[1]), float(p[2])
+        _check_level_index_(int(p[0]), nLevel, p)
+        _check_level_index_(int(p[1]), nLevel, p)
         cont_N[k] = int(p[3])
         wavedeps.append(p[4].upper())
         cont_lamb_min[k] = float(p[5])

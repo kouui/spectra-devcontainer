@@ -32,6 +32,9 @@ from ...Util import MeshUtil as _MeshUtil
 def _require_omega_collisions_(atom: _Atom.Atom) -> None:
     """Refuse an atom whose collision tables are not collision strengths.
 
+    Why RH tables are not converted to Omega instead: see
+    `E_COLLISIONAL_TRANSITION_FORMULA`.
+
     `_get_Cij_` evaluates ``Omega_table`` as Omega. An atom from an RH file
     holds RH coefficients there (``RH_CE``/``RH_CI``), which would give wrong
     rates without any error. Every public entry calls this first, before it

@@ -31,6 +31,18 @@ class E_COLLISIONAL_TRANSITION_SOURCE(_IntEnum):
 class E_COLLISIONAL_TRANSITION_FORMULA(_IntEnum):
     """What `Collisional_Transition.Omega_table` holds.
 
+    Why RH tables have their own formulas: an RH CE/CI table holds a rate
+    coefficient, not a dimensionless collision strength. The rate is
+    ``coe * sqrt(T)`` (CE: times g_i / g_j, downward; CI: times exp(-dE / kT)),
+    interpolated with a natural cubic spline in Te clamped to the table range.
+    An OMEGA table holds Omega, which `SELib` turns into a rate with its own
+    prefactor and linear interpolation. Converting an RH table to Omega when it is
+    read would let `SELib` use RH atoms, but it would change the interpolant
+    (linear in Omega instead of a spline in the RH coefficient) and so break the
+    agreement of MALI with RH and with the frozen v2. The table therefore keeps its
+    formula, and `SELib` refuses everything that is not OMEGA: it would read these
+    tables as Omega and give wrong rates without an error.
+
     OMEGA: the effective collision strength Omega (dimensionless); the rate
     follows from `Atomic.Collision`. This is the only formula the statistical
     equilibrium solver of `Function.SEquil.SELib` understands.

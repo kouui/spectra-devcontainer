@@ -1,5 +1,6 @@
-"""Tests of the RH atom reader and `Atom.init_Atom_from_RH_` on the 6-level
-hydrogen atom of the FALC case (`tests/data/rh_falc/H_6_CRD.atom`).
+"""Tests of `Atom.init_Atom_from_RH_` on the 6-level hydrogen atom of the FALC case
+(`tests/data/rh_falc/H_6_CRD.atom`). The parser and the array builders have their
+own files (`test.RH_AtomFile.py`, `test.RH_AtomBuild.py`).
 
 Expected values are written out from the file (or derived independently of the
 reader); the file is the single source. Fast, so they also run under
@@ -18,7 +19,6 @@ from spectra.Function.SEquil import SELib
 from spectra.Struct import Atmosphere, Radiation
 from spectra.Struct import Atom as Atom_
 from spectra.Util import MeshUtil
-from spectra.Util.AtomUtils import RHAtomIO
 
 RH_ATOM = Path(__file__).resolve().parents[1] / "data" / "rh_falc" / "H_6_CRD.atom"
 _E_CM = np.array([0.0, 82258.211, 97491.219, 102822.766, 105290.508, 109677.617])
@@ -81,18 +81,6 @@ def test_level_energy_round_trips_to_cm_inverse(atom):
     # a later stage recovers the file's cm^-1 from erg
     back = atom.Level["erg"] / (CST.h_ * CST.c_)
     np.testing.assert_allclose(back, _E_CM, rtol=1e-15, atol=0.0)
-
-
-@pytest.mark.parametrize(
-    ("label", "n"), [("H I 1S 2SE", 1), ("H I 12K 2KE", 12), ("Ca II 3D 2DE", 3)], ids=["1S", "12K", "CaII"]
-)
-def test_principal_n_from_label(label, n):
-    assert Atom_._principal_n_from_label_(label) == n
-
-
-def test_principal_n_without_a_number_raises():
-    with pytest.raises(ValueError, match="principal quantum number"):
-        Atom_._principal_n_from_label_("H I S 2SE")
 
 
 # ---------------------------------------------------------------------------
@@ -198,12 +186,6 @@ def test_mesh_without_lamb_min_is_the_default_one():
     np.testing.assert_array_equal(h._wave_mesh.Cont_mesh, expected)
 
 
-def test_non_positive_lamb_min_in_an_RH_file_raises(atom_text, tmp_path):
-    bad = atom_text.replace("HYDROGENIC       22.794", "HYDROGENIC        0.000")
-    with pytest.raises(ValueError, match="lamb_min"):
-        Atom_.init_Atom_from_RH_(_write(tmp_path, bad))
-
-
 def test_lamb_min_beyond_the_edge_raises(atom_text, tmp_path):
     bad = atom_text.replace("HYDROGENIC       22.794", "HYDROGENIC       220.794")
     with pytest.raises(ValueError, match="lamb_min"):
@@ -305,79 +287,6 @@ def test_wave_mesh_line_coe(atom):
 
     np.testing.assert_array_equal(atom.RL.Coe["lineIndex"], np.arange(10))
     assert atom.RL.nRadiativeLine == 10
-
-
-# ---------------------------------------------------------------------------
-# reader: unsupported input
-# ---------------------------------------------------------------------------
-
-
-def test_unknown_keyword_raises_naming_it(atom_text, tmp_path):
-    text = atom_text.replace("\nEND", "\n OHM      1  0    1.0e-16  1.0e-16\nEND")
-    assert text != atom_text
-    with pytest.raises(NotImplementedError, match="OHM"):
-        RHAtomIO.read_RH_atom_(_write(tmp_path, text))
-
-
-@pytest.mark.parametrize(
-    ("old", "new", "name"),
-    [
-        ("HYDROGENIC       22.794", "EXPLICIT        22.794", "EXPLICIT"),
-        ("VOIGT    100", "PRD_VOIGT 100", "PRD_VOIGT"),
-        ("UNSOLD   1.000  0.000  1.000  0.000  4.70E+08", "BARKLEM  1.000  0.000  1.000  0.000  4.70E+08", "BARKLEM"),
-        ("ASYMM  15.0", "RANDOM 15.0", "RANDOM"),
-        ("    6       10       5        0", "    6       10       5        1", "fixed transitions"),
-    ],
-    ids=["continuum", "line-type", "vdW", "symmetry", "fixed"],
-)
-def test_unsupported_features_raise_naming_them(atom_text, tmp_path, old, new, name):
-    assert old in atom_text
-    with pytest.raises(NotImplementedError, match=name):
-        RHAtomIO.read_RH_atom_(_write(tmp_path, atom_text.replace(old, new, 1)))
-
-
-@pytest.mark.parametrize(
-    ("old", "new", "match"),
-    [
-        # RH accepts the pair in either order; the reader requires (upper, lower)
-        ("  1   0  4.162E-01", "  0   1  4.162E-01", "upward"),
-        # RH accepts a 16th column (g_Lande_eff)
-        ("4.70E+08  1.0E+00", "4.70E+08  1.0E+00  0.0", "columns"),
-        # RH accepts level rows without levelNo
-        ("2SE          '    0       0", "2SE          '    0", "levelNo"),
-        # RH sums repeated CE rows; the reader refuses them
-        (
-            " CE      1  0",
-            " CE      1  0    1.0e-16  1.0e-16  1.0e-16  1.0e-16  1.0e-16  1.0e-16\n CE      1  0",
-            "twice",
-        ),
-    ],
-    ids=["swapped-pair", "16th-column", "no-levelNo", "duplicate-CE"],
-)
-def test_input_that_RH_accepts_but_the_reader_does_not(atom_text, tmp_path, old, new, match):
-    assert old in atom_text
-    with pytest.raises(ValueError, match=match):
-        Atom_.init_Atom_from_RH_(_write(tmp_path, atom_text.replace(old, new, 1)))
-
-
-def test_file_without_end_raises(atom_text, tmp_path):
-    with pytest.raises(ValueError, match="END"):
-        RHAtomIO.read_RH_atom_(_write(tmp_path, atom_text.replace("END", "")))
-
-
-def test_decreasing_stage_raises(atom_text, tmp_path):
-    # swap the stages of the first and the last level: the levels of a stage must be contiguous
-    text = atom_text.replace("2SE          '    0       0", "2SE          '    1       0").replace(
-        "2HO          '    1       5", "2HO          '    0       5"
-    )
-    with pytest.raises(ValueError, match="stages"):
-        Atom_.init_Atom_from_RH_(_write(tmp_path, text))
-
-
-def test_collision_row_without_a_listed_transition_raises(atom_text, tmp_path):
-    text = atom_text.replace(" CE      4  3", " CE      5  3", 1)
-    with pytest.raises(ValueError, match="CE row"):
-        Atom_.init_Atom_from_RH_(_write(tmp_path, text))
 
 
 # ---------------------------------------------------------------------------
