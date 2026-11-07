@@ -3,9 +3,13 @@
 # -------------------------------------------------------------------------------
 
 from dataclasses import dataclass as _dataclass
+from pathlib import Path as _Path
 
 from ..ImportAll import *
+from ..Util import ElementUtil as _ElementUtil
 from ..Util.AtomUtils import AtomIO as _AtomIO
+from ..Util.RH import AtomBuild as _RHBuild
+from ..Util.RH import AtomFile as _RHFile
 from . import WavelengthMesh as _WavelengthMesh
 
 # -------------------------------------------------------------------------------
@@ -25,9 +29,14 @@ class Collisional_Transition:
     _transition_source: T_E_COLLISIONAL_TRANSITION_SOURCE
     _transition_formula: T_E_COLLISIONAL_TRANSITION_FORMULA
 
-    Te_table: T_ARRAY  # 1d
-    Omega_table: T_ARRAY  # 2d
-    Coe: T_ARRAY  # struct array
+    Te_table: T_ARRAY  # 1d, [K]
+    # 2d (nTransition, nTe), row k belongs to the k-th line (CE) / continuum (CI).
+    # The content and unit depend on `_transition_formula`: OMEGA holds collision
+    # strengths (dimensionless); RH_CE / RH_CI hold RH coefficients already in CGS,
+    # [cm^3 s^-1 K^-1/2] (see `E_COLLISIONAL_TRANSITION_FORMULA`; an evaluator must
+    # not multiply by 1e6 again).
+    Omega_table: T_ARRAY
+    Coe: T_ARRAY  # struct array, idxI = lower level, idxJ = upper level
 
 
 @_dataclass(**STRUCT_KWGS)
@@ -258,6 +267,123 @@ def init_Atom_(conf_path: T_STR, is_hydrogen: T_BOOL = False) -> Atom:
         _wave_mesh=waveMesh,
     )
     return atom
+
+
+def init_Atom_from_RH_(path: T_STR | _Path) -> Atom:
+    """Create the Atom struct from an RH ``*.atom`` file.
+
+    Parameters
+    ----------
+    path : T_STR | Path
+        path to the RH atom file; see `Util.RH.AtomFile` for the supported subset;
+        `Util.RH.AtomBuild` maps the values onto the arrays
+
+    Returns
+    -------
+    atom : Atom
+        every value of the file is stored in an existing field, in CGS.
+
+    Notes
+    -----
+    - Levels: stage = RH stage + 1; ``isGround`` is the lowest level of each
+      stage (stages must not decrease along the file, so the levels of one stage
+      are contiguous); ``Level["erg"]`` is ``E[cm^-1] * h_ * c_`` with project
+      constants, and the file's cm^-1 is recovered as ``erg / (h_ * c_)``;
+      ``Level["n"]`` is read from the label, 0 for a bare nucleus (stage Z + 1).
+    - Only the lines and continua the file lists exist, in file order (lines
+      first in the transition order).
+    - ``RL.Coe`` has one row per line: the profile mesh (``nLambda`` is the
+      number of points of the full profile, ``qcore``, ``qwing``) and the
+      broadening (``Grad``, ``vdW_type``, ``cvdW``, ``cStark``; see the dtype).
+      ``vdW_type`` is set (UNSOLD), so every broadening field is literal here:
+      ``Grad = 0`` means no radiative damping, not "use ``Line.Gamma``".
+    - The continuum mesh ends at the file's ``lamb_min``
+      (``_wave_mesh.Cont_Coe["lamb_min"]``, [cm]).
+    - ``PI`` holds the project's hydrogenic cross section on that mesh, as for
+      a "Hydrogenic" entry of a PI file; the file's ``alpha0`` (cm^2) is
+      recorded in ``PI.Coe["alpha0"]`` and does not scale the values. The edge
+      value differs from ``alpha0`` by up to 3 % (n = 1) and the Gaunt factor
+      differs from RH's, so a solver that must reproduce RH computes its cross
+      sections from ``alpha0`` itself.
+    - ``CE``/``CI`` hold the file's tables with formula ``RH_CE``/``RH_CI``
+      (see `E_COLLISIONAL_TRANSITION_FORMULA`): CGS, already multiplied by 1e6,
+      rows in the order of ``Line``/``Cont``, ``idxI`` the lower level. The
+      statistical equilibrium solver `SELib` refuses them.
+    """
+    rh = _RHFile.read_RH_atom_(path)
+
+    sym = _ElementUtil.format_sym_(rh.element)
+    Z: T_INT = _ElementUtil.sym_to_z_(sym)
+
+    Level, Level_info_table = _RHBuild.make_Level_(rh, Z)
+    nLevel = Level.shape[0]
+    Line, Line_idx_table = _RHBuild.make_Line_(rh, Level)
+    Cont, Cont_idx_table = _RHBuild.make_Cont_(rh, Level)
+    nLine, nCont = Line.shape[0], Cont.shape[0]
+    _has_continuum = nCont > 0
+
+    Line_ctj_table: T_CTJ_PAIR_TABLE = tuple((Level_info_table[i], Level_info_table[j]) for i, j in Line_idx_table)
+    Cont_ctj_table: T_CTJ_PAIR_TABLE = tuple((Level_info_table[i], Level_info_table[j]) for i, j in Cont_idx_table)
+    _ctj_table = CTJ_Table(Level=Level_info_table, Line=Line_ctj_table, Cont=Cont_ctj_table)
+    _idx_table = Index_Table(Line=Line_idx_table, Cont=Cont_idx_table)
+
+    def _collisions(tran_type: T_STR, Tran: T_ARRAY, ctj: T_CTJ_PAIR_TABLE, idx: T_ARRAY, coe: T_ARRAY):
+        Te_table, Omega_table, Coe, _tt, _ts, _tf = _RHBuild.make_CECI_(
+            tran_type, Tran, Level, Level_info_table, ctj, rh.Te_table, idx, coe
+        )
+        return Collisional_Transition(
+            _transition_type=_tt,
+            _transition_source=_ts,
+            _transition_formula=_tf,
+            Te_table=Te_table,
+            Omega_table=Omega_table,
+            Coe=Coe,
+        )
+
+    CE = _collisions("CE", Line, Line_ctj_table, rh.CE_idx, rh.CE_coe)
+    CI = _collisions("CI", Cont, Cont_ctj_table, rh.CI_idx, rh.CI_coe)
+
+    RL = Radiative_Line(nRadiativeLine=nLine, Coe=_RHBuild.make_RL_Coe_(rh, Line))
+    waveMesh = _WavelengthMesh.init_Wave_Mesh_(Cont, Line, RL.Coe, rh.cont_lamb_min_nm * CST.nm2cm_)
+
+    alpha_table, alpha_table_idxs, PI_Coe, alpha_interp = _AtomIO.make_Atom_PI_hydrogenic_(
+        Level, Cont, waveMesh.Cont_mesh, rh.cont_alpha0_m2 * CST.m2cm_**2
+    )
+    PI = Photo_Ionization(
+        alpha_table=alpha_table, alpha_table_idxs=alpha_table_idxs, Coe=PI_Coe, alpha_interp=alpha_interp
+    )
+
+    _atomic_data_source = ATOMIC_DATA_SOURCE(
+        AJI=E_ATOMIC_DATA_SOURCE.EXPERIMENT,
+        CE=E_ATOMIC_DATA_SOURCE.EXPERIMENT,
+        CI=E_ATOMIC_DATA_SOURCE.EXPERIMENT,
+        PI=E_ATOMIC_DATA_SOURCE.EXPERIMENT,
+    )
+
+    return Atom(
+        Z=Z,
+        Mass=_ElementUtil.sym_to_mass_(sym),
+        Abun=_ElementUtil.sym_to_abun_(sym),
+        nLevel=nLevel,
+        nBoundLevel=nLevel - 1 if _has_continuum else nLevel,
+        nLine=nLine,
+        nCont=nCont,
+        nTran=nLine + nCont,
+        nRL=nLine,
+        Level=Level,
+        Line=Line,
+        Cont=Cont,
+        _has_continuum=_has_continuum,
+        _atomic_data_source=_atomic_data_source,
+        _atom_type=E_ATOM.HYDROGEN if Z == 1 else E_ATOM.NORMAL,
+        _ctj_table=_ctj_table,
+        _idx_table=_idx_table,
+        CE=CE,
+        CI=CI,
+        PI=PI,
+        RL=RL,
+        _wave_mesh=waveMesh,
+    )
 
 
 def init_theoretical_hydrogen_atom_(

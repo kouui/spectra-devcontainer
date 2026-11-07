@@ -34,7 +34,23 @@ _LINE_MESH_QWING: T_FLOAT = 10.0
 _LINE_MESH_TYPE: T_E_ABSORPTION_PROFILE_TYPE = E_ABSORPTION_PROFILE_TYPE.GAUSSIAN
 
 
-def init_Wave_Mesh_(Cont: T_ARRAY, Line: T_ARRAY, RL_Coe: T_ARRAY) -> Wavelength_Mesh:
+def _lamb_min_or_default_(Cont_lamb_min: T_ARRAY | None, nCont: T_INT) -> T_ARRAY:
+    if Cont_lamb_min is None:
+        return _numpy.zeros(nCont, dtype=DT_NB_FLOAT)
+    if Cont_lamb_min.shape != (nCont,):
+        raise ValueError("`Cont_lamb_min` must have one value per continuum")
+    return Cont_lamb_min
+
+
+def init_Wave_Mesh_(
+    Cont: T_ARRAY, Line: T_ARRAY, RL_Coe: T_ARRAY, Cont_lamb_min: T_ARRAY | None = None
+) -> Wavelength_Mesh:
+    """Build the wavelength meshes of continua and lines.
+
+    ``Cont_lamb_min`` (nCont,), [cm], optional: the short-wavelength end of each
+    continuum mesh, 0 for the default mesh. It is recorded in
+    ``Cont_Coe["lamb_min"]``.
+    """
 
     ## : Cont_mesh
     dtype = _numpy.dtype(
@@ -43,21 +59,27 @@ def init_Wave_Mesh_(Cont: T_ARRAY, Line: T_ARRAY, RL_Coe: T_ARRAY) -> Wavelength
             ("idxJ", T_INT),  #: level index, the Level index of upper level
             ("w0", T_FLOAT),  #: central wavelength, [cm]
             ("nLambda", T_INT),  #: number of meaningful wavelength mesh point
+            ("lamb_min", T_FLOAT),  #: short-wavelength end of the mesh, [cm]; 0 = default mesh
         ]
     )
     nCont = Cont.shape[0]
+    Cont_lamb_min = _lamb_min_or_default_(Cont_lamb_min, nCont)
     Cont_mesh = _numpy.zeros((nCont, _N_CONT_MESH), dtype=DT_NB_FLOAT)
     Cont_Coe = _numpy.empty(nCont, dtype=dtype)
     if nCont > 0:  # has_continuum == True
         for k in range(nCont):
             # mesh = _MeshUtil.make_continuum_mesh_( _N_CONT_MESH ) # in limit wavelength unit
             # w0 = Cont["w0"][k]
-            Cont_mesh[k, :] = Cont["w0"][k] * _MeshUtil.make_continuum_mesh_(_N_CONT_MESH)
+            if Cont_lamb_min[k] > 0.0:
+                Cont_mesh[k, :] = _MeshUtil.make_continuum_mesh_in_range_(_N_CONT_MESH, Cont["w0"][k], Cont_lamb_min[k])
+            else:
+                Cont_mesh[k, :] = Cont["w0"][k] * _MeshUtil.make_continuum_mesh_(_N_CONT_MESH)
 
             Cont_Coe["idxI"][k] = Cont["idxI"][k]
             Cont_Coe["idxJ"][k] = Cont["idxJ"][k]
             Cont_Coe["w0"][k] = Cont["w0"][k]
             Cont_Coe["nLambda"][k] = _N_CONT_MESH
+            Cont_Coe["lamb_min"][k] = Cont_lamb_min[k]
 
     ## : Line_mesh, only transition defined in RL will be considered
     nLine = Line.shape[0]

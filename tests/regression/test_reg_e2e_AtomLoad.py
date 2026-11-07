@@ -34,6 +34,10 @@ _CONFIGS: list[tuple[str, str, bool]] = [
 ]
 
 
+# (RH atom file path relative to repo root, readable name)
+_RH_ATOMS: list[tuple[str, str]] = [("tests/data/rh_falc/H_6_CRD.atom", "H_6_CRD_RH")]
+
+
 @pytest.mark.parametrize(
     ("conf_rel", "name", "is_hydrogen"),
     _CONFIGS,
@@ -44,3 +48,10 @@ def test_load_atom_matches_reference(conf_rel: str, name: str, is_hydrogen: bool
     atom = Atom.init_Atom_(conf_path, is_hydrogen=is_hydrogen)
     path_dict = _AtomIO.read_conf_(conf_path)
     assert_atom_matches(atom, path_dict, name, ref_atom)
+
+
+@pytest.mark.parametrize(("rh_rel", "name"), _RH_ATOMS, ids=[a[1] for a in _RH_ATOMS])
+def test_load_RH_atom_matches_reference(rh_rel: str, name: str, ref_atom):
+    rh_path = CFG._ROOT_DIR / rh_rel
+    atom = Atom.init_Atom_from_RH_(rh_path)
+    assert_atom_matches(atom, {"RH": str(rh_path)}, name, ref_atom)
