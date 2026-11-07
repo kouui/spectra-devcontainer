@@ -44,10 +44,15 @@ class E_COLLISIONAL_TRANSITION_FORMULA(_IntEnum):
       the upward rate follows by detailed balance, C_ij = C_ji * (g_j / g_i) * exp(-dE / kTe).
     - RH_CI (ionization table): the upward rate is C_ij = coe * sqrt(Te) * exp(-dE / kTe).
 
-    In both tables the table is interpolated in Te on `Te_table`, and rows
-    follow the order of the transitions (lines for CE, continua for CI) with
-    `Coe["idxI"]` the lower and `Coe["idxJ"]` the upper level, whatever the
-    order in the file.
+    Evaluation, as the frozen MALI v2 FALC case does it (and RH `collision.c`):
+    a natural cubic spline in Te through `Te_table`, with Te clamped to the table
+    range for the lookup only, because the spline goes negative when extrapolated
+    above the last TEMP. RH_CI gives the UPWARD rate; the downward rate follows from
+    the LTE (Saha) population ratio, as in RH.
+
+    In both tables rows follow the order of the transitions (lines for CE,
+    continua for CI) with `Coe["idxI"]` the lower and `Coe["idxJ"]` the upper
+    level, whatever the order in the file.
     """
 
     OMEGA = 1
@@ -58,7 +63,7 @@ class E_COLLISIONAL_TRANSITION_FORMULA(_IntEnum):
 class E_VDW_TYPE(_IntEnum):
     """Van der Waals broadening prescription of a line (`RL.Coe["vdW_type"]`)."""
 
-    NONE = 0  # not given: the file format has no van der Waals data
+    NONE = 0  # the row carries no broadening data at all (see `AtomIO.RL_DTYPE`)
     UNSOLD = 1  # Unsold approximation; `cvdW[0]` (H) and `cvdW[2]` (He) multiply it
 
 

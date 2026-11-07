@@ -9,7 +9,10 @@ mapping onto `Struct.Atom.Atom` belong to the builder, so this module imports
 no struct.
 
 Only the subset of the format that the repository's RH hydrogen atom uses is
-supported. Anything else raises ``NotImplementedError`` naming it: guessing the
+supported, and the reader is stricter than RH on it. RH accepts line rows with j
+and i in either order, an optional 16th column (``g_Lande_eff``), level rows
+without ``levelNo`` and several CE rows for one transition (summed); this reader
+raises on all of them, as it does on ``lamb_min <= 0`` for a continuum. Anything else raises ``NotImplementedError`` naming it: guessing the
 meaning of an unknown keyword would give a wrong atom without any error, and
 each new feature needs a decision on how its data enters the solver.
 """
@@ -191,6 +194,8 @@ def read_RH_atom_(path: T_STR | Path) -> RH_Atom_File:  # noqa: C901
         cont_N[k] = int(p[3])
         wavedeps.append(p[4].upper())
         cont_lamb_min[k] = float(p[5])
+        if cont_lamb_min[k] <= 0.0:
+            raise ValueError(f"RH atom file: lamb_min must be positive, got {p[5]} in continuum row {p}")
 
     # --- collisions: TEMP, then CE / CI rows (a row may end with a label), END
     # The file repeats TEMP before the CE and the CI block. One table is

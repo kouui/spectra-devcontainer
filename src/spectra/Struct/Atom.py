@@ -33,9 +33,10 @@ class Collisional_Transition:
 
     Te_table: T_ARRAY  # 1d, [K]
     # 2d (nTransition, nTe), row k belongs to the k-th line (CE) / continuum (CI).
-    # The content depends on `_transition_formula`: OMEGA holds collision
-    # strengths; RH_CE / RH_CI hold RH coefficients already in CGS (see
-    # `E_COLLISIONAL_TRANSITION_FORMULA`; an evaluator must not multiply by 1e6 again).
+    # The content and unit depend on `_transition_formula`: OMEGA holds collision
+    # strengths (dimensionless); RH_CE / RH_CI hold RH coefficients already in CGS,
+    # [cm^3 s^-1 K^-1/2] (see `E_COLLISIONAL_TRANSITION_FORMULA`; an evaluator must
+    # not multiply by 1e6 again).
     Omega_table: T_ARRAY
     Coe: T_ARRAY  # struct array, idxI = lower level, idxJ = upper level
 
@@ -273,9 +274,11 @@ def init_Atom_(conf_path: T_STR, is_hydrogen: T_BOOL = False) -> Atom:
 # RH atom files are SI (energies in cm^-1); an Atom is CGS. Every value is
 # converted once, here or in `AtomIO.make_Atom_CECI_RH_`, and stored in the unit
 # the field comment names.
-# RH's f -> Aji factor (2 pi e^2 / (eps0 m_e c), SI [m^2 s^-1]); it is the
-# constant the RH atom files assume, kept as RH has it instead of rebuilding it
-# from spectra.Constants so that Aji agrees with RH's to the last digit.
+# f -> Aji factor [m^2 s^-1] of the frozen MALI v2 FALC case. RH's own expression
+# (readatom.c: 2 pi (e / eps0) (e / m_e) / c with the values of its constant.h)
+# gives 6.670253e-5, which is 9.2e-6 larger in relative terms. The value below is
+# kept so that Aji matches that case; switching to RH's value belongs to the
+# RH-parity work, which measures its effect on the residual against RH.
 _RH_F_TO_AJI_SI = 6.670192e-5
 
 
@@ -350,7 +353,7 @@ def _rh_make_Line_(rh: _RHAtomIO.RH_Atom_File, Level: T_ARRAY) -> T_TUPLE[T_ARRA
     Line["idxJ"][:] = rh.line_j
     for k, (i, j) in enumerate(idx_table):
         wl_cm = 1.0 / (rh.level_E_cm[j] - rh.level_E_cm[i])
-        Line["AJI"][k] = rh.line_f[k] * (_RH_F_TO_AJI_SI / (wl_cm * 1.0e-2) ** 2) * (rh.level_g[i] / rh.level_g[j])
+        Line["AJI"][k] = rh.line_f[k] * (_RH_F_TO_AJI_SI / (wl_cm / CST.m2cm_) ** 2) * (rh.level_g[i] / rh.level_g[j])
     _AtomIO.finalize_Line_(Line, Level)
     return Line, idx_table
 
@@ -409,6 +412,8 @@ def init_Atom_from_RH_(path: T_STR | _Path) -> Atom:
     - ``RL.Coe`` has one row per line: the profile mesh (``nLambda`` is the
       number of points of the full profile, ``qcore``, ``qwing``) and the
       broadening (``Grad``, ``vdW_type``, ``cvdW``, ``cStark``; see the dtype).
+      ``vdW_type`` is set (UNSOLD), so every broadening field is literal here:
+      ``Grad = 0`` means no radiative damping, not "use ``Line.Gamma``".
     - The continuum mesh ends at the file's ``lamb_min``
       (``_wave_mesh.Cont_Coe["lamb_min"]``, [cm]).
     - ``PI`` holds the project's hydrogenic cross section on that mesh, as for

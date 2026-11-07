@@ -575,14 +575,22 @@ RL_DTYPE = _numpy.dtype(
         ("qwing", T_FLOAT),
         ("nLambda", T_INT),  #: number of meaningful wavelength mesh point
         # Broadening of the line, one row per line (`lineIndex` is the row of `Atom.Line`).
-        # A file that does not provide it leaves the defaults: zeros / `E_VDW_TYPE.NONE`.
-        ("Grad", T_FLOAT),  #: radiative broadening Gamma, [s^-1]; 0 = not given, use `Line.Gamma`
-        ("vdW_type", T_INT),  #: `E_VDW_TYPE`; NONE = no van der Waals data
+        # `vdW_type == NONE` means the row carries no broadening data (atoms from the
+        # Level/Aji/RadiativeLine files, where every field below is left 0): the
+        # consumer then takes the radiative damping from `Line.Gamma`. Otherwise all
+        # four fields are literal values of the file, and Grad = 0 is zero radiative
+        # damping.
+        ("Grad", T_FLOAT),  #: radiative broadening Gamma, [s^-1]
+        ("vdW_type", T_INT),  #: `E_VDW_TYPE`
         # UNSOLD: [0] multiplies the hydrogen-perturber term, [2] the helium one,
         # [1] and [3] unused; all dimensionless
         ("cvdW", T_FLOAT, (4,)),
-        # quadratic Stark. > 0: dimensionless multiplier of the Traving estimate;
-        # < 0: |cStark| is Gamma / Ne directly, [cm^3 s^-1]; 0 = no Stark broadening
+        # quadratic Stark. > 0: dimensionless multiplier of the Traving estimate.
+        # < 0: |cStark| is Gamma / Ne directly, in CGS [cm^3 s^-1] (the file has SI
+        # m^3 s^-1), so Gamma [s^-1] = |cStark| * Ne with Ne in cm^-3 and no further
+        # factor. A routine written for RH's SI value (the v2 `stark_quadratic_`
+        # converts Ne itself and expects SI) must not be handed this value as it is.
+        # 0 = no Stark broadening.
         ("cStark", T_FLOAT),
     ]
 )
@@ -593,7 +601,7 @@ PI_COE_DTYPE = _numpy.dtype(
         ("idxJ", T_INT),  #: level index, the Level index of upper level
         # ('lineIndex',T_INT),  #: line index
         ("nLambda", T_INT),  #: number of meaningful wavelength mesh point
-        ("alpha0", T_FLOAT),  #: Photoionization cross section at frequency edge
+        ("alpha0", T_FLOAT),  #: Photoionization cross section at frequency edge, [cm^2]
         ("gi", T_INT),  #: statistical weight of lower level
         ("gj", T_INT),  #: statistical weight of upper level
         ("dEij", T_FLOAT),  #: ionization limit, [:math:`erg`]

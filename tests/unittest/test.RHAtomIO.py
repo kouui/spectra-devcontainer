@@ -6,6 +6,7 @@ reader); the file is the single source. Fast, so they also run under
 NUMBA_DISABLE_JIT=1.
 """
 
+import dataclasses
 from pathlib import Path
 
 import numpy as np
@@ -145,6 +146,15 @@ def test_negative_cStark_is_converted_and_keeps_its_sign(atom_text, tmp_path):
     np.testing.assert_array_equal(changed.RL.Coe["cStark"][1:], np.ones(9))
 
 
+def test_zero_Grad_in_an_RH_file_is_stored_as_zero_with_vdW_type_set(atom_text, tmp_path):
+    # in an RH file Grad = 0 is "no radiative damping", not "use Line.Gamma"
+    old = "4.70E+08  1.0E+00"
+    assert old in atom_text
+    a = Atom_.init_Atom_from_RH_(_write(tmp_path, atom_text.replace(old, "0.00E+00  1.0E+00")))
+    assert a.RL.Coe["Grad"][0] == 0.0
+    assert a.RL.Coe["vdW_type"][0] == int(E_VDW_TYPE.UNSOLD)
+
+
 def test_mesh_counts_follow_the_file(atom):
     # raw Nlambda 100 50 20 20 70 40 40 20 20 20 with ASYMM, ASYMM, SYMM, SYMM, ASYMM, SYMM...:
     # the file's count for ASYMM (+1 when even), 2N - 1 for SYMM
@@ -187,6 +197,12 @@ def test_mesh_without_lamb_min_is_the_default_one():
     np.testing.assert_array_equal(h._wave_mesh.Cont_Coe["lamb_min"], np.zeros(h.nCont))
     expected = h.Cont["w0"][:, None] * MeshUtil.make_continuum_mesh_(41)[None, :]
     np.testing.assert_array_equal(h._wave_mesh.Cont_mesh, expected)
+
+
+def test_non_positive_lamb_min_in_an_RH_file_raises(atom_text, tmp_path):
+    bad = atom_text.replace("HYDROGENIC       22.794", "HYDROGENIC        0.000")
+    with pytest.raises(ValueError, match="lamb_min"):
+        Atom_.init_Atom_from_RH_(_write(tmp_path, bad))
 
 
 def test_lamb_min_beyond_the_edge_raises(atom_text, tmp_path):
@@ -321,6 +337,30 @@ def test_unsupported_features_raise_naming_them(atom_text, tmp_path, old, new, n
         RHAtomIO.read_RH_atom_(_write(tmp_path, atom_text.replace(old, new, 1)))
 
 
+@pytest.mark.parametrize(
+    ("old", "new", "match"),
+    [
+        # RH accepts the pair in either order; the reader requires (upper, lower)
+        ("  1   0  4.162E-01", "  0   1  4.162E-01", "upward"),
+        # RH accepts a 16th column (g_Lande_eff)
+        ("4.70E+08  1.0E+00", "4.70E+08  1.0E+00  0.0", "columns"),
+        # RH accepts level rows without levelNo
+        ("2SE          '    0       0", "2SE          '    0", "levelNo"),
+        # RH sums repeated CE rows; the reader refuses them
+        (
+            " CE      1  0",
+            " CE      1  0    1.0e-16  1.0e-16  1.0e-16  1.0e-16  1.0e-16  1.0e-16\n CE      1  0",
+            "twice",
+        ),
+    ],
+    ids=["swapped-pair", "16th-column", "no-levelNo", "duplicate-CE"],
+)
+def test_input_that_RH_accepts_but_the_reader_does_not(atom_text, tmp_path, old, new, match):
+    assert old in atom_text
+    with pytest.raises(ValueError, match=match):
+        Atom_.init_Atom_from_RH_(_write(tmp_path, atom_text.replace(old, new, 1)))
+
+
 def test_file_without_end_raises(atom_text, tmp_path):
     with pytest.raises(ValueError, match="END"):
         RHAtomIO.read_RH_atom_(_write(tmp_path, atom_text.replace("END", "")))
@@ -367,6 +407,23 @@ def test_old_SE_path_refuses_an_RH_atom_before_touching_the_atmosphere(atom, cal
     with pytest.raises(ValueError, match="RH_CE"):
         call(atom, atmos, Radiation.init_Radiation_())
     assert dict(vars(atmos)) == before
+
+
+def test_mixed_collision_formulas_are_refused(atom):
+    # CE as collision strengths but CI from an RH table: still not an OMEGA atom
+    omega_ce = dataclasses.replace(atom.CE, _transition_formula=E_FORMULA.OMEGA)
+    mixed = dataclasses.replace(atom, CE=omega_ce)
+    atmos = _fresh_atmos()
+    before = dict(vars(atmos))
+    with pytest.raises(ValueError, match=r"atom\.CI"):
+        SELib.cal_SE_with_Nh_Te_(mixed, atmos, Radiation.init_Radiation_(), None)
+    assert dict(vars(atmos)) == before
+
+
+def test_guarded_wrappers_keep_their_docstring():
+    # the guard call sits below the docstring; above it, it would turn it into a no-op string
+    assert SELib.cal_SE_with_Ne_Te_.__doc__ is not None
+    assert "is_single_element" in SELib.cal_SE_with_Ne_Te_.__doc__
 
 
 def test_conf_atoms_have_default_broadening_and_omega_collisions():

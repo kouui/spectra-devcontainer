@@ -207,10 +207,10 @@ def cal_SE_with_Ne_Te_(
     is_single_element: bool = False,
     rate_only: T_BOOL = False,
 ) -> T_TUPLE[_Container.SE_Container, _Container.TranRates_Container]:
-    _require_omega_collisions_(atom)
     r"""
     if is_single_element=False, then atmos.Nh must be provided when it is not hydrogen atom
     """
+    _require_omega_collisions_(atom)
     ##    is_hydrogen = ( atom._atom_type ==  E_ATOM.HYDROGEN )
 
     ## : this comment out block tries to compute Nh with iteration
