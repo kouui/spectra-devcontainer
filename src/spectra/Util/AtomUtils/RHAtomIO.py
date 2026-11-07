@@ -9,12 +9,14 @@ mapping onto `Struct.Atom.Atom` belong to the builder, so this module imports
 no struct.
 
 Only the subset of the format that the repository's RH hydrogen atom uses is
-supported, and the reader is stricter than RH on it. RH accepts line rows with j
-and i in either order, an optional 16th column (``g_Lande_eff``), level rows
-without ``levelNo`` and several CE rows for one transition (summed); this reader
-raises on all of them, as it does on ``lamb_min <= 0`` for a continuum. Anything else raises ``NotImplementedError`` naming it: guessing the
-meaning of an unknown keyword would give a wrong atom without any error, and
-each new feature needs a decision on how its data enters the solver.
+supported, and the import is stricter than RH on it. RH accepts an optional
+16th line column (``g_Lande_eff``), level rows without ``levelNo``, line rows
+with j and i in either order and several CE rows for one transition (summed).
+This reader raises on the first two and on ``lamb_min <= 0``; the builder
+(``Struct.Atom.init_Atom_from_RH_``) raises on the last two. Anything else
+raises ``NotImplementedError`` naming it: guessing the meaning of an unknown
+keyword would give a wrong atom without any error, and each new feature needs a
+decision on how its data enters the solver.
 """
 
 from pathlib import Path
