@@ -55,7 +55,7 @@ def mali_two_level_(
         B: (ND,), Planck function at line center (also the lower boundary)
         wl_win, phi_win, weight_win, wphi_line: the window (= axis) and its
             profile table (nw,), (nw, ND), (nw,), (ND,)
-        n_angle, tol, itmax, use_lstar, lstar_scale: see mali_multilevel_
+        n_angle, tol, itmax, use_lstar, lstar_scale: see Function/MALI/Loop.mali_multilevel_
 
     Output: MALI2lv_Result(S, Jbar, Lstar, niter, dS_history)
     """

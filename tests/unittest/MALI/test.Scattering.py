@@ -189,7 +189,7 @@ class TestScatteringOperator:
 
         def corrected(n, J_dag):
             J, Psi, chi_tot, chi_int, _ = _sweep_at(atom, atmos, mesh, pre, n, J_dag)
-            w = np.clip(Psi * pre.bg_sca / chi_tot, 0.0, Kernels._W_SCA_MAX)
+            w = np.clip(Psi * pre.bg_sca / chi_tot, 0.0, Kernels.W_SCA_MAX)
             Lstar = Kernels.line_rates_(
                 J, Psi / (1.0 - w), chi_tot, mesh.wl, mesh.Nblue, mesh.span, mesh.win_off,
                 pre.phi, pre.weight, pre.wphi, atom.Line["w0"].copy(), chi_int,

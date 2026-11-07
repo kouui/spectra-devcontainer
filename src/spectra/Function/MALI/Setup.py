@@ -25,7 +25,8 @@ from ...RadiativeTransfer.MALI import ProfileTable as _ProfileTable
 from ...RadiativeTransfer.MALI.Precompute import MALI_Precompute
 
 
-# Toy_Atom and Atmos1D are temporary input types, replaced by Struct.Atom.Atom / AtmosphereC1D later
+# Toy_Atom and Atmos1D are temporary input types: Struct.Atom.Atom and AtmosphereC1D do not yet carry the
+# fabricated collision tables and the per-species density, so the solver reads these until it is moved onto them
 @_dataclass(**STRUCT_KWGS_UNFROZEN)
 class Toy_Atom:
     Level: T_ARRAY  # (nLevel,), _LEVEL_DTYPE
@@ -56,6 +57,8 @@ class Atmos1D:
     ND: T_INT
 
 
+# temporary: the LTE populations still come from SELib._ni_nj_LTE_; the routine moves to Atomic/LTELib in a later
+# step, after which this module no longer imports SELib
 def precompute_(
     atom: Toy_Atom,
     atmos: Atmos1D,
@@ -93,7 +96,6 @@ def precompute_(
     else:
         Cij_coe = _numpy.ascontiguousarray(Cij_dep, dtype=DT_NB_FLOAT)
     for k in range(ND):
-        # temporary: the LTE routine is still SELib's, to be replaced by the Atomic/LTELib one
         ni, ratio = _SELib._ni_nj_LTE_(atom.Level, atom.Line, atom.Cont, atmos.Te[k], atmos.Ne[k])
         n_LTE[k, :] = ni
         nj_by_ni[k, :] = ratio

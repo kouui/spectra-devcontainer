@@ -15,7 +15,7 @@ from ...Math import GaussLeg as _GaussLeg
 from ...RadiativeTransfer.MALI import GlobalMesh as _GlobalMesh
 from ...RadiativeTransfer.MALI import Precompute as _Precompute
 from ...RadiativeTransfer.MALI.Kernels import (
-    _W_SCA_MAX,
+    W_SCA_MAX,
     bf_rates_kernel_,
     continuum_coefficients_,
     line_coefficients_,
@@ -159,7 +159,7 @@ def mali_multilevel_(
             w0, pre.phi, chi_int, S_cur, pre.alpha_win, pre.row_cont0, n_low, n_dag,
             pre.exp_hnu_kT, pre.twohc2_wl5, pre.bg_chi, pre.bg_eta, pre.bg_sca, J_dag, pre.hn_bottom, mus, wmus,
         )  # fmt: skip
-        w_sca = _numpy.clip(Psi * pre.bg_sca / chi_tot, 0.0, _W_SCA_MAX)
+        w_sca = _numpy.clip(Psi * pre.bg_sca / chi_tot, 0.0, W_SCA_MAX)
         J_cur = (J_cur - w_sca * J_dag) / (1.0 - w_sca)
         Jbar_cur, Lstar_cur = line_rates_(
             J_cur, Psi / (1.0 - w_sca), chi_tot, mesh.wl, mesh.Nblue, mesh.span, mesh.win_off,

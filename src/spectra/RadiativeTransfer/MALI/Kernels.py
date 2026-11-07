@@ -24,10 +24,10 @@ from .. import Feautrier as _Feautrier
 
 # cap on the diagonal scattering-operator weight Psi*sigma/chi (see
 # Function/MALI/Loop.mali_multilevel_): 1e3 overrelaxation at most, rounding amplified by 1e3
-_W_SCA_MAX: T_FLOAT = 1.0 - 1.0e-3
+W_SCA_MAX: T_FLOAT = 1.0 - 1.0e-3
 
-# production kernels are compiled at their definition; a jitted caller here binds
-# the dispatchers directly (re-wrapping a dispatcher in njit raises).
+# the kernel bodies call these names; keeping the aliases keeps the bodies identical to the frozen
+# Experimental v2 copy they were relocated from.
 _formal_rh_ = _Feautrier.formal_improved_RH_
 _set_matrixR_ = _SEsolver.set_matrixR_
 _set_matrixC_ = _SEsolver.set_matrixC_
