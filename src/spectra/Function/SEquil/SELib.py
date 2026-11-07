@@ -29,12 +29,30 @@ from ...Struct import Radiation as _Radiation
 from ...Util import MeshUtil as _MeshUtil
 
 
+def _require_omega_collisions_(atom: _Atom.Atom) -> None:
+    """Refuse an atom whose collision tables are not collision strengths.
+
+    `_get_Cij_` evaluates ``Omega_table`` as Omega. An atom from an RH file
+    holds RH coefficients there (``RH_CE``/``RH_CI``), which would give wrong
+    rates without any error. Every public entry calls this first, before it
+    touches the caller's atmosphere; `cal_SE_`, the only reader of
+    ``atom.CE``/``atom.CI``, repeats it.
+    """
+    for name, tran in (("CE", atom.CE), ("CI", atom.CI)):
+        if tran._transition_formula != E_COLLISIONAL_TRANSITION_FORMULA.OMEGA:
+            raise ValueError(
+                f"SELib supports only collision tables of formula OMEGA; atom.{name} has "
+                f"{tran._transition_formula.name} (an atom read from an RH file)"
+            )
+
+
 def cal_SE_with_Pg_Te_single_Atom_(
     atom: _Atom.Atom,
     atmos: _Atmosphere.Atmosphere0D,
     radiation: _Radiation.Radiation,
     se_params: _Container.SE_Params_Container | None = None,
 ):
+    _require_omega_collisions_(atom)
     Pg = atmos.Pg
     Te = atmos.Te
     _Vt = atmos.Vt
@@ -85,6 +103,7 @@ def cal_SE_with_Pg_Te_(
     Nh_SE: T_ARRAY | None,
     se_params: _Container.SE_Params_Container | None = None,
 ) -> T_TUPLE[_Container.SE_Container, _Container.TranRates_Container]:
+    _require_omega_collisions_(atom)
     Pg = atmos.Pg
     Te = atmos.Te
     Vt = atmos.Vt
@@ -138,6 +157,7 @@ def cal_SE_with_Nh_Te_(
     Nh_SE: T_ARRAY | None,
     se_params: _Container.SE_Params_Container | None = None,
 ) -> T_TUPLE[_Container.SE_Container, _Container.TranRates_Container]:
+    _require_omega_collisions_(atom)
 
     Nh = atmos.Nh  # [/cm^{3}]
     Ne0 = 1.0e-4 * Nh  # [/cm^{3}]
@@ -187,6 +207,7 @@ def cal_SE_with_Ne_Te_(
     is_single_element: bool = False,
     rate_only: T_BOOL = False,
 ) -> T_TUPLE[_Container.SE_Container, _Container.TranRates_Container]:
+    _require_omega_collisions_(atom)
     r"""
     if is_single_element=False, then atmos.Nh must be provided when it is not hydrogen atom
     """
@@ -248,16 +269,7 @@ def cal_SE_(
     rate_only: T_BOOL = False,
     PI_intensity: T_ARRAY | None = None,
 ) -> T_TUPLE[_Container.SE_Container, _Container.TranRates_Container]:
-    # Every public entry of this module ends here, and this is the one place
-    # that reads atom.CE / atom.CI. An atom from an RH file keeps its
-    # collisions in atom.RH and has empty placeholders there, so without this
-    # check the formula collisions would be used silently.
-    if atom.RH is not None:
-        raise ValueError(
-            "SELib does not support an atom read from an RH file (atom.RH is set): "
-            "its CE/CI are empty placeholders and the collision data is in atom.RH"
-        )
-
+    _require_omega_collisions_(atom)
     ##: TODO: instead of using background radiation in radiation struct
     ##        use an updatable MeanIntensity struct for lines and PI_intensity
 

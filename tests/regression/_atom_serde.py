@@ -19,8 +19,6 @@ Design notes
   ``gj``, ``dEij``) are uninitialized when the conf file has no PI entry
   (``data_source_PI == CALCULATE``); they are also tracked shape-only in
   that branch, and full-value in the EXPERIMENT branch.
-- ``Atom.RH`` (RH file values) adds keys ``<name>.RH.<field>`` only when it
-  is set, so the keys of conf-file atoms do not change.
 - Struct-array dtypes are not preserved: each named field is stored as a
   plain list keyed by ``<prefix>.<field>``. The comparator restores numpy
   arrays per-field for bit-level assertion.
@@ -28,7 +26,6 @@ Design notes
 
 from __future__ import annotations
 
-import dataclasses
 import json
 from pathlib import Path
 from typing import Any
@@ -171,13 +168,6 @@ def dump_atom(atom: Any, path_dict: dict[str, str | None], name: str) -> dict[st
     out.update(_struct_array_as_flat(wave_mesh.Line_Coe, f"{name}.waveMesh.Line_Coe"))
     # Uninitialised memory — shape-only comparison.
     out[f"{name}.waveMesh.Line_absorb_prof"] = _shape_only(wave_mesh.Line_absorb_prof)
-
-    # --- RH_Data (only atoms read from an RH file; conf atoms add no keys) ---
-    rh = atom.RH
-    if rh is not None:
-        for fld in dataclasses.fields(rh):
-            v = getattr(rh, fld.name)
-            out[f"{name}.RH.{fld.name}"] = list(v) if isinstance(v, tuple) else v.tolist()
 
     return out
 

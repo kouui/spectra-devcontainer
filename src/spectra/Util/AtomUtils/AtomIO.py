@@ -574,6 +574,16 @@ RL_DTYPE = _numpy.dtype(
         ("qcore", T_FLOAT),
         ("qwing", T_FLOAT),
         ("nLambda", T_INT),  #: number of meaningful wavelength mesh point
+        # Broadening of the line, one row per line (`lineIndex` is the row of `Atom.Line`).
+        # A file that does not provide it leaves the defaults: zeros / `E_VDW_TYPE.NONE`.
+        ("Grad", T_FLOAT),  #: radiative broadening Gamma, [s^-1]; 0 = not given, use `Line.Gamma`
+        ("vdW_type", T_INT),  #: `E_VDW_TYPE`; NONE = no van der Waals data
+        # UNSOLD: [0] multiplies the hydrogen-perturber term, [2] the helium one,
+        # [1] and [3] unused; all dimensionless
+        ("cvdW", T_FLOAT, (4,)),
+        # quadratic Stark. > 0: dimensionless multiplier of the Traving estimate;
+        # < 0: |cStark| is Gamma / Ne directly, [cm^3 s^-1]; 0 = no Stark broadening
+        ("cStark", T_FLOAT),
     ]
 )
 
@@ -1146,3 +1156,62 @@ def make_Atom_PI_hydrogenic_(
         alpha_table[1, lo:hi] = alpha_interp[k, :]
 
     return alpha_table, alpha_table_idxs, Coe, alpha_interp
+
+
+def make_Atom_CECI_RH_(
+    tran_type: T_STR,
+    Tran: T_ARRAY,
+    Level: T_ARRAY,
+    Level_info_table: T_CTJ_TABLE,
+    Tran_ctj_table: T_CTJ_PAIR_TABLE,
+    Te_table: T_ARRAY,
+    idx_in_file: T_ARRAY,
+    coe_in_file: T_ARRAY,
+) -> T_TUPLE[
+    T_ARRAY,
+    T_ARRAY,
+    T_ARRAY,
+    T_E_COLLISIONAL_TRANSITION,
+    T_E_COLLISIONAL_TRANSITION_SOURCE,
+    T_E_COLLISIONAL_TRANSITION_FORMULA,
+]:
+    """CE or CI table of an RH atom file, in the layout of `make_Atom_CECI_`.
+
+    Parameters
+    ----------
+    tran_type : T_STR
+        "CE" (transitions are the lines) or "CI" (the continua)
+    Te_table : T_ARRAY
+        the file's TEMP grid, [K]
+    idx_in_file : T_ARRAY
+        (nRow, 2) level pairs as written in the file: (upper, lower) for CE,
+        (lower, upper) for CI
+    coe_in_file : T_ARRAY
+        (nRow, nTemp) the file's coefficients, SI (m^3 ...)
+
+    Returns
+    -------
+    Te_table, Omega_table, Coe, type, source, formula
+        ``Omega_table`` is (nTran, nTemp) with the coefficients converted ONCE to
+        CGS (x1e6); a transition the file has no row for stays 0. Row k belongs to
+        ``Tran[k]``, so ``Coe["idxI"]`` is always the lower and ``Coe["idxJ"]``
+        the upper level, whichever order the file uses. The formula is
+        ``RH_CE`` / ``RH_CI`` (see `E_COLLISIONAL_TRANSITION_FORMULA`).
+    """
+    nTran = Tran.shape[0]
+    _, _, Coe, _tt, _ts, _ = make_Atom_CECI_(None, tran_type, nTran, Tran, Level, Level_info_table, Tran_ctj_table)
+    row_of = {(int(Tran["idxI"][k]), int(Tran["idxJ"][k])): k for k in range(nTran)}
+
+    Omega_table = _numpy.zeros((nTran, Te_table.size), dtype=DT_NB_FLOAT)
+    filled = set()
+    for (a, b), coe in zip(idx_in_file.tolist(), coe_in_file, strict=True):
+        key = (b, a) if tran_type == "CE" else (a, b)
+        if key not in row_of:
+            raise ValueError(f"RH atom file: {tran_type} row ({a}, {b}) matches no listed transition")
+        if key in filled:
+            raise ValueError(f"RH atom file: {tran_type} row ({a}, {b}) is listed twice")
+        filled.add(key)
+        Omega_table[row_of[key], :] = coe * CST.m2cm_**3  # RH tabulates CE/CI with SI volumes (m^3); stored in cm^3
+
+    formula = E_COLLISIONAL_TRANSITION_FORMULA.RH_CE if tran_type == "CE" else E_COLLISIONAL_TRANSITION_FORMULA.RH_CI
+    return Te_table.copy(), Omega_table, Coe, _tt, _ts, formula

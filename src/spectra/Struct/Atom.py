@@ -31,9 +31,13 @@ class Collisional_Transition:
     _transition_source: T_E_COLLISIONAL_TRANSITION_SOURCE
     _transition_formula: T_E_COLLISIONAL_TRANSITION_FORMULA
 
-    Te_table: T_ARRAY  # 1d
-    Omega_table: T_ARRAY  # 2d
-    Coe: T_ARRAY  # struct array
+    Te_table: T_ARRAY  # 1d, [K]
+    # 2d (nTransition, nTe), row k belongs to the k-th line (CE) / continuum (CI).
+    # The content depends on `_transition_formula`: OMEGA holds collision
+    # strengths; RH_CE / RH_CI hold RH coefficients already in CGS (see
+    # `E_COLLISIONAL_TRANSITION_FORMULA`; an evaluator must not multiply by 1e6 again).
+    Omega_table: T_ARRAY
+    Coe: T_ARRAY  # struct array, idxI = lower level, idxJ = upper level
 
 
 @_dataclass(**STRUCT_KWGS)
@@ -72,54 +76,6 @@ class Index_Table:
 
 
 @_dataclass(**STRUCT_KWGS)
-class RH_Data:
-    """Values of an RH atom file that the `Atom` fields cannot hold.
-
-    Everything is kept as written in the file (cm^-1, m^2, nm, raw ``Nlambda``)
-    so that a later stage decides its own discretization and constants; the one
-    exception is the collision coefficients, see below. Rows and indices are in
-    file order: level indices are positions in the level list, and
-    ``line_*``/``cont_*`` follow ``Atom.Line``/``Atom.Cont`` one to one.
-
-    The raw cm^-1 energies are kept next to ``Atom.Level["erg"]`` on purpose:
-    the broadening assembly uses RH's own constants with them, and the two
-    energy scales differ by up to 1e-6 (relative).
-    """
-
-    # --- levels
-    level_E_cm: T_ARRAY  # (nLevel,) [cm^-1]
-    level_label: T_TUPLE[T_STR, ...]
-    level_no: T_ARRAY  # (nLevel,) RH levelNo column; not the principal quantum number
-
-    # --- lines (one per Atom.Line)
-    line_Grad: T_ARRAY  # (nLine,) radiative broadening [s^-1]
-    line_vdW_type: T_TUPLE[T_STR, ...]
-    line_cvdW: T_ARRAY  # (nLine, 4)
-    line_cStark: T_ARRAY  # (nLine,)
-    line_Nlambda: T_ARRAY  # (nLine,) raw: half profile for SYMM, full profile for ASYMM
-    line_symm: T_TUPLE[T_STR, ...]  # "SYMM" | "ASYMM"
-    line_qcore: T_ARRAY  # (nLine,)
-    line_qwing: T_ARRAY  # (nLine,)
-
-    # --- continua (one per Atom.Cont)
-    cont_alpha0_m2: T_ARRAY  # (nCont,) edge cross section [m^2]
-    cont_lamb_min_nm: T_ARRAY  # (nCont,) [nm]
-    cont_Nlambda: T_ARRAY  # (nCont,) raw
-    cont_wavedep: T_TUPLE[T_STR, ...]  # "HYDROGENIC"
-
-    # --- collisions (RH table format, evaluated by the solver, not by SELib)
-    # The coefficients are converted once, SI -> CGS (x1e6, m^3 -> cm^3), so an
-    # evaluator must not multiply again.
-    # CE rows list the UPPER level first, CI rows the LOWER level first, as in
-    # the file; the two conventions are easy to mix up.
-    Te_table: T_ARRAY  # (nTemp,) [K]
-    CE_idx: T_ARRAY  # (nCE, 2) (upper, lower)
-    CE_coe_cgs: T_ARRAY  # (nCE, nTemp)
-    CI_idx: T_ARRAY  # (nCI, 2) (lower, upper)
-    CI_coe_cgs: T_ARRAY  # (nCI, nTemp)
-
-
-@_dataclass(**STRUCT_KWGS)
 class Atom:
     # Title : T_STR
     # Element : T_STR
@@ -153,11 +109,6 @@ class Atom:
     RL: Radiative_Line
 
     _wave_mesh: _WavelengthMesh.Wavelength_Mesh
-
-    # None for atoms read from the conf/Level/Aji files. An atom with RH data
-    # carries placeholders in CE/CI and must not enter the SE solver of
-    # `Function.SEquil.SELib`, which would compute collisions from formulas.
-    RH: RH_Data | None = None
 
 
 # -------------------------------------------------------------------------------
@@ -319,13 +270,13 @@ def init_Atom_(conf_path: T_STR, is_hydrogen: T_BOOL = False) -> Atom:
     return atom
 
 
-# Conversion constants of the RH atom format, shared by the Aji and the
-# collision handling below.
+# RH atom files are SI (energies in cm^-1); an Atom is CGS. Every value is
+# converted once, here or in `AtomIO.make_Atom_CECI_RH_`, and stored in the unit
+# the field comment names.
 # RH's f -> Aji factor (2 pi e^2 / (eps0 m_e c), SI [m^2 s^-1]); it is the
 # constant the RH atom files assume, kept as RH has it instead of rebuilding it
 # from spectra.Constants so that Aji agrees with RH's to the last digit.
 _RH_F_TO_AJI_SI = 6.670192e-5
-_CM_PER_M_CUBED = 1.0e6  # m^3 -> cm^3, applied once to the CE/CI coefficients
 
 
 def _principal_n_from_label_(label: T_STR) -> T_INT:
@@ -413,36 +364,8 @@ def _rh_make_Cont_(rh: _RHAtomIO.RH_Atom_File, Level: T_ARRAY) -> T_TUPLE[T_ARRA
     return _AtomIO.make_Atom_Cont_(len(idx_table), idx_table, Level), idx_table
 
 
-def _rh_check_collision_rows_(
-    rh: _RHAtomIO.RH_Atom_File, Line_idx_table: T_IDX_PAIR_TABLE, Cont_idx_table: T_IDX_PAIR_TABLE
-) -> None:
-    """Every CE row must name a listed line and every CI row a listed continuum."""
-    line_set, cont_set = set(Line_idx_table), set(Cont_idx_table)
-    for upper, lower in rh.CE_idx.tolist():
-        if (lower, upper) not in line_set:
-            raise ValueError(f"RH atom file: CE row ({upper}, {lower}) matches no listed line")
-    for lower, upper in rh.CI_idx.tolist():
-        if (lower, upper) not in cont_set:
-            raise ValueError(f"RH atom file: CI row ({lower}, {upper}) matches no listed continuum")
-
-
-def _rh_placeholder_collisions_(
-    tran_type: T_STR, Tran: T_ARRAY, Level: T_ARRAY, Level_info_table: T_CTJ_TABLE, ctj: T_CTJ_PAIR_TABLE
-) -> Collisional_Transition:
-    Te_table, Omega_table, Coe, _tt, _ts, _tf = _AtomIO.make_Atom_CECI_(
-        None, tran_type, Tran.shape[0], Tran, Level, Level_info_table, ctj
-    )
-    return Collisional_Transition(
-        _transition_type=_tt,
-        _transition_source=_ts,
-        _transition_formula=_tf,
-        Te_table=Te_table,
-        Omega_table=Omega_table,
-        Coe=Coe,
-    )
-
-
 def _rh_make_RL_Coe_(rh: _RHAtomIO.RH_Atom_File, Line: T_ARRAY) -> T_ARRAY:
+    """One RL row per line, in the order of ``Line``, with the RH broadening in CGS."""
     nLine = Line.shape[0]
     Coe = _numpy.zeros(nLine, dtype=_AtomIO.RL_DTYPE)
     Coe["idxI"][:] = Line["idxI"]
@@ -452,32 +375,13 @@ def _rh_make_RL_Coe_(rh: _RHAtomIO.RH_Atom_File, Line: T_ARRAY) -> T_ARRAY:
     Coe["qcore"][:] = rh.line_qcore
     Coe["qwing"][:] = rh.line_qwing
     Coe["nLambda"][:] = [_full_profile_points_(int(n), s) for n, s in zip(rh.line_Nlambda, rh.line_symm, strict=True)]
+    Coe["Grad"][:] = rh.line_Grad  # s^-1 in both
+    Coe["vdW_type"][:] = [int(E_VDW_TYPE[t]) for t in rh.line_vdW_type]  # the reader accepts UNSOLD only
+    Coe["cvdW"][:, :] = rh.line_cvdW  # dimensionless multipliers
+    # A negative cStark carries Gamma / Ne in m^3 s^-1 and is converted to cm^3 s^-1
+    # (the sign stays the flag); a positive one is a dimensionless multiplier.
+    Coe["cStark"][:] = _numpy.where(rh.line_cStark < 0.0, rh.line_cStark * CST.m2cm_**3, rh.line_cStark)
     return Coe
-
-
-def _rh_make_RH_Data_(rh: _RHAtomIO.RH_Atom_File) -> RH_Data:
-    return RH_Data(
-        level_E_cm=rh.level_E_cm,
-        level_label=rh.level_label,
-        level_no=rh.level_no,
-        line_Grad=rh.line_Grad,
-        line_vdW_type=rh.line_vdW_type,
-        line_cvdW=rh.line_cvdW,
-        line_cStark=rh.line_cStark,
-        line_Nlambda=rh.line_Nlambda,
-        line_symm=rh.line_symm,
-        line_qcore=rh.line_qcore,
-        line_qwing=rh.line_qwing,
-        cont_alpha0_m2=rh.cont_alpha0_m2,
-        cont_lamb_min_nm=rh.cont_lamb_min_nm,
-        cont_Nlambda=rh.cont_Nlambda,
-        cont_wavedep=rh.cont_wavedep,
-        Te_table=rh.Te_table,
-        CE_idx=rh.CE_idx,
-        CE_coe_cgs=rh.CE_coe * _CM_PER_M_CUBED,
-        CI_idx=rh.CI_idx,
-        CI_coe_cgs=rh.CI_coe * _CM_PER_M_CUBED,
-    )
 
 
 def init_Atom_from_RH_(path: T_STR | _Path) -> Atom:
@@ -491,30 +395,32 @@ def init_Atom_from_RH_(path: T_STR | _Path) -> Atom:
     Returns
     -------
     atom : Atom
-        ``atom.RH`` holds the raw file values (see `RH_Data`).
+        every value of the file is stored in an existing field, in CGS.
 
     Notes
     -----
-    - Stage = RH stage + 1, ``isGround`` is the lowest level of each stage.
-      Stages must not decrease along the file, so the levels of one stage
-      are contiguous.
+    - Levels: stage = RH stage + 1; ``isGround`` is the lowest level of each
+      stage (stages must not decrease along the file, so the levels of one stage
+      are contiguous); ``Level["erg"]`` is ``E[cm^-1] * h_ * c_`` with project
+      constants, and the file's cm^-1 is recovered as ``erg / (h_ * c_)``;
+      ``Level["n"]`` is read from the label, 0 for a bare nucleus (stage Z + 1).
     - Only the lines and continua the file lists exist, in file order (lines
       first in the transition order).
-    - ``Level["erg"]`` is ``E[cm^-1] * h_ * c_`` with project constants.
-    - ``Level["n"]`` is read from the label; a bare nucleus (stage Z + 1) has 0.
-    - ``RL.Coe`` carries the number of points of the full profile mesh
-      (see `_full_profile_points_`), ``qcore`` and ``qwing``, so that
-      `init_Wave_Mesh_` builds ``Line_Coe``/``Line_mesh`` from them.
-    - ``PI`` holds the project's hydrogenic cross section on the default
-      continuum mesh (edge-concentrated, ``w0`` times `make_continuum_mesh_`),
-      exactly as for a "Hydrogenic" entry of a PI file. It is not RH's
-      cross section: the edge value differs from ``alpha0`` by up to 3 %
-      (n = 1), the mesh does not start at ``lamb_min``, and the Gaunt factor
-      differs. A solver that must reproduce RH builds its cross sections from
-      ``atom.RH`` on its own mesh and does not read ``atom.PI``.
-    - ``CE``/``CI`` are empty placeholders and their data source says
-      CALCULATE. The collisions are in ``atom.RH``; `SELib.cal_SE_` refuses
-      an atom with ``RH`` set, so the placeholders cannot be used by mistake.
+    - ``RL.Coe`` has one row per line: the profile mesh (``nLambda`` is the
+      number of points of the full profile, ``qcore``, ``qwing``) and the
+      broadening (``Grad``, ``vdW_type``, ``cvdW``, ``cStark``; see the dtype).
+    - The continuum mesh ends at the file's ``lamb_min``
+      (``_wave_mesh.Cont_Coe["lamb_min"]``, [cm]).
+    - ``PI`` holds the project's hydrogenic cross section on that mesh, as for
+      a "Hydrogenic" entry of a PI file; the file's ``alpha0`` (cm^2) is
+      recorded in ``PI.Coe["alpha0"]`` and does not scale the values. The edge
+      value differs from ``alpha0`` by up to 3 % (n = 1) and the Gaunt factor
+      differs from RH's, so a solver that must reproduce RH computes its cross
+      sections from ``alpha0`` itself.
+    - ``CE``/``CI`` hold the file's tables with formula ``RH_CE``/``RH_CI``
+      (see `E_COLLISIONAL_TRANSITION_FORMULA`): CGS, already multiplied by 1e6,
+      rows in the order of ``Line``/``Cont``, ``idxI`` the lower level. The
+      statistical equilibrium solver `SELib` refuses them.
     """
     rh = _RHAtomIO.read_RH_atom_(path)
 
@@ -525,7 +431,6 @@ def init_Atom_from_RH_(path: T_STR | _Path) -> Atom:
     nLevel = Level.shape[0]
     Line, Line_idx_table = _rh_make_Line_(rh, Level)
     Cont, Cont_idx_table = _rh_make_Cont_(rh, Level)
-    _rh_check_collision_rows_(rh, Line_idx_table, Cont_idx_table)
     nLine, nCont = Line.shape[0], Cont.shape[0]
     _has_continuum = nCont > 0
 
@@ -534,24 +439,36 @@ def init_Atom_from_RH_(path: T_STR | _Path) -> Atom:
     _ctj_table = CTJ_Table(Level=Level_info_table, Line=Line_ctj_table, Cont=Cont_ctj_table)
     _idx_table = Index_Table(Line=Line_idx_table, Cont=Cont_idx_table)
 
-    CE = _rh_placeholder_collisions_("CE", Line, Level, Level_info_table, Line_ctj_table)
-    CI = _rh_placeholder_collisions_("CI", Cont, Level, Level_info_table, Cont_ctj_table)
+    def _collisions(tran_type: T_STR, Tran: T_ARRAY, ctj: T_CTJ_PAIR_TABLE, idx: T_ARRAY, coe: T_ARRAY):
+        Te_table, Omega_table, Coe, _tt, _ts, _tf = _AtomIO.make_Atom_CECI_RH_(
+            tran_type, Tran, Level, Level_info_table, ctj, rh.Te_table, idx, coe
+        )
+        return Collisional_Transition(
+            _transition_type=_tt,
+            _transition_source=_ts,
+            _transition_formula=_tf,
+            Te_table=Te_table,
+            Omega_table=Omega_table,
+            Coe=Coe,
+        )
+
+    CE = _collisions("CE", Line, Line_ctj_table, rh.CE_idx, rh.CE_coe)
+    CI = _collisions("CI", Cont, Cont_ctj_table, rh.CI_idx, rh.CI_coe)
 
     RL = Radiative_Line(nRadiativeLine=nLine, Coe=_rh_make_RL_Coe_(rh, Line))
-    waveMesh = _WavelengthMesh.init_Wave_Mesh_(Cont, Line, RL.Coe)
+    waveMesh = _WavelengthMesh.init_Wave_Mesh_(Cont, Line, RL.Coe, rh.cont_lamb_min_nm * CST.nm2cm_)
 
     alpha_table, alpha_table_idxs, PI_Coe, alpha_interp = _AtomIO.make_Atom_PI_hydrogenic_(
-        Level, Cont, waveMesh.Cont_mesh, rh.cont_alpha0_m2 * 1.0e4
+        Level, Cont, waveMesh.Cont_mesh, rh.cont_alpha0_m2 * CST.m2cm_**2
     )
     PI = Photo_Ionization(
         alpha_table=alpha_table, alpha_table_idxs=alpha_table_idxs, Coe=PI_Coe, alpha_interp=alpha_interp
     )
 
-    # CALCULATE for CE/CI: no table is stored in CE/CI (see Notes)
     _atomic_data_source = ATOMIC_DATA_SOURCE(
         AJI=E_ATOMIC_DATA_SOURCE.EXPERIMENT,
-        CE=E_ATOMIC_DATA_SOURCE.CALCULATE,
-        CI=E_ATOMIC_DATA_SOURCE.CALCULATE,
+        CE=E_ATOMIC_DATA_SOURCE.EXPERIMENT,
+        CI=E_ATOMIC_DATA_SOURCE.EXPERIMENT,
         PI=E_ATOMIC_DATA_SOURCE.EXPERIMENT,
     )
 
@@ -578,7 +495,6 @@ def init_Atom_from_RH_(path: T_STR | _Path) -> Atom:
         PI=PI,
         RL=RL,
         _wave_mesh=waveMesh,
-        RH=_rh_make_RH_Data_(rh),
     )
 
 
