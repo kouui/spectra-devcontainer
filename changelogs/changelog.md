@@ -10,6 +10,16 @@ recent date inside the file) and start a fresh entry below.
 
 ## 2026-11-07
 
+### `Atomic/{Background,Broadening}.py`, `RadiativeTransfer/MALI/`, `Function/MALI/`, `tests/unittest/MALI/`, `tests/conftest.py` — YW.Huang
+
+Relocation of the MALI v2 prototype into the package layout, with no behaviour change. `Experimental/MALI/v1` and `v2` and their tests are untouched.
+
+- New modules: `Atomic/Background.py`, `Atomic/Broadening.py`; `RadiativeTransfer/MALI/{GlobalMesh,ProfileTable,Precompute,Kernels}.py` (kernels take arrays only and import no `Struct`/`Function` module); `Function/MALI/{Setup,Loop}.py` (build-once setup and the multilevel driver, with the `bf_rates_` struct adapter). Function bodies are copied verbatim; only imports changed and numba decoration moved to the definition (`@nb_njit(**NB_NJIT_KWGS)`).
+- `Toy_Atom` and `Atmos1D` live in `Function/MALI/Setup.py` as temporary input types, and `Setup` still calls `SELib._ni_nj_LTE_`; both are to be replaced by `Struct.Atom.Atom`, `AtmosphereC1D` and the `Atomic/LTELib` routine.
+- Tests in `tests/unittest/MALI/`: the v2 tests with switched imports (Rates keeps only the tests that do not compare with v1), toy builders in `_toy.py`, the two-level driver as a test oracle in `_two_level.py`, an AST layering test, and `test.frozen_v2_parity.py`, which compares the new package with v2 on FALC and four toy cases with `numpy.array_equal` (precompute arrays, populations, J, `wl`, `niter`). The directory is in `_SLOW_WITHOUT_JIT_DIRS`.
+- The FALC pin reads the existing `mali_v2_falc_all_reference.npz`, shared with the v2 copy of the test; regenerate means rerun both. The MALI tests now run twice until the v2 tests are removed.
+- Pins unchanged: `reference_values.json`, `atom_reference_values.json`.
+
 ### `Struct/{Atom,WavelengthMesh}.py`, `Enums.py`, `Types.py`, `ImportAll.py`, `Util/RH/{AtomFile,AtomBuild}.py`, `Util/{MeshUtil,AtomUtils/AtomIO}.py`, `Function/SEquil/SELib.py`, `tests/unittest/{test.MeshUtil.py,test.RH_AtomFile.py,test.RH_AtomBuild.py,test.RH_Atom.py,test.rh_atom_parity.py}`, `tests/regression/{_atom_serde.py,test_reg_e2e_AtomLoad.py,atom_reference_values.json}`, `scripts/gen_atom_reference.py` — YW.Huang
 
 `Atom.init_Atom_from_RH_(path)` reads an RH `*.atom` file into an ordinary `Atom` (first step of moving MALI out of `Experimental`; no solver change). Every file value goes into the existing structure it belongs to, converted once to CGS; there is no side container.
