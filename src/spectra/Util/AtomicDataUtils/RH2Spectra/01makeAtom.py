@@ -698,16 +698,16 @@ def read_rh_collision_(file: str):  # noqa: C901
 def make_CE_file_(  # noqa: C901
     temp: ColTempRH, cols: list[CollisionRH], tables: dict[int, LevelRecord], outfile: str, prefix: str | None
 ):
-    header = """
+    header = f"""
 #--------------------------------------------------------------------------------------------------
 # Collisional Excitation Rate
 # type ::
 #       ECS -> Effective Collision Strength
 #       CRC -> Collision Rate Coefficient
 # Effective Collision Strengths (Omega_ij[-]) : RH/Atoms_example/CaII.atom
-# Collision Rate : n_e * C_ij = n_e * ( 8.63e-6 * (Omega_ij*f1/f2) ) / (g_i * T_e^0.5) * e^(-dE_ji / (k*T_e))
+# Collision Rate : n_e * C_ij = n_e * ( {Cst.CE_omega_to_rate_:.6e} * (Omega_ij*f1/f2) ) / (g_i * T_e^0.5) * e^(-dE_ji / (k*T_e))
 #                             = n_e *        CE * T_e^0.5 * f1/f2                      * e^(-dE_ji / (k*T_e))
-#  --> Omega_ij = CE * T_e * g_i / 8.63E-6
+#  --> Omega_ij = CE * T_e * g_i / {Cst.CE_omega_to_rate_:.6e}
 """
     with Path(outfile).open("w") as f:
         f.write(header + "\n")
@@ -759,7 +759,7 @@ def make_CE_file_(  # noqa: C901
                 continue
             if kind == "CE":
                 for t, c in zip(temp.temps, coes0, strict=False):
-                    coes.append(c * gi * t / 8.63e-6)
+                    coes.append(c * gi * t / Cst.CE_omega_to_rate_)
             else:
                 coes = coes0
 

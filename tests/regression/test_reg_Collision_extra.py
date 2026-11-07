@@ -2,6 +2,7 @@
 
 import numpy as np
 
+from spectra import Constants as Cst
 from spectra.Atomic import Collision
 
 from .conftest import assert_close
@@ -61,6 +62,15 @@ class TestCERateCoeGeneral:
 
     def test_scalar2(self, ref):
         assert_close(Collision.CE_rate_coe_(0.5, 10000.0, 8, 2.0e-11), ref["Collision.CE_rate_coe_scalar2"])
+
+    def test_prefactor_from_constants(self):
+        # The rate is pi a0^2 sqrt(8k/(pi me)) * (E_Rydberg/k) * Omega / (gi sqrt(Te)) * exp(-dE/kT);
+        # a rounded literal prefactor is off by 1e-4 relative, so the comparison is relative only.
+        prefactor = Cst.pi_ * Cst.a0_**2 * (8 * Cst.k_ / Cst.pi_ / Cst.me_) ** 0.5 * Cst.E_Rydberg_ / Cst.k_
+        omega, gi, dEij = 0.8, 4, 1.63e-11
+        Te = np.array([3000.0, 7000.0, 2.0e4])
+        expected = prefactor * omega / (gi * np.sqrt(Te)) * np.exp(-dEij / (Cst.k_ * Te))
+        np.testing.assert_allclose(Collision.CE_rate_coe_(omega, Te, gi, dEij), expected, rtol=1e-14, atol=0.0)
 
 
 class TestCIRateCoeGeneral:
