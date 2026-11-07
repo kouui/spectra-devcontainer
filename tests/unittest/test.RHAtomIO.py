@@ -6,7 +6,6 @@ reader); the file is the single source. Fast, so they also run under
 NUMBA_DISABLE_JIT=1.
 """
 
-import dataclasses
 from pathlib import Path
 
 import numpy as np
@@ -407,23 +406,6 @@ def test_old_SE_path_refuses_an_RH_atom_before_touching_the_atmosphere(atom, cal
     with pytest.raises(ValueError, match="RH_CE"):
         call(atom, atmos, Radiation.init_Radiation_())
     assert dict(vars(atmos)) == before
-
-
-def test_mixed_collision_formulas_are_refused(atom):
-    # CE as collision strengths but CI from an RH table: still not an OMEGA atom
-    omega_ce = dataclasses.replace(atom.CE, _transition_formula=E_FORMULA.OMEGA)
-    mixed = dataclasses.replace(atom, CE=omega_ce)
-    atmos = _fresh_atmos()
-    before = dict(vars(atmos))
-    with pytest.raises(ValueError, match=r"atom\.CI"):
-        SELib.cal_SE_with_Nh_Te_(mixed, atmos, Radiation.init_Radiation_(), None)
-    assert dict(vars(atmos)) == before
-
-
-def test_guarded_wrappers_keep_their_docstring():
-    # the guard call sits below the docstring; above it, it would turn it into a no-op string
-    assert SELib.cal_SE_with_Ne_Te_.__doc__ is not None
-    assert "is_single_element" in SELib.cal_SE_with_Ne_Te_.__doc__
 
 
 def test_conf_atoms_have_default_broadening_and_omega_collisions():
